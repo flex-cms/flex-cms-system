@@ -2,7 +2,16 @@
 
 define('SIDEBAR_LINKS', [
     ['url' => '/admin/dashboard', 'icon' => 'fa-chart-line', 'label' => 'Табло'],
-    ['url' => '/admin/users', 'icon' => 'fa-users', 'label' => 'Потребители'],
+    [
+        'url' => '/admin/users',
+        'icon' => 'fa-users',
+        'label' => 'Потребители',
+        'children' => [
+            ['url' => '/admin/users', 'label' => 'Всички потребители'],
+            ['url' => '/admin/roles', 'label' => 'Роли и права'],
+            ['url' => '/admin/permissions', 'label' => 'Разрешения'],
+        ]
+    ],
     ['url' => '/admin/pages', 'icon' => 'fa-book-open', 'label' => 'Страници'],
 ]);
 ?>
@@ -18,7 +27,7 @@ define('SIDEBAR_LINKS', [
     <aside id="main-sidebar" :class="{ 
             'translate-x-0': isOpen, 
             '-translate-x-full': !isOpen,
-            'transition-transform duration-300': mounted // Анимацията се активира само след зареждане
+            'transition-transform duration-300': mounted
         }"
         class="min-h-screen fixed inset-y-0 left-0 w-72 bg-black text-white z-50 transform shadow-2xl <?= !$is_open ? '-translate-x-full' : '' ?>">
 
@@ -36,19 +45,56 @@ define('SIDEBAR_LINKS', [
         <hr class="border-t border-gray-800" />
 
         <nav class="space-y-2 flex-1 text-lg">
-            <?php $current_admin_page = $_SERVER['REQUEST_URI']; ?>
+            <?php $current_path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH); ?>
 
             <div class="p-2 space-y-1">
                 <?php foreach (SIDEBAR_LINKS as $link): ?>
-                    <?php $is_active = str_starts_with($current_admin_page, $link['url']); ?>
+                    <?php $has_children = isset($link['children']) && !empty($link['children']);
 
-                    <a href="<?= $link['url'] ?>" @click.prevent="navigateTo('<?= $link['url'] ?>')"
-                        class="flex items-center gap-3 px-3 py-2 rounded-md font-semibold"
-                        :class="isOpen ? (<?= $is_active ? 'true' : 'false' ?> ? 'bg-primary text-white' : 'text-slate-400 hover:bg-primary hover:text-white') : ''">
+                    $is_group_active = str_starts_with($current_path, $link['url']);
 
-                        <i class="fa-solid <?= $link['icon'] ?> text-xl w-6"></i>
-                        <span><?= $link['label'] ?></span>
-                    </a>
+                    if ($has_children) {
+                        foreach ($link['children'] as $child) {
+                            if (str_starts_with($current_path, $child['url'])) {
+                                $is_group_active = true;
+                                break;
+                            }
+                        }
+                    } ?>
+
+                    <?php if ($has_children): ?>
+                        <div x-data="{ subOpen: <?= $is_group_active ? 'true' : 'false' ?> }" class="space-y-1">
+                            <button @click="subOpen = !subOpen"
+                                class="w-full flex items-center justify-between px-3 py-2 rounded-md font-semibold text-left transition-colors"
+                                :class="subOpen ? 'text-white bg-neutral-900/50' : 'text-slate-400 hover:bg-primary hover:text-white'">
+                                <div class="flex items-center gap-3">
+                                    <i class="fa-solid <?= $link['icon'] ?> text-xl w-6"
+                                        :class="subOpen ? 'text-primary' : ''"></i>
+                                    <span><?= $link['label'] ?></span>
+                                </div>
+                                <i class="fa-solid fa-chevron-down text-sm transition-transform duration-200"
+                                    :class="{ 'rotate-180': subOpen }"></i>
+                            </button>
+
+                            <div x-show="subOpen" x-cloak class="pl-9 space-y-1" x-collapse>
+                                <?php foreach ($link['children'] as $child): ?>
+                                    <?php $is_child_active = str_starts_with($current_path, $child['url']); ?>
+                                    <a href="<?= $child['url'] ?>" @click.prevent="navigateTo('<?= $child['url'] ?>')"
+                                        class="block px-3 py-1.5 rounded-md text-base transition-colors <?= $is_child_active ? 'text-secondary font-bold bg-neutral-900/30' : 'text-slate-400 hover:text-white' ?>">
+                                        <?= $child['label'] ?>
+                                    </a>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                    <?php else: ?>
+                        <a href="<?= $link['url'] ?>" @click.prevent="navigateTo('<?= $link['url'] ?>')"
+                            class="flex items-center gap-3 px-3 py-2 rounded-md font-semibold transition-colors"
+                            :class="isOpen ? (<?= $is_group_active ? 'true' : 'false' ?> ? 'bg-primary text-white' : 'text-slate-400 hover:bg-primary hover:text-white') : ''">
+
+                            <i class="fa-solid <?= $link['icon'] ?> text-xl w-6"></i>
+                            <span><?= $link['label'] ?></span>
+                        </a>
+                    <?php endif; ?>
                 <?php endforeach; ?>
             </div>
 
@@ -63,6 +109,5 @@ define('SIDEBAR_LINKS', [
                     </button>
                 </form>
             </div>
-        </nav>
     </aside>
 </div>

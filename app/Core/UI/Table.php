@@ -182,4 +182,32 @@ class Table
         </div>
         <?php
     }
+
+    public static function avatar(?string $imageSrc, string $fallbackText, string $bgColor = '#6366f1', int $size = 40): string
+    {
+        $words = explode(' ', trim($fallbackText));
+        $initials = '';
+        foreach ($words as $word) {
+            $initials .= mb_substr($word, 0, 1, 'UTF-8');
+            if (mb_strlen($initials, 'UTF-8') >= 2) break;
+        }
+        $initials = mb_strtoupper($initials, 'UTF-8');
+
+        $bgStyle = str_starts_with($bgColor, '#') ? "style=\"background-color: {$bgColor};\"" : "";
+        $bgClass = !str_starts_with($bgColor, '#') ? $bgColor : "";
+
+        $html = "<div class=\"flex items-center justify-center rounded-full text-white font-semibold select-none overflow-hidden shrink-0 {$bgClass}\" 
+                    style=\"width: {$size}px; height: {$size}px; font-size: " . ($size * 0.4) . "px; " . (str_starts_with($bgColor, '#') ? "background-color: {$bgColor};" : "") . "\">";
+
+        if (!empty($imageSrc)) {
+            $html .= "<img src=\"{$imageSrc}\" alt=\"{$fallbackText}\" class=\"w-full h-full object-cover\" onerror=\"this.style.display='none'; this.nextElementSibling.style.display='flex';\">";
+            $html .= "<span class=\"hidden w-full h-full items-center justify-center\">{$initials}</span>";
+        } else {
+            $html .= "<span>{$initials}</span>";
+        }
+
+        $html .= "</div>";
+
+        return $html;
+    }
 }
