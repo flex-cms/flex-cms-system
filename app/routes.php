@@ -7,6 +7,7 @@ use Flex\Core\Controllers\AdminController;
 use Flex\Core\Controllers\UserController;
 use Flex\Core\Controllers\RoleController;
 use Flex\Core\Controllers\PermissionController;
+use Flex\Core\Controllers\UpdateController;
 
 $routes = [
     // Auth маршрути
@@ -36,6 +37,10 @@ $routes = [
     ['POST', '/admin/permissions/create',     [PermissionController::class, 'store']],
     ['GET',  '/admin/permissions/edit/{id}',  [PermissionController::class, 'edit']],
     ['POST', '/admin/permissions/edit/{id}',  [PermissionController::class, 'update']],
+
+    // Updates
+    ['GET',  '/admin/update',  [UpdateController::class, 'index']],
+    ['POST', '/admin/update',  [UpdateController::class, 'performUpdate']],
 ];
 
 foreach ($routes as [$method, $path, $handler]) {

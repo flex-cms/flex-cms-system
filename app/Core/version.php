@@ -1,0 +1,6 @@
+<?php
+
+return [
+    'version' => '0.0.0.1',
+    'release_date' => '2026-05-20'
+];
