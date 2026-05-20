@@ -9,7 +9,12 @@ use ZipArchive;
 class UpdateController extends BaseController
 {
     private string $githubRepo = 'kriskatacom/flex-cms-versions';
-    private string $githubToken = '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';
+    private string $githubToken;
+
+    public function __construct()
+    {
+        $this->githubToken = $_ENV['GITHUB_UPDATE_TOKEN'] ?? getenv('GITHUB_UPDATE_TOKEN') ?: '';
+    }
 
     public function index()
     {
@@ -169,7 +174,6 @@ class UpdateController extends BaseController
                 'plugins',
                 'storage/uploads',
                 'config.php',
-                'app/Core/Controllers/UpdateController.php',
                 '.env',
             ];
 
@@ -238,7 +242,7 @@ class UpdateController extends BaseController
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
 
         $response = curl_exec($ch);
-        curl_close($ch);
+
         return $response;
     }
 

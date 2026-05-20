@@ -40,7 +40,7 @@ $routes = [
 
     // Updates
     ['GET',  '/admin/update',  [UpdateController::class, 'index']],
-    ['POST', '/admin/update',  [UpdateController::class, 'performUpdate']],
+    ['POST', '/admin/update',  [UpdateController::class, 'update']],
 ];
 
 foreach ($routes as [$method, $path, $handler]) {

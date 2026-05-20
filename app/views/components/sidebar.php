@@ -13,6 +13,7 @@ define('SIDEBAR_LINKS', [
         ]
     ],
     ['url' => '/admin/pages', 'icon' => 'fa-book-open', 'label' => 'Страници'],
+    ['url' => '/admin/update', 'icon' => 'fa-arrow-rotate-right', 'label' => 'Обновяване'],
 ]);
 ?>
 
