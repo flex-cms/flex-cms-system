@@ -7,6 +7,8 @@ use Flex\Core\Routing\View;
 $currentUser = Auth::user();
 $sidebarOpen = $currentUser->options['sidebar_open'] ?? $_SESSION['sidebar_open'] ?? true;
 $darkMode = ($currentUser->options['theme'] ?? null) === 'dark' ?? $_SESSION['dark_mode'] ?? false;
+$currentConfig = require dirname(__DIR__, 2) . '/Core/version.php';
+$currentVersion = $currentConfig['version'];
 ?>
 
 <html lang="bg" 
@@ -62,8 +64,7 @@ $darkMode = ($currentUser->options['theme'] ?? null) === 'dark' ?? $_SESSION['da
                 'duration-300': mounted 
             }">
 
-            <header
-                class="h-16 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between px-4 sticky top-0 z-30">
+            <header class="h-16 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between px-4 sticky top-0 z-30">
                 <div class="flex items-center gap-4">
                     <button @click="toggle()" class="p-2 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700">
                         <i class="fa-solid fa-bars text-xl"></i>
@@ -124,10 +125,9 @@ $darkMode = ($currentUser->options['theme'] ?? null) === 'dark' ?? $_SESSION['da
                 </div>
             </main>
 
-            <footer
-                class="py-4 px-6 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 text-sm text-slate-500 flex flex-col sm:flex-row justify-between items-center gap-2">
+            <footer class="py-4 px-6 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 text-sm text-slate-500 flex flex-col sm:flex-row justify-between items-center gap-2">
                 <p>&copy;
-                    <?= date('Y'); ?> Flex CMS v3.0
+                    <?= date('Y'); ?> Flex CMS версия <?= $currentVersion ?>. Всички права запазени.
                 </p>
                 <div class="flex gap-4">
                     <a href="#" class="hover:text-indigo-600">Документация</a>

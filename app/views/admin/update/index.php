@@ -1,5 +1,4 @@
-<div class="p-6 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm"
-    x-data="updater()">
+<div class="p-6 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm" x-data="updater()">
 
     <div class="flex items-center justify-between mb-6">
         <div>
@@ -21,7 +20,7 @@
         <?php else: ?>
             <span
                 class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
-                Системата е най-новата
+                Използвате последната версия
             </span>
         <?php endif; ?>
     </div>
@@ -87,11 +86,9 @@
         </div>
     </div>
 
-    <div x-show="error" x-cloak
-        class="mt-4 p-3 bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400 rounded-lg text-sm" x-text="error">
+    <div x-show="error" x-cloak class="mt-4 p-3 bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400 rounded-lg text-sm" x-text="error">
     </div>
-    <div x-show="updating" x-cloak
-        class="mt-4 p-3 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-800 dark:text-indigo-300 rounded-lg text-sm flex items-center gap-2">
+    <div x-show="updating" x-cloak class="mt-4 p-3 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-800 dark:text-indigo-300 rounded-lg text-sm flex items-center gap-2">
         <i class="fa-solid fa-circle-notch fa-spin"></i>
         <span x-text="message"></span>
     </div>

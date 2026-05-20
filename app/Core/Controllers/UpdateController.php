@@ -41,7 +41,7 @@ class UpdateController extends BaseController
                         if (!is_array($item))
                             continue;
 
-                        if (isset($item['type']) && $item['type'] === 'dir' && preg_match('/^\d+\.\d+\.\d+$/', $item['name'])) {
+                        if (isset($item['type']) && $item['type'] === 'dir' && preg_match('/^\d+(\.\d+)+$/', $item['name'])) {
                             $versionName = $item['name'];
 
                             if (version_compare($versionName, $latestVersion, '>')) {
@@ -126,7 +126,7 @@ class UpdateController extends BaseController
 
         if (is_array($items) && !isset($items['message'])) {
             foreach ($items as $item) {
-                if (is_array($item) && $item['type'] === 'dir' && preg_match('/^\d+\.\d+\.\d+$/', $item['name'])) {
+                if (is_array($item) && $item['type'] === 'dir' && preg_match('/^\d+(\.\d+)+$/', $item['name'])) {
                     if (version_compare($item['name'], $latestVersion, '>')) {
                         $latestVersion = $item['name'];
                         $hasUpdate = true;
