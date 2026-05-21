@@ -1,6 +1,6 @@
 <?php
 
 return [
-    'version' => '0.0.0.3',
+    'version' => '0.0.0.4',
     'release_date' => '2026-05-20'
 ];

@@ -21,20 +21,21 @@ $dotenv->load();
 $capsule = new Capsule;
 
 $capsule->addConnection([
-    'driver'    => 'mysql',
-    'host'      => $_ENV['DB_HOST'],
-    'database'  => $_ENV['DB_NAME'],
-    'username'  => $_ENV['DB_USER'],
-    'password'  => $_ENV['DB_PASS'],
-    'charset'   => $_ENV['DB_CHAR'],
+    'driver' => 'mysql',
+    'host' => $_ENV['DB_HOST'],
+    'database' => $_ENV['DB_NAME'],
+    'username' => $_ENV['DB_USER'],
+    'password' => $_ENV['DB_PASS'],
+    'charset' => $_ENV['DB_CHAR'],
     'collation' => 'utf8mb4_unicode_ci',
-    'prefix'    => '',
+    'prefix' => '',
 ]);
 
 $capsule->setAsGlobal();
 $capsule->bootEloquent();
 
-function db() {
+function db()
+{
     return Database::getInstance();
 }
 db();
@@ -42,7 +43,14 @@ db();
 $events = EventManager::getInstance();
 $router = new Router($events);
 
-$activePlugins = ['page-plugin'];
+try {
+    $activePlugins = Capsule::table('plugins')
+        ->where('is_active', 1)
+        ->pluck('slug')
+        ->toArray();
+} catch (\Exception $e) {
+    $activePlugins = [];
+}
 
 $pluginManager = new PluginManager($events, $activePlugins);
 $pluginManager->loadPlugins($router);

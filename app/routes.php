@@ -8,6 +8,7 @@ use Flex\Core\Controllers\UserController;
 use Flex\Core\Controllers\RoleController;
 use Flex\Core\Controllers\PermissionController;
 use Flex\Core\Controllers\UpdateController;
+use Flex\Core\Controllers\PluginController;
 
 $routes = [
     // Auth маршрути
@@ -39,8 +40,13 @@ $routes = [
     ['POST', '/admin/permissions/edit/{id}',  [PermissionController::class, 'update']],
 
     // Updates
-    ['GET',  '/admin/update',  [UpdateController::class, 'index']],
-    ['POST', '/admin/update',  [UpdateController::class, 'update']],
+    ['GET',  '/admin/update',                   [UpdateController::class, 'index']],
+    ['POST', '/admin/update',                   [UpdateController::class, 'update']],
+
+    // Plugins
+    ['GET',  '/admin/plugins',                  [PluginController::class, 'index']],
+    ['POST', '/admin/plugins/toggle',     [PluginController::class, 'toggle']],
+    ['POST', '/admin/plugins/delete',           [PluginController::class, 'delete']],
 ];
 
 foreach ($routes as [$method, $path, $handler]) {
