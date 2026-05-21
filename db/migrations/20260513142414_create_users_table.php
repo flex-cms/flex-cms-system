@@ -13,6 +13,7 @@ final class CreateUsersTable extends AbstractMigration
             ->addColumn('email', 'string', ['limit' => 100, 'null' => false])
             ->addColumn('password', 'string', ['limit' => 255, 'null' => false])
             ->addColumn('role', 'enum', ['values' => ['admin', 'editor', 'user'], 'default' => 'user'])
+            ->addColumn('is_active', 'boolean', ['default' => true, 'null' => false])
             ->addColumn('options', 'json', ['null' => true])
             ->addColumn('last_login', 'timestamp', ['null' => true])
             ->addTimestamps()

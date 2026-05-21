@@ -17,13 +17,20 @@ class Table
         return new self($items);
     }
 
-    public function column(string $label, callable $renderer, ?string $sortKey = null): self
+    public function column(string $label, callable $renderer, ?string $sortKey = null, string $align = 'left'): self
     {
+        $validAlignments = ['left', 'center', 'right'];
+        if (!in_array($align, $validAlignments)) {
+            $align = 'left';
+        }
+
         $this->columns[] = [
             'label' => $label,
             'renderer' => $renderer,
-            'sortKey' => $sortKey
+            'sortKey' => $sortKey,
+            'align' => $align
         ];
+        
         return $this;
     }
 
@@ -47,15 +54,20 @@ class Table
         <div
             class="bg-white dark:bg-slate-800 shadow-sm rounded-md border border-slate-200 dark:border-slate-700 overflow-hidden <?= $addContainerClasses ?>">
             <div class="overflow-x-auto scrollbar scrollbar-track-slate-100 scrollbar-thumb-slate-300 dark:scrollbar-track-slate-800 dark:scrollbar-thumb-slate-600">
-                <table class="w-full text-left border-collapse">
+                <table class="w-full border-collapse">
                     <thead>
                         <tr class="bg-slate-50 dark:bg-slate-700/50">
                             <?php foreach ($this->columns as $col): ?>
+                                <?php 
+                                $align = $col['align'] ?? 'left';
+                                $justifyMap = ['left' => 'justify-start', 'center' => 'justify-center', 'right' => 'justify-end'];
+                                $justifyClass = $justifyMap[$align];
+                                ?>
                                 <th
-                                    class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                    class="px-4 py-2 font-semibold text-slate-500 dark:text-slate-400 text-<?= $align ?>">
                                     <?php if ($col['sortKey']): ?>
                                         <a href="<?= $this->getSortUrl($col['sortKey']) ?>"
-                                            class="flex items-center gap-1 hover:text-indigo-600 transition-colors">
+                                            class="flex items-center gap-1 hover:text-primary transition-colors <?= $justifyClass ?>">
                                             <?= $col['label'] ?>
                                             <?php if ($currentSort === $col['sortKey']): ?>
                                                 <i
@@ -76,7 +88,8 @@ class Table
                             <?php foreach ($this->items as $item): ?>
                                 <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
                                     <?php foreach ($this->columns as $col): ?>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600 dark:text-slate-300">
+                                        <?php $align = $col['align'] ?? 'left'; ?>
+                                        <td class="px-4 py-2 text-slate-600 dark:text-slate-300 text-<?= $align ?>">
                                             <?= $col['renderer']($item) ?>
                                         </td>
                                     <?php endforeach; ?>
@@ -112,6 +125,9 @@ class Table
 
     public static function search(string $placeholder = 'Търсене...', string $name = 'search', string $value = ''): void
     {
+        if ($value === '') {
+            $value = $_GET[$name] ?? '';
+        }
         ?>
         <div class="relative w-full max-w-full sm:max-w-xs">
             <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
@@ -123,11 +139,14 @@ class Table
 
     public static function select(string $name, array $options, string $selected = ''): void
     {
+        if ($selected === '') {
+            $selected = $_GET[$name] ?? '';
+        }
         ?>
         <select name="<?= $name ?>"
             class="w-full max-w-full sm:max-w-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500 transition-all dark:text-white">
             <?php foreach ($options as $value => $label): ?>
-                <option value="<?= $value ?>" <?= $value === $selected ? 'selected' : '' ?>>
+                <option value="<?= $value ?>" <?= (string)$value === (string)$selected ? 'selected' : '' ?>>
                     <?= $label ?>
                 </option>
             <?php endforeach; ?>
@@ -209,5 +228,74 @@ class Table
         $html .= "</div>";
 
         return $html;
+    }
+
+    public static function actionsMenu(array $options, $item): string
+    {
+        ob_start(); ?>
+        <div x-data="{ open: false }" @click.away="open = false" class="relative inline-block text-left">
+            <button @click="open = !open" type="button" 
+                class="flex items-center justify-center p-2 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors focus:outline-none">
+                <i class="fa-solid fa-ellipsis-vertical text-base"></i>
+            </button>
+
+            <div x-show="open" 
+                x-anchor.bottom-start="$el.parentElement"
+                x-transition:enter="transition ease-out duration-100"
+                x-transition:enter-start="transform opacity-0 scale-95"
+                x-transition:enter-end="transform opacity-100 scale-100"
+                x-transition:leave="transition ease-in duration-75"
+                x-transition:leave-start="transform opacity-100 scale-100"
+                x-transition:leave-end="transform opacity-0 scale-95"
+                class="fixed z-100 mt-2 py-2 w-44 -translate-x-full rounded-md bg-white dark:bg-slate-800 shadow-lg border border-slate-200 dark:border-slate-700 focus:outline-none text-left" 
+                style="display: none;">
+                
+                <?php foreach ($options as $option): ?>
+                    <?php 
+                    if (isset($option['visible']) && is_callable($option['visible'])) {
+                        if (!$option['visible']($item)) {
+                            continue;
+                        }
+                    }
+
+                    $html = $option['html']($item);
+                    
+                    $xShowAttr = '';
+                    if (preg_match('/x-show="[^"]+"/', $html, $matches)) {
+                        $xShowAttr = $matches[0];
+                    }
+                    ?>
+                    <div class="px-2" <?= $xShowAttr ?>>
+                        <div @click="open = false">
+                            <?= $html ?>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    public static function actionLink(string $href, string $label, string $icon, string $class = 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'): string
+    {
+        ob_start(); ?>
+        <a href="<?= $href ?>" 
+        class="flex w-full items-center px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-md transition-colors <?= $class ?>">
+            <i class="<?= $icon ?> mr-2 w-4 text-center text-slate-400"></i> <?= $label ?>
+        </a>
+        <?php
+        return ob_get_clean();
+    }
+
+    public static function actionButton(string $click, string $label, string $icon, string $class = '', string $extraAttributes = ''): string
+    {
+        ob_start(); ?>
+        <button type="button" @click="<?= $click ?>" <?= $extraAttributes ?>
+            class="flex w-full items-center px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-md transition-colors disabled:opacity-50 <?= $class ?>">
+            <i class="<?= $icon ?> mr-2 w-4 text-center"></i> <?= $label ?>
+        </button>
+        <?php
+        return ob_get_clean();
     }
 }

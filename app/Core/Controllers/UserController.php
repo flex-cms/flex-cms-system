@@ -13,7 +13,47 @@ class UserController extends BaseController
     {
         $currentTab = $_GET['tab'] ?? 'users';
 
-        $users = User::with('roles')->orderBy('created_at', 'desc')->get();
+        $usersQuery = User::with('roles');
+
+        if (!empty($_GET['search'])) {
+            $search = $_GET['search'];
+            $usersQuery->where(function ($query) use ($search) {
+                $query->where('username', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        if (!empty($_GET['role'])) {
+            $usersQuery->whereHas('roles', function ($query) {
+                $query->where('slug', $_GET['role']);
+            });
+        }
+
+        if (!empty($_GET['status'])) {
+            $status = $_GET['status'];
+            if ($status === 'active') {
+                $usersQuery->where('is_active', true);
+            } elseif ($status === 'inactive') {
+                $usersQuery->where('is_active', false);
+            }
+        }
+
+        $sort = $_GET['sort'] ?? 'created_at';
+        $direction = $_GET['direction'] ?? 'desc';
+
+        $validSorts = ['username', 'email', 'role', 'created_at'];
+        if (in_array($sort, $validSorts)) {
+            if ($sort === 'role') {
+                $usersQuery->join('user_roles', 'users.id', '=', 'user_roles.user_id')
+                    ->join('roles', 'user_roles.role_id', '=', 'roles.id')
+                    ->orderBy('roles.name', $direction)
+                    ->select('users.*');
+            } else {
+                $usersQuery->orderBy($sort, $direction);
+            }
+        }
+
+        $users = $usersQuery->get();
         $roles = Role::orderBy('name', 'asc')->get();
         $permissions = Permission::orderBy('module', 'asc')->get();
 

@@ -10,7 +10,7 @@
         "rollback": "php vendor/bin/phinx rollback",
         "migrate:create": "php vendor/bin/phinx create",
         "migrate:status": "php vendor/bin/phinx status",
-        "seed": "php vendor/bin/phinx seed:run -s UserSeeder"
+        "seed": "php vendor/bin/phinx seed:run -s DatabaseSeeder"
     },
     "dependencies": {
         "@alpinejs/collapse": "^3.15.12",

@@ -8,6 +8,7 @@ import sidebar from "./admin/components/sidebar.js";
 import uiSection from "./admin/components/ui-section.js";
 import alertComponent from './admin/components/alert.js';
 import updater from './admin/components/updater.js';
+import deleteManager from './admin/components/deleteManager.js';
 import plugins from './admin/plugins.js';
 
 window.Alpine = Alpine;
@@ -17,6 +18,7 @@ Alpine.data("sidebar", sidebar);
 Alpine.data("uiSection", uiSection);
 Alpine.data('alertComponent', alertComponent);
 Alpine.data('updater', updater);
+Alpine.data('deleteManager', deleteManager);
 Alpine.data('pluginManager', plugins);
 
 Alpine.start();

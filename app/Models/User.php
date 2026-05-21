@@ -4,7 +4,8 @@ namespace Flex\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Casts\AsArrayObject;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class User extends Model
 {
@@ -16,11 +17,13 @@ class User extends Model
         'username',
         'email',
         'password',
+        'is_active',
         'options',
         'last_login'
     ];
 
     protected $casts = [
+        'is_active' => 'boolean',
         'options' => AsArrayObject::class,
         'last_login' => 'datetime',
     ];
@@ -29,23 +32,25 @@ class User extends Model
         'password',
     ];
 
-    public function setPasswordAttribute($value)
+    protected function password(): Attribute
     {
-        $this->attributes['password'] = password_hash($value, PASSWORD_BCRYPT);
+        return Attribute::make(
+            set: fn(string $value) => password_hash($value, PASSWORD_BCRYPT)
+        );
     }
 
-    public function roles()
+    public function roles(): BelongsToMany
     {
         return $this->belongsToMany(Role::class, 'user_role');
     }
 
-    public function can(string $permissionSlug): bool
+    public function hasPermission(string $permissionSlug): bool
     {
         if ($this->hasRole('admin')) {
             return true;
         }
 
-        return in_array($permissionSlug, $this->getPermissions());
+        return in_array($permissionSlug, $this->getPermissions(), true);
     }
 
     public function hasRole(string $roleSlug): bool
@@ -59,14 +64,15 @@ class User extends Model
             return $this->permissionsCache;
         }
 
-        $result = \Illuminate\Support\Facades\DB::select("
-        SELECT DISTINCT p.slug 
-        FROM permissions p
-        JOIN role_permission rp ON p.id = rp.permission_id
-        JOIN user_role ur ON rp.role_id = ur.role_id
-        WHERE ur.user_id = ?
-    ", [$this->id]);
-        $this->permissionsCache = array_map(fn($item) => $item->slug, $result);
+        $this->permissionsCache = $this->roles()
+            ->with('permissions')
+            ->get()
+            ->pluck('permissions')
+            ->collapse()
+            ->pluck('slug')
+            ->unique()
+            ->toArray();
+
         return $this->permissionsCache;
     }
 }
