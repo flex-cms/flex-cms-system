@@ -49,11 +49,22 @@ class Router
             foreach ($this->routes[$method] as $routePath => $routeData) {
                 $normRoutePath = '/' . trim($routePath, '/');
 
-                $pattern = preg_replace('/\{[a-zA-Z0-0_]+\}/', '([^/]+)', $normRoutePath);
+                $pattern = preg_replace('/\{[a-zA-Z0-9_]+\}/', '([^/]+)', $normRoutePath);
                 $pattern = "#^" . $pattern . "$#";
 
                 if (preg_match($pattern, $path, $matches)) {
                     array_shift($matches);
+
+                    if (!empty($routeData['middlewares'])) {
+                        foreach ($routeData['middlewares'] as $middlewareClass) {
+                            if (class_exists($middlewareClass)) {
+                                $middleware = new $middlewareClass();
+                                if (method_exists($middleware, 'handle')) {
+                                    $middleware->handle();
+                                }
+                            }
+                        }
+                    }
 
                     $handler = $routeData['handler'];
                     $controllerClass = $handler[0];

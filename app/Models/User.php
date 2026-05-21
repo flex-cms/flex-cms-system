@@ -17,6 +17,7 @@ class User extends Model
         'username',
         'email',
         'password',
+        'remember_token',
         'is_active',
         'options',
         'last_login'

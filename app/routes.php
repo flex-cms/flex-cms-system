@@ -9,47 +9,52 @@ use Flex\Core\Controllers\RoleController;
 use Flex\Core\Controllers\PermissionController;
 use Flex\Core\Controllers\UpdateController;
 use Flex\Core\Controllers\PluginController;
+use Flex\Core\Middlewares\AuthMiddleware;
 
 $routes = [
     // Auth маршрути
-    ['GET',  '/admin',                  [AuthController::class, 'showLogin']],
-    ['POST', '/admin',                  [AuthController::class, 'login']],
-    ['GET',  '/logout',                 [AuthController::class, 'logout']],
+    ['GET', '/admin', [AuthController::class, 'showLogin']],
+    ['POST', '/admin', [AuthController::class, 'login']],
+    ['GET', '/logout', [AuthController::class, 'logout']],
 
     // Dashboard & UI
-    ['GET',  '/admin/dashboard',        [AdminController::class, 'index']],
-    ['POST', '/admin/sidebar-toggle',   [AdminController::class, 'toggleSidebar']],
-    ['POST', '/admin/theme-toggle',     [AdminController::class, 'toggleTheme']],
-    ['POST', '/admin/ui/save-state',    [AdminController::class, 'saveUiState']],
+    ['GET', '/admin/dashboard', [AdminController::class, 'index'], [AuthMiddleware::class]],
+    ['POST', '/admin/sidebar-toggle', [AdminController::class, 'toggleSidebar'], [AuthMiddleware::class]],
+    ['POST', '/admin/theme-toggle', [AdminController::class, 'toggleTheme'], [AuthMiddleware::class]],
+    ['POST', '/admin/ui/save-state', [AdminController::class, 'saveUiState'], [AuthMiddleware::class]],
 
     // Users (RBAC)
-    ['GET',  '/admin/users',            [UserController::class, 'index']],
+    ['GET', '/admin/users', [UserController::class, 'index'], [AuthMiddleware::class]],
 
     // Roles
-    ['GET',  '/admin/roles',            [RoleController::class, 'index']],
-    ['GET',  '/admin/roles/create',     [RoleController::class, 'create']],
-    ['POST', '/admin/roles/create',     [RoleController::class, 'store']],
-    ['GET',  '/admin/roles/edit/{id}',  [RoleController::class, 'edit']],
-    ['POST', '/admin/roles/edit/{id}',  [RoleController::class, 'update']],
+    ['GET', '/admin/roles', [RoleController::class, 'index'], [AuthMiddleware::class]],
+    ['GET', '/admin/roles/create', [RoleController::class, 'create'], [AuthMiddleware::class]],
+    ['POST', '/admin/roles/create', [RoleController::class, 'store'], [AuthMiddleware::class]],
+    ['GET', '/admin/roles/edit/{id}', [RoleController::class, 'edit'], [AuthMiddleware::class]],
+    ['POST', '/admin/roles/edit/{id}', [RoleController::class, 'update'], [AuthMiddleware::class]],
 
     // Permissions
-    ['GET',  '/admin/permissions',            [PermissionController::class, 'index']],
-    ['GET',  '/admin/permissions/create',     [PermissionController::class, 'create']],
-    ['POST', '/admin/permissions/create',     [PermissionController::class, 'store']],
-    ['GET',  '/admin/permissions/edit/{id}',  [PermissionController::class, 'edit']],
-    ['POST', '/admin/permissions/edit/{id}',  [PermissionController::class, 'update']],
+    ['GET', '/admin/permissions', [PermissionController::class, 'index'], [AuthMiddleware::class]],
+    ['GET', '/admin/permissions/create', [PermissionController::class, 'create'], [AuthMiddleware::class]],
+    ['POST', '/admin/permissions/create', [PermissionController::class, 'store'], [AuthMiddleware::class]],
+    ['GET', '/admin/permissions/edit/{id}', [PermissionController::class, 'edit'], [AuthMiddleware::class]],
+    ['POST', '/admin/permissions/edit/{id}', [PermissionController::class, 'update'], [AuthMiddleware::class]],
 
     // Updates
-    ['GET',  '/admin/update',                   [UpdateController::class, 'index']],
-    ['POST', '/admin/update',                   [UpdateController::class, 'update']],
+    ['GET', '/admin/update', [UpdateController::class, 'index'], [AuthMiddleware::class]],
+    ['POST', '/admin/update', [UpdateController::class, 'update'], [AuthMiddleware::class]],
 
     // Plugins
-    ['GET',  '/admin/plugins',                  [PluginController::class, 'index']],
-    ['POST', '/admin/plugins/toggle',     [PluginController::class, 'toggle']],
-    ['POST', '/admin/plugins/delete',           [PluginController::class, 'delete']],
+    ['GET', '/admin/plugins', [PluginController::class, 'index'], [AuthMiddleware::class]],
+    ['POST', '/admin/plugins/toggle', [PluginController::class, 'toggle'], [AuthMiddleware::class]],
+    ['POST', '/admin/plugins/delete', [PluginController::class, 'delete'], [AuthMiddleware::class]],
 ];
 
-foreach ($routes as [$method, $path, $handler]) {
-    $method = strtolower($method);
-    $router->$method($path, $handler);
+foreach ($routes as $route) {
+    $method = strtolower($route[0]);
+    $path = $route[1];
+    $handler = $route[2];
+    $middlewares = $route[3] ?? [];
+
+    $router->$method($path, $handler, $middlewares);
 }

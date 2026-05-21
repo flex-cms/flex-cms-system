@@ -91,7 +91,7 @@ class Form
         }
 
         ?>
-        <div class="flex items-center gap-4 py-3 px-1">
+        <div class="flex items-center gap-4">
             <label for="<?= $id ?>" class="relative inline-flex items-center cursor-pointer shrink-0 mt-0.5">
                 <input type="checkbox" 
                     name="<?= $name ?>" 
