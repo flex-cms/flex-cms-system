@@ -12,14 +12,17 @@ class Plugin extends Model
         'name',
         'slug',
         'description',
+        'author',
+        'requires',
         'is_active',
         'version'
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'requires' => 'array',
     ];
-    
+
     public static function isActive(string $slug): bool
     {
         return self::where('slug', $slug)->where('is_active', true)->exists();

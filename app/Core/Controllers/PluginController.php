@@ -16,17 +16,54 @@ class PluginController extends BaseController
 
             foreach ($folders as $folder) {
                 $slug = basename($folder);
+                $manifestPath = $folder . '/plugin.json';
 
-                $exists = Plugin::where('slug', $slug)->exists();
+                $name = ucfirst(str_replace('-', ' ', $slug));
+                $description = 'Управление на функционалности за ' . $slug;
+                $version = '1.0.0';
 
-                if (!$exists) {
+                if (file_exists($manifestPath)) {
+                    $manifest = json_decode(file_get_contents($manifestPath), true);
+                    if (json_last_error() === JSON_ERROR_NONE) {
+                        $name = $manifest['name'] ?? $name;
+                        $description = $manifest['description'] ?? $description;
+                        $version = $manifest['version'] ?? $version;
+                    }
+                }
+
+                $plugin = Plugin::where('slug', $slug)->first();
+
+                $author = $manifest['author'] ?? null;
+                $requires = $manifest['requires'] ?? null;
+
+                if (!$plugin) {
                     Plugin::create([
-                        'name' => ucfirst(str_replace('-', ' ', $slug)),
+                        'name' => $name,
                         'slug' => $slug,
-                        'description' => 'Управление на функционалности за ' . $slug,
+                        'description' => $description,
+                        'author' => $author,
+                        'requires' => $requires,
                         'is_active' => false,
-                        'version' => '1.0.0'
+                        'version' => $version
                     ]);
+                } else {
+                    $dbRequires = is_string($plugin->requires) ? json_decode($plugin->requires, true) : $plugin->requires;
+
+                    if (
+                        $plugin->version !== $version ||
+                        $plugin->name !== $name ||
+                        $plugin->description !== $description ||
+                        $plugin->author !== $author ||
+                        $dbRequires !== $requires
+                    ) {
+                        Plugin::where('slug', $slug)->update([
+                            'name' => $name,
+                            'description' => $description,
+                            'version' => $version,
+                            'author' => $author,
+                            'requires' => $requires
+                        ]);
+                    }
                 }
             }
         }

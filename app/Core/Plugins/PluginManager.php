@@ -53,4 +53,18 @@ class PluginManager
             return is_dir($this->pluginsPath . '/' . $item);
         }));
     }
+
+    public function getManifest(string $pluginDir): array
+    {
+        $manifestPath = $this->pluginsPath . '/' . $pluginDir . '/plugin.json';
+
+        if (file_exists($manifestPath)) {
+            $manifest = json_decode(file_get_contents($manifestPath), true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                return $manifest;
+            }
+        }
+
+        return [];
+    }
 }
