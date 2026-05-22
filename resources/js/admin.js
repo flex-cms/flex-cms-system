@@ -9,7 +9,7 @@ import uiSection from "./admin/components/ui-section.js";
 import alertComponent from './admin/components/alert.js';
 import updater from './admin/components/updater.js';
 import deleteManager from './admin/components/deleteManager.js';
-import plugins from './admin/plugins.js';
+import tableManager from './admin/components/table-manager.js';
 
 window.Alpine = Alpine;
 Alpine.plugin(collapse);
@@ -19,6 +19,6 @@ Alpine.data("uiSection", uiSection);
 Alpine.data('alertComponent', alertComponent);
 Alpine.data('updater', updater);
 Alpine.data('deleteManager', deleteManager);
-Alpine.data('pluginManager', plugins);
+Alpine.data('tableManager', tableManager);
 
 Alpine.start();

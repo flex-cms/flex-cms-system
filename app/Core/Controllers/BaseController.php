@@ -6,6 +6,41 @@ use Flex\Core\Routing\View;
 
 abstract class BaseController
 {
+    protected function handleToggleStatus(string $modelClass, string $statusField = 'is_active'): void
+    {
+        $jsonInput = file_get_contents('php://input');
+        $data = json_decode($jsonInput, true);
+
+        $id = $data['id'] ?? null;
+
+        if (!$id) {
+            $this->json(['success' => false, 'message' => 'Невалидно или липсващо ID.'], 400);
+        }
+
+        if (!class_exists($modelClass)) {
+            $this->json(['success' => false, 'message' => 'Системна грешка: Моделът не съществува.'], 500);
+        }
+
+        $item = $modelClass::find($id);
+
+        if (!$item) {
+            $this->json(['success' => false, 'message' => 'Елементът не беше намерен.'], 404);
+        }
+
+        try {
+            $item->{$statusField} = $item->{$statusField} ? 0 : 1;
+            $item->save();
+
+            $this->json([
+                'success' => true,
+                'message' => 'Статусът беше променен успешно.',
+                'new_status' => (bool)$item->{$statusField}
+            ]);
+        } catch (\Exception $e) {
+            $this->json(['success' => false, 'message' => 'Възникна грешка при записа в базата данни.'], 500);
+        }
+    }
+
     public function callAction(string $method, array $parameters = [])
     {
         if (method_exists($this, $method)) {

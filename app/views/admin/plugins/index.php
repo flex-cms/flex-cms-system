@@ -5,11 +5,18 @@ $plugins = $plugins ?? [];
 
 $initialStatuses = [];
 foreach ($plugins as $plugin) {
-    $initialStatuses[$plugin->id] = (bool) $plugin->is_active;
+    if (isset($plugin->id)) {
+        $initialStatuses[$plugin->id] = (bool) $plugin->is_active;
+    }
 }
 ?>
 
-<div x-data="pluginManager(<?= htmlspecialchars(json_encode($initialStatuses), ENT_QUOTES, 'UTF-8') ?>)">
+<div x-data="tableManager({
+    toggleUrl: '/admin/plugins/toggle',
+    deleteUrl: '/admin/plugins/delete',
+    initialStatuses: <?= htmlspecialchars(json_encode($initialStatuses), ENT_QUOTES, 'UTF-8') ?>,
+    confirmDeleteMessage: 'Сигурни ли сте, че искате да премахнете този плъгин?'
+})">
     <?php Table::header(slot: function () { ?>
         <?php Table::search('Търсене на плъгин...'); ?>
 
@@ -28,74 +35,57 @@ foreach ($plugins as $plugin) {
 
     <?php Table::create($plugins)
         ->column('Име и Версия', function ($plugin) {
-        ob_start(); ?>
-        <div class="flex items-center gap-3">
-            <div class="p-2 bg-slate-100 dark:bg-slate-700 rounded-md text-slate-500">
-                <i class="fa-solid fa-plug text-base"></i>
-            </div>
-            <div>
-                <span class="font-medium text-slate-900 dark:text-white block"><?= htmlspecialchars($plugin->name) ?></span>
-                <span class="text-xs text-slate-400 font-mono block">slug: <?= htmlspecialchars($plugin->slug) ?></span>
-            </div>
-        </div>
-        <?php return ob_get_clean();
+        return Table::avatarWithLabel(
+            avatarUrl: null,
+            label: $plugin->name ?? '---',
+            color: '#6366f1',
+            size: 36,
+            isDefault: false
+        );
     }, 'name')
 
         ->column('Описание', function ($plugin) {
-        ob_start(); ?>
-        <div class="max-w-md">
-            <p class="text-slate-600 dark:text-slate-300 line-clamp-2 mb-1">
-                <?= htmlspecialchars($plugin->description) ?>
-            </p>
-            <span
-                class="inline-flex items-center bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs px-2 py-0.5 rounded-full">
-                v<?= htmlspecialchars($plugin->version) ?>
-            </span>
-        </div>
-        <?php return ob_get_clean();
+        return Table::textCell($plugin->description ?? null);
     })
 
         ->column('Статус', function ($plugin) {
-        ob_start(); ?>
-        <span x-text="statuses[<?= $plugin->id ?>] ? 'Активен' : 'Деактивиран'"
-            :class="statuses[<?= $plugin->id ?>] ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300' : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400'"
-            class="inline-block px-2.5 py-1 rounded-full text-xs font-semibold">
-        </span>
-        <?php return ob_get_clean();
+        return Table::statusBadge('Активен|Деактивиран', 'success', $plugin->id ?? null);
     }, 'is_active')
 
         ->column('Действие', function ($plugin) {
+        if (!isset($plugin->id))
+            return '';
         ob_start(); ?>
         <div class="flex justify-end">
-            <?= Table::actionsMenu([
-                [
-                    'html' => fn($p) => Table::actionButton(
-                        "togglePlugin({$p->id})",
-                        'Деактивирай',
-                        'fa-solid fa-power-off',
-                        'text-red-500 dark:text-red-500 hover:bg-slate-100 dark:hover:bg-slate-700',
-                        "x-show=\"statuses[{$p->id}]\" :disabled=\"loading[{$p->id}]\""
-                    )
-                ],
-                [
-                    'html' => fn($p) => Table::actionButton(
-                        "togglePlugin({$p->id})",
-                        'Активирай',
-                        'fa-solid fa-play',
-                        'text-green-500 dark:text-green-500 hover:bg-slate-100 dark:hover:bg-slate-700',
-                        "x-show=\"!statuses[{$p->id}]\" :disabled=\"loading[{$p->id}]\""
-                    )
-                ],
-                [
-                    'html' => fn($p) => Table::actionButton(
-                        "deletePlugin({$p->id})",
-                        'Премахни',
-                        'fa-solid fa-trash-can',
-                        'text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 font-medium border-t border-slate-100 dark:border-slate-700/50 mt-1 pt-2',
-                        "x-show=\"!statuses[{$p->id}]\" :disabled=\"loading[{$p->id}]\""
-                    )
-                ]
-            ], $plugin); ?>
+            <?= Table::actionsMenu(slot: function ($p) {
+                ob_start(); ?>
+
+                <?= Table::actionButton(
+                    click: "toggleStatus({$p->id})",
+                    label: 'Деактивирай',
+                    icon: 'fa-solid fa-power-off',
+                    type: 'danger',
+                    extraAttributes: "x-show=\"statuses[{$p->id}]\" :disabled=\"loading[{$p->id}]\""
+                ) ?>
+
+                <?= Table::actionButton(
+                    click: "toggleStatus({$p->id})",
+                    label: 'Активирай',
+                    icon: 'fa-solid fa-play',
+                    type: 'success',
+                    extraAttributes: "x-show=\"!statuses[{$p->id}]\" :disabled=\"loading[{$p->id}]\""
+                ) ?>
+
+                <?= Table::actionButton(
+                    click: "deleteItem({$p->id})",
+                    label: 'Премахни',
+                    icon: 'fa-solid fa-trash-can',
+                    type: 'delete',
+                    extraAttributes: "x-show=\"!statuses[{$p->id}]\" :disabled=\"loading[{$p->id}]\""
+                ) ?>
+
+                <?php return ob_get_clean();
+            }, item: $plugin) ?>
         </div>
         <?php return ob_get_clean();
     }, null, 'right')

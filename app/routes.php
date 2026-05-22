@@ -25,6 +25,7 @@ $routes = [
 
     // Users (RBAC)
     ['GET', '/admin/users', [UserController::class, 'index'], [AuthMiddleware::class]],
+    ['POST', '/admin/users/toggle', [UserController::class, 'toggle'], [AuthMiddleware::class]],
 
     // Roles
     ['GET', '/admin/roles', [RoleController::class, 'index'], [AuthMiddleware::class]],
@@ -32,6 +33,7 @@ $routes = [
     ['POST', '/admin/roles/create', [RoleController::class, 'store'], [AuthMiddleware::class]],
     ['GET', '/admin/roles/edit/{id}', [RoleController::class, 'edit'], [AuthMiddleware::class]],
     ['POST', '/admin/roles/edit/{id}', [RoleController::class, 'update'], [AuthMiddleware::class]],
+    ['POST', '/admin/roles/toggle', [RoleController::class, 'toggle'], [AuthMiddleware::class]],
 
     // Permissions
     ['GET', '/admin/permissions', [PermissionController::class, 'index'], [AuthMiddleware::class]],

@@ -34,6 +34,15 @@ class Table
         return $this;
     }
 
+    public static function textCell(?string $text, string $fallback = '—'): string
+    {
+        if ($text === null || trim($text) === '') {
+            return "<span class=\"text-slate-400 dark:text-slate-500\">{$fallback}</span>";
+        }
+
+        return htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
+    }
+
     private function getSortUrl(string $key): string
     {
         $params = $_GET;
@@ -230,8 +239,11 @@ class Table
         return $html;
     }
 
-    public static function actionsMenu(array $options, $item): string
-    {
+    public static function actionsMenu(
+        callable $slot, 
+        $item = null, 
+        string $align = 'right'
+    ): string {
         ob_start(); ?>
         <div x-data="{ open: false }" @click.away="open = false" class="relative inline-block text-left">
             <button @click="open = !open" type="button" 
@@ -240,37 +252,19 @@ class Table
             </button>
 
             <div x-show="open" 
-                x-anchor.bottom-start="$el.parentElement"
+                x-anchor.bottom-end="$el.parentElement"
                 x-transition:enter="transition ease-out duration-100"
                 x-transition:enter-start="transform opacity-0 scale-95"
                 x-transition:enter-end="transform opacity-100 scale-100"
                 x-transition:leave="transition ease-in duration-75"
                 x-transition:leave-start="transform opacity-100 scale-100"
                 x-transition:leave-end="transform opacity-0 scale-95"
-                class="fixed z-100 mt-2 py-2 w-44 -translate-x-full rounded-md bg-white dark:bg-slate-800 shadow-lg border border-slate-200 dark:border-slate-700 focus:outline-none text-left" 
-                style="display: none;">
-                
-                <?php foreach ($options as $option): ?>
-                    <?php 
-                    if (isset($option['visible']) && is_callable($option['visible'])) {
-                        if (!$option['visible']($item)) {
-                            continue;
-                        }
-                    }
-
-                    $html = $option['html']($item);
-                    
-                    $xShowAttr = '';
-                    if (preg_match('/x-show="[^"]+"/', $html, $matches)) {
-                        $xShowAttr = $matches[0];
-                    }
-                    ?>
-                    <div class="px-2" <?= $xShowAttr ?>>
-                        <div @click="open = false">
-                            <?= $html ?>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
+                class="fixed z-100 mt-2 py-1 w-44 rounded-md bg-white dark:bg-slate-800 shadow-lg border border-slate-200 dark:border-slate-700 focus:outline-none text-left right-0" 
+                style="display: none;"
+                @click="open = false"> 
+                <div class="px-1.5 space-y-0.5">
+                    <?= $slot($item) ?>
+                </div>
             </div>
         </div>
         <?php
@@ -281,21 +275,119 @@ class Table
     {
         ob_start(); ?>
         <a href="<?= $href ?>" 
-        class="flex w-full items-center px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-md transition-colors <?= $class ?>">
-            <i class="<?= $icon ?> mr-2 w-4 text-center text-slate-400"></i> <?= $label ?>
+        class="flex w-full items-center px-3 py-2 text-sm rounded-md transition-colors <?= $class ?>">
+            <i class="<?= $icon ?> mr-2 w-4 text-center text-slate-400/80"></i> <?= $label ?>
         </a>
         <?php
         return ob_get_clean();
     }
 
-    public static function actionButton(string $click, string $label, string $icon, string $class = '', string $extraAttributes = ''): string
-    {
+    public static function actionButton(
+        string $click, 
+        string $label, 
+        string $icon, 
+        string $type = 'neutral', 
+        string $extraAttributes = ''
+    ): string {
+        $types = [
+            'neutral' => [
+                'btn' => 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50',
+                'icon' => 'text-slate-400 dark:text-slate-500'
+            ],
+            'success' => [
+                'btn' => 'text-emerald-600 dark:text-emerald-400 hover:bg-slate-100 dark:hover:bg-slate-700/50',
+                'icon' => 'text-emerald-500'
+            ],
+            'danger' => [
+                'btn' => 'text-red-600 dark:text-red-400 hover:bg-slate-100 dark:hover:bg-slate-700/50',
+                'icon' => 'text-red-500'
+            ],
+            'delete' => [
+                'btn' => 'text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 font-medium border-t border-slate-100 dark:border-slate-700/50 pt-1.5 mt-1 rounded-t-none',
+                'icon' => 'text-red-500'
+            ]
+        ];
+
+        $style = $types[$type] ?? $types['neutral'];
+        
         ob_start(); ?>
         <button type="button" @click="<?= $click ?>" <?= $extraAttributes ?>
-            class="flex w-full items-center px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-md transition-colors disabled:opacity-50 <?= $class ?>">
-            <i class="<?= $icon ?> mr-2 w-4 text-center"></i> <?= $label ?>
+            class="flex w-full items-center px-3 py-2 text-sm rounded-md transition-colors disabled:opacity-50 <?= $style['btn'] ?>">
+            <i class="<?= $icon ?> <?= $style['icon'] ?> mr-2 w-4 text-center"></i> <?= $label ?>
         </button>
         <?php
         return ob_get_clean();
+    }
+
+    public static function avatarWithLabel(
+        ?string $avatarUrl, 
+        string $label, 
+        string $color = '#6366f1', 
+        int $size = 36, 
+        bool $isDefault = false
+    ): string {
+        ob_start(); ?>
+        <div class="flex items-center gap-3">
+            <?= self::avatar($avatarUrl, $label, $color, $size); ?>
+            <div>
+                <span class="font-medium text-slate-900 dark:text-white block">
+                    <?= htmlspecialchars($label, ENT_QUOTES, 'UTF-8') ?>
+                    
+                    <?php if ($isDefault): ?>
+                        <span class="ml-1.5 inline-flex items-center rounded-md bg-indigo-50 dark:bg-indigo-950/40 px-1.5 py-0.5 text-xs font-medium text-indigo-700 dark:text-indigo-400 ring-1 ring-inset ring-indigo-700/10 dark:ring-indigo-400/20 select-none">
+                            По подразбиране
+                        </span>
+                    <?php endif; ?>
+                </span>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    public static function statusBadge(
+        string $text, 
+        string $type = 'success', 
+        int|string|null $reactiveId = null
+    ): string {
+        $styles = [
+            'success' => 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300',
+            'neutral' => 'bg-slate-100 text-slate-500 dark:bg-slate-700/50 dark:text-slate-400',
+            'code'    => 'bg-slate-100 dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700 text-indigo-600 dark:text-indigo-400 font-mono text-xs'
+        ];
+
+        $class = $styles[$type] ?? $styles['neutral'];
+
+        if ($reactiveId !== null) {
+            // Проверяваме дали е подаден комбиниран стринг с разделител "|" (напр. 'Активен|Деактивиран')
+            if (str_contains($text, '|')) {
+                [$activeText, $inactiveText] = explode('|', $text, 2);
+            } else {
+                // Автоматичен режим според рода на думата
+                $isFeminine = ($text === 'Активна' || $text === 'Неактивна');
+                $activeText = $isFeminine ? 'Активна' : 'Активен';
+                $inactiveText = $isFeminine ? 'Неактивна' : 'Неактивен';
+            }
+
+            ob_start(); ?>
+            <span x-text="typeof statuses !== 'undefined' && statuses[<?= $reactiveId ?>] ? '<?= htmlspecialchars($activeText, ENT_QUOTES, 'UTF-8') ?>' : '<?= htmlspecialchars($inactiveText, ENT_QUOTES, 'UTF-8') ?>'"
+                :class="typeof statuses !== 'undefined' && statuses[<?= $reactiveId ?>] ? '<?= $styles['success'] ?>' : '<?= $styles['neutral'] ?>'"
+                class="inline-block px-2.5 py-1 rounded-full text-xs font-semibold select-none">
+            </span>
+            <?php
+            return ob_get_clean();
+        }
+
+        if (trim($text) === '') {
+            return '<span class="text-slate-400">—</span>';
+        }
+
+        $cleanText = htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
+
+        if ($type === 'code') {
+            return "<code class='px-2 py-1 rounded select-all {$class}'>{$cleanText}</code>";
+        }
+
+        return "<span class='inline-block px-2.5 py-1 rounded-full text-xs font-semibold {$class}'>{$cleanText}</span>";
     }
 }

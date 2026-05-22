@@ -2,32 +2,108 @@
 
 use Flex\Core\UI\Table;
 
+$roles = $roles ?? [];
+
+// Генериране на първоначалните статуси за Alpine.js компонента
+$initialStatuses = [];
+foreach ($roles as $role) {
+    if (isset($role->id)) {
+        $initialStatuses[$role->id] = (bool) $role->is_active;
+    }
+}
 ?>
 
-<?php Table::header(slot: function () { ?>
-    <?php Table::search('Търсене на роля...'); ?>
-    <?php Table::submit('Приложи'); ?>
-    <?php Table::reset('/admin/roles'); ?>
-<?php }); ?>
+<div x-data="tableManager({
+    deleteUrl: '/admin/roles/delete',
+    toggleUrl: '/admin/roles/toggle',
+    confirmDeleteMessage: 'Сигурни ли сте, че искате да изтриете тази роля?',
+    initialStatuses: <?= htmlspecialchars(json_encode($initialStatuses), ENT_QUOTES, 'UTF-8') ?>
+})">
+    <?php Table::header(slot: function () { ?>
+        <?php Table::search('Търсене на роля...'); ?>
 
-<?php Table::create($roles)
-    ->column('Име на роля', fn($role) => "
-            <div class='flex items-center gap-3'>
-                " . Table::avatar(
-                $role->avatar_url ?? null,
-                $role->name ?? '---',
-                $role->color ?? '#6366f1',
-                36
-            ) . "
-                <span class='font-medium text-slate-900 dark:text-slate-100'>" . ($role->name ?? '---') . "</span>
-            </div>
-        ")
-    ->column('Slug', fn($role) => isset($role->slug) ? "<code class='bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded text-xs'>{$role->slug}</code>" : '---')
-    ->column('Описание', fn($role) => $role->description ? $role->description : '-')
-    ->column('Действия', fn($role) => isset($role->id) ? "
-            <div class='flex gap-3'>
-                <a href='/admin/roles/edit/{$role->id}' class='text-indigo-500 hover:text-indigo-700'><i class='fa-solid fa-pen-to-square'></i></a>
-                <button class='text-rose-500 hover:text-rose-700'><i class='fa-solid fa-trash'></i></button>
-            </div>
-        " : "")
-    ->render('mt-5');
+        <?php
+        $statusOptions = [
+            '' => 'Всички статуси',
+            'active' => 'Активни',
+            'inactive' => 'Неактивни'
+        ];
+        Table::select('status', $statusOptions);
+        ?>
+
+        <?php Table::submit('Приложи'); ?>
+        <?php Table::reset('/admin/roles'); ?>
+    <?php }); ?>
+
+    <?php Table::create($roles)
+        ->column('Име на роля', function ($role) {
+        return Table::avatarWithLabel(
+            avatarUrl: $role->avatar_url ?? null,
+            label: $role->name ?? '---',
+            color: $role->color ?? '#6366f1',
+            size: 36,
+            isDefault: !empty($role->is_default)
+        );
+    }, 'name')
+
+        ->column('Slug', function ($role) {
+        return Table::statusBadge($role->slug ?? '', 'code');
+    }, 'slug')
+
+        ->column('Описание', function ($role) {
+        return Table::textCell($role->description ?? null);
+    })
+
+        ->column('Статус', function ($role) {
+        return Table::statusBadge('Активна', 'success', $role->id ?? null);
+    }, 'is_active')
+
+        ->column('Действия', function ($role) {
+        if (!isset($role->id))
+            return '';
+        ob_start(); ?>
+        <div class="flex justify-end">
+            <?= Table::actionsMenu(slot: function ($r) {
+                ob_start(); ?>
+
+                <?= Table::actionLink(
+                    "/admin/roles/edit/{$r->id}",
+                    'Редактирай',
+                    'fa-solid fa-pen-to-square'
+                ) ?>
+
+                <?php if ($r->slug !== 'admin'): ?>
+
+                    <?= Table::actionButton(
+                        click: "toggleStatus({$r->id})",
+                        label: 'Деактивирай',
+                        icon: 'fa-solid fa-power-off',
+                        type: 'danger',
+                        extraAttributes: "x-show=\"statuses[{$r->id}]\" :disabled=\"loading[{$r->id}]\""
+                    ) ?>
+
+                    <?= Table::actionButton(
+                        click: "toggleStatus({$r->id})",
+                        label: 'Активирай',
+                        icon: 'fa-solid fa-play',
+                        type: 'success',
+                        extraAttributes: "x-show=\"!statuses[{$r->id}]\" :disabled=\"loading[{$r->id}]\""
+                    ) ?>
+
+                    <?= Table::actionButton(
+                        click: "deleteItem({$r->id})",
+                        label: 'Изтрий',
+                        icon: 'fa-solid fa-trash-can',
+                        type: 'delete',
+                        extraAttributes: ":disabled=\"loading[{$r->id}]\""
+                    ) ?>
+
+                <?php endif; ?>
+
+                <?php return ob_get_clean();
+            }, item: $role); ?>
+        </div>
+        <?php return ob_get_clean();
+    }, null, 'right')
+        ->render('mt-5'); ?>
+</div>

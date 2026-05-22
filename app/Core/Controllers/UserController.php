@@ -69,6 +69,11 @@ class UserController extends BaseController
         ], 'admin'));
     }
 
+    public function toggle()
+    {
+        $this->handleToggleStatus(User::class, 'is_active');
+    }
+
     private function getTabConfig(string $tab): array
     {
         return match ($tab) {

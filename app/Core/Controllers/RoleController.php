@@ -11,16 +11,28 @@ class RoleController extends BaseController
 {
     public function index()
     {
-        $roles = Role::orderBy('name', 'asc')->get();
+        $query = Role::orderBy('name', 'asc');
+
+        if (!empty($_GET['status'])) {
+            $isActive = ($_GET['status'] === 'active') ? 1 : 0;
+            $query->where('is_active', $isActive);
+        }
+
+        if (!empty($_GET['search'])) {
+            $search = trim($_GET['search']);
+            $query->where('name', 'LIKE', "%{$search}%");
+        }
+
+        $roles = $query->get();
 
         $this->render(View::make('admin/roles/index', [
             'title' => 'Роли и права',
             'roles' => $roles,
             'primaryButton' => [
-                    'label' => 'Нова роля',
-                    'url' => '/admin/roles/create',
-                    'icon' => 'fa-plus'
-                ]
+                'label' => 'Нова роля',
+                'url' => '/admin/roles/create',
+                'icon' => 'fa-plus'
+            ]
         ], 'admin'));
     }
 
@@ -77,6 +89,11 @@ class RoleController extends BaseController
         View::redirect('/admin/roles/edit/' . $id);
     }
 
+    public function toggle()
+    {
+        $this->handleToggleStatus(Role::class, 'is_active');
+    }
+
     private function getRoleDataFromRequest(): array
     {
         $rawSchedule = $_POST['schedule'] ?? [];
@@ -93,8 +110,8 @@ class RoleController extends BaseController
             }
         }
 
-        $slug = !empty($_POST['slug']) 
-            ? Str::slug($_POST['slug']) 
+        $slug = !empty($_POST['slug'])
+            ? Str::slug($_POST['slug'])
             : Str::slug($_POST['name'] ?? '');
 
         return [
