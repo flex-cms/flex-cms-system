@@ -1,5 +1,6 @@
 <?php
 
+use Flex\Core\Events\EventManager;
 use Flex\Core\Vite;
 ?>
 
@@ -11,6 +12,8 @@ use Flex\Core\Vite;
     <title>
         <?php echo $title ?? 'Flex CMS'; ?>
     </title>
+
+    <?php EventManager::getInstance()->trigger('view.head'); ?>
 
     <?= Vite::use('main') ?>
 </head>
@@ -52,6 +55,7 @@ use Flex\Core\Vite;
         </div>
     </footer>
 
+    <?php EventManager::getInstance()->trigger('view.footer'); ?>
 </body>
 
 </html>
