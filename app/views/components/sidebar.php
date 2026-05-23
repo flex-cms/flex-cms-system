@@ -7,9 +7,10 @@ define('SIDEBAR_LINKS', [
         'icon' => 'fa-users',
         'label' => 'Потребители',
         'children' => [
-            ['url' => '/admin/users', 'label' => 'Всички потребители'],
-            ['url' => '/admin/roles', 'label' => 'Роли и права'],
-            ['url' => '/admin/permissions', 'label' => 'Разрешения'],
+            ['url' => '/admin/users/index', 'label' => 'Всички потребители'],
+            ['url' => '/admin/users/roles', 'label' => 'Роли и права'],
+            ['url' => '/admin/users/permissions', 'label' => 'Разрешения'],
+            ['url' => '/admin/users/emails', 'label' => 'Имейли'],
         ]
     ],
     ['url' => '/admin/pages', 'icon' => 'fa-book-open', 'label' => 'Страници'],

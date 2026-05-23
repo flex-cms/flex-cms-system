@@ -25,23 +25,23 @@ $routes = [
     ['POST', '/admin/ui/save-state', [AdminController::class, 'saveUiState'], [AuthMiddleware::class]],
 
     // Users (RBAC)
-    ['GET', '/admin/users', [UserController::class, 'index'], [AuthMiddleware::class]],
+    ['GET', '/admin/users/index', [UserController::class, 'index'], [AuthMiddleware::class]],
     ['POST', '/admin/users/toggle', [UserController::class, 'toggle'], [AuthMiddleware::class]],
 
     // Roles
-    ['GET', '/admin/roles', [RoleController::class, 'index'], [AuthMiddleware::class]],
-    ['GET', '/admin/roles/create', [RoleController::class, 'create'], [AuthMiddleware::class]],
-    ['POST', '/admin/roles/create', [RoleController::class, 'store'], [AuthMiddleware::class]],
-    ['GET', '/admin/roles/edit/{id}', [RoleController::class, 'edit'], [AuthMiddleware::class]],
-    ['POST', '/admin/roles/edit/{id}', [RoleController::class, 'update'], [AuthMiddleware::class]],
-    ['POST', '/admin/roles/toggle', [RoleController::class, 'toggle'], [AuthMiddleware::class]],
+    ['GET', '/admin/users/roles', [RoleController::class, 'index'], [AuthMiddleware::class]],
+    ['GET', '/admin/users/roles/create', [RoleController::class, 'create'], [AuthMiddleware::class]],
+    ['POST', '/admin/users/roles/create', [RoleController::class, 'store'], [AuthMiddleware::class]],
+    ['GET', '/admin/users/roles/edit/{id}', [RoleController::class, 'edit'], [AuthMiddleware::class]],
+    ['POST', '/admin/users/roles/edit/{id}', [RoleController::class, 'update'], [AuthMiddleware::class]],
+    ['POST', '/admin/users/roles/toggle', [RoleController::class, 'toggle'], [AuthMiddleware::class]],
 
     // Permissions
-    ['GET', '/admin/permissions', [PermissionController::class, 'index'], [AuthMiddleware::class]],
-    ['GET', '/admin/permissions/create', [PermissionController::class, 'create'], [AuthMiddleware::class]],
-    ['POST', '/admin/permissions/create', [PermissionController::class, 'store'], [AuthMiddleware::class]],
-    ['GET', '/admin/permissions/edit/{id}', [PermissionController::class, 'edit'], [AuthMiddleware::class]],
-    ['POST', '/admin/permissions/edit/{id}', [PermissionController::class, 'update'], [AuthMiddleware::class]],
+    ['GET', '/admin/users/permissions', [PermissionController::class, 'index'], [AuthMiddleware::class]],
+    ['GET', '/admin/users/permissions/create', [PermissionController::class, 'create'], [AuthMiddleware::class]],
+    ['POST', '/admin/users/permissions/create', [PermissionController::class, 'store'], [AuthMiddleware::class]],
+    ['GET', '/admin/users/permissions/edit/{id}', [PermissionController::class, 'edit'], [AuthMiddleware::class]],
+    ['POST', '/admin/users/permissions/edit/{id}', [PermissionController::class, 'update'], [AuthMiddleware::class]],
 
     // Updates
     ['GET', '/admin/update', [UpdateController::class, 'index'], [AuthMiddleware::class]],

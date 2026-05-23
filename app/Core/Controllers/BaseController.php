@@ -78,6 +78,8 @@ abstract class BaseController
         } else {
             echo $content;
         }
+
+        exit;
     }
 
     protected function json(array $data, int $status = 200): void
