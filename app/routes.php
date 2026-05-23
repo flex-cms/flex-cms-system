@@ -10,6 +10,7 @@ use Flex\Core\Controllers\PermissionController;
 use Flex\Core\Controllers\UpdateController;
 use Flex\Core\Controllers\PluginController;
 use Flex\Core\Middlewares\AuthMiddleware;
+use Flex\Core\Controllers\FileStructureController;
 
 $routes = [
     // Auth маршрути
@@ -50,6 +51,9 @@ $routes = [
     ['GET', '/admin/plugins', [PluginController::class, 'index'], [AuthMiddleware::class]],
     ['POST', '/admin/plugins/toggle', [PluginController::class, 'toggle'], [AuthMiddleware::class]],
     ['POST', '/admin/plugins/delete', [PluginController::class, 'delete'], [AuthMiddleware::class]],
+    
+    // File Structure
+    ['GET', '/admin/file-structure', [FileStructureController::class, 'index'], [AuthMiddleware::class]],
 ];
 
 foreach ($routes as $route) {

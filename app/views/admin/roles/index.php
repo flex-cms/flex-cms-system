@@ -4,7 +4,6 @@ use Flex\Core\UI\Table;
 
 $roles = $roles ?? [];
 
-// Генериране на първоначалните статуси за Alpine.js компонента
 $initialStatuses = [];
 foreach ($roles as $role) {
     if (isset($role->id)) {
