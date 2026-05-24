@@ -66,7 +66,7 @@ foreach ($roles as $role) {
                 ob_start(); ?>
 
                 <?= Table::actionLink(
-                    "/admin/roles/edit/{$r->id}",
+                    "/admin/users/roles/edit/{$r->id}",
                     'Редактирай',
                     'fa-solid fa-pen-to-square'
                 ) ?>

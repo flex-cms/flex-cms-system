@@ -13,7 +13,7 @@ Page::header(
 );
 ?>
 
-<form action="<?= $role ? '/admin/roles/edit/' . $role->id : '/admin/roles/create' ?>" method="POST" class="max-w-5xl">
+<form action="<?= $role ? '/admin/users/roles/edit/' . $role->id : '/admin/roles/create' ?>" method="POST" class="max-w-5xl">
 
     <?php Form::section(function () use ($role) { ?>
         <?php Form::row(function () use ($role) { ?>

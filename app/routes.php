@@ -11,50 +11,50 @@ use Flex\Core\Controllers\UpdateController;
 use Flex\Core\Controllers\PluginController;
 use Flex\Core\Middlewares\AuthMiddleware;
 use Flex\Core\Controllers\FileStructureController;
+use Flex\Core\Middlewares\AdminMiddleware;
 
 $routes = [
-    // Auth маршрути
     ['GET', '/admin', [AuthController::class, 'showLogin']],
     ['POST', '/admin', [AuthController::class, 'login']],
     ['GET', '/logout', [AuthController::class, 'logout']],
 
     // Dashboard & UI
-    ['GET', '/admin/dashboard', [AdminController::class, 'index'], [AuthMiddleware::class]],
-    ['POST', '/admin/sidebar-toggle', [AdminController::class, 'toggleSidebar'], [AuthMiddleware::class]],
-    ['POST', '/admin/theme-toggle', [AdminController::class, 'toggleTheme'], [AuthMiddleware::class]],
-    ['POST', '/admin/ui/save-state', [AdminController::class, 'saveUiState'], [AuthMiddleware::class]],
+    ['GET', '/admin/dashboard', [AdminController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]],
+    ['POST', '/admin/sidebar-toggle', [AdminController::class, 'toggleSidebar'], [AuthMiddleware::class, AdminMiddleware::class]],
+    ['POST', '/admin/theme-toggle', [AdminController::class, 'toggleTheme'], [AuthMiddleware::class, AdminMiddleware::class]],
+    ['POST', '/admin/ui/save-state', [AdminController::class, 'saveUiState'], [AuthMiddleware::class, AdminMiddleware::class]],
 
     // Users (RBAC)
-    ['GET', '/admin/users/index', [UserController::class, 'index'], [AuthMiddleware::class]],
-    ['POST', '/admin/users/toggle', [UserController::class, 'toggle'], [AuthMiddleware::class]],
+    ['GET', '/admin/users/index', [UserController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]],
+    ['POST', '/admin/users/toggle', [UserController::class, 'toggle'], [AuthMiddleware::class, AdminMiddleware::class]],
 
     // Roles
-    ['GET', '/admin/users/roles', [RoleController::class, 'index'], [AuthMiddleware::class]],
-    ['GET', '/admin/users/roles/create', [RoleController::class, 'create'], [AuthMiddleware::class]],
-    ['POST', '/admin/users/roles/create', [RoleController::class, 'store'], [AuthMiddleware::class]],
-    ['GET', '/admin/users/roles/edit/{id}', [RoleController::class, 'edit'], [AuthMiddleware::class]],
-    ['POST', '/admin/users/roles/edit/{id}', [RoleController::class, 'update'], [AuthMiddleware::class]],
-    ['POST', '/admin/users/roles/toggle', [RoleController::class, 'toggle'], [AuthMiddleware::class]],
+    ['GET', '/admin/users/roles', [RoleController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]],
+    ['GET', '/admin/users/roles/create', [RoleController::class, 'create'], [AuthMiddleware::class, AdminMiddleware::class]],
+    ['POST', '/admin/users/roles/create', [RoleController::class, 'store'], [AuthMiddleware::class, AdminMiddleware::class]],
+    ['GET', '/admin/users/roles/edit/{id}', [RoleController::class, 'edit'], [AuthMiddleware::class, AdminMiddleware::class]],
+    ['POST', '/admin/users/roles/edit/{id}', [RoleController::class, 'update'], [AuthMiddleware::class, AdminMiddleware::class]],
+    ['POST', '/admin/users/roles/toggle', [RoleController::class, 'toggle'], [AuthMiddleware::class, AdminMiddleware::class]],
 
     // Permissions
-    ['GET', '/admin/users/permissions', [PermissionController::class, 'index'], [AuthMiddleware::class]],
-    ['GET', '/admin/users/permissions/create', [PermissionController::class, 'create'], [AuthMiddleware::class]],
-    ['POST', '/admin/users/permissions/create', [PermissionController::class, 'store'], [AuthMiddleware::class]],
-    ['GET', '/admin/users/permissions/edit/{id}', [PermissionController::class, 'edit'], [AuthMiddleware::class]],
-    ['POST', '/admin/users/permissions/edit/{id}', [PermissionController::class, 'update'], [AuthMiddleware::class]],
+    ['GET', '/admin/users/permissions', [PermissionController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]],
+    ['GET', '/admin/users/permissions/create', [PermissionController::class, 'create'], [AuthMiddleware::class, AdminMiddleware::class]],
+    ['POST', '/admin/users/permissions/create', [PermissionController::class, 'store'], [AuthMiddleware::class, AdminMiddleware::class]],
+    ['GET', '/admin/users/permissions/edit/{id}', [PermissionController::class, 'edit'], [AuthMiddleware::class, AdminMiddleware::class]],
+    ['POST', '/admin/users/permissions/edit/{id}', [PermissionController::class, 'update'], [AuthMiddleware::class, AdminMiddleware::class]],
 
     // Updates
-    ['GET', '/admin/update', [UpdateController::class, 'index'], [AuthMiddleware::class]],
-    ['POST', '/admin/update', [UpdateController::class, 'update'], [AuthMiddleware::class]],
+    ['GET', '/admin/update', [UpdateController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]],
+    ['POST', '/admin/update', [UpdateController::class, 'update'], [AuthMiddleware::class, AdminMiddleware::class]],
 
     // Plugins
-    ['GET', '/admin/plugins', [PluginController::class, 'index'], [AuthMiddleware::class]],
-    ['POST', '/admin/plugins/toggle', [PluginController::class, 'toggle'], [AuthMiddleware::class]],
-    ['POST', '/admin/plugins/delete', [PluginController::class, 'delete'], [AuthMiddleware::class]],
-    ['POST', '/admin/plugins/update', [PluginController::class, 'update'], [AuthMiddleware::class]],
+    ['GET', '/admin/plugins', [PluginController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]],
+    ['POST', '/admin/plugins/toggle', [PluginController::class, 'toggle'], [AuthMiddleware::class, AdminMiddleware::class]],
+    ['POST', '/admin/plugins/delete', [PluginController::class, 'delete'], [AuthMiddleware::class, AdminMiddleware::class]],
+    ['POST', '/admin/plugins/update', [PluginController::class, 'update'], [AuthMiddleware::class, AdminMiddleware::class]],
 
     // File Structure
-    ['GET', '/admin/file-structure', [FileStructureController::class, 'index'], [AuthMiddleware::class]],
+    ['GET', '/admin/file-structure', [FileStructureController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]],
 ];
 
 foreach ($routes as $route) {

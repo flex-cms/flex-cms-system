@@ -65,7 +65,18 @@ class Auth
         }
 
         if (isset($_SESSION['user_id'])) {
-            return true;
+            if (self::$currentUser !== null) {
+                return true;
+            }
+
+            $user = User::find($_SESSION['user_id']);
+            if ($user && $user->is_active) {
+                self::$currentUser = $user;
+                return true;
+            }
+
+            self::logout();
+            return false;
         }
 
         $token = $_COOKIE['remember_token'];
@@ -146,7 +157,7 @@ class Auth
             [
                 'expires' => $expireTime,
                 'path' => '/',
-                'secure' => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || $_SERVER['SERVER_PORT'] == 443,
+                'secure' => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443),
                 'httponly' => true,
                 'samesite' => 'Lax'
             ]

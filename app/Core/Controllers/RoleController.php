@@ -86,7 +86,7 @@ class RoleController extends BaseController
         $role->update($data);
         $role->permissions()->sync($_POST['permissions'] ?? []);
 
-        View::redirect('/admin/roles/edit/' . $id);
+        View::redirect('/admin/users/roles/edit/' . $id);
     }
 
     public function toggle()
