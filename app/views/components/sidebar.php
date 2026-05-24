@@ -13,7 +13,6 @@ define('SIDEBAR_LINKS', [
             ['url' => '/admin/users/emails', 'label' => 'Имейли'],
         ]
     ],
-    ['url' => '/admin/pages', 'icon' => 'fa-book-open', 'label' => 'Страници'],
     ['url' => '/admin/plugins', 'icon' => 'fa-plug', 'label' => 'Плъгини'],
     ['url' => '/admin/update', 'icon' => 'fa-arrow-rotate-right', 'label' => 'Обновяване'],
 ]);

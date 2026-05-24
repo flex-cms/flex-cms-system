@@ -21,6 +21,7 @@ class PluginController extends BaseController
                 $name = ucfirst(str_replace('-', ' ', $slug));
                 $description = 'Управление на функционалности за ' . $slug;
                 $version = '1.0.0';
+                $manifest = [];
 
                 if (file_exists($manifestPath)) {
                     $manifest = json_decode(file_get_contents($manifestPath), true);
@@ -34,6 +35,7 @@ class PluginController extends BaseController
                 $plugin = Plugin::where('slug', $slug)->first();
 
                 $author = $manifest['author'] ?? null;
+                $authorUrl = $manifest['author_url'] ?? null;
                 $requires = $manifest['requires'] ?? null;
 
                 if (!$plugin) {
@@ -42,6 +44,7 @@ class PluginController extends BaseController
                         'slug' => $slug,
                         'description' => $description,
                         'author' => $author,
+                        'author_url' => $authorUrl,
                         'requires' => $requires,
                         'is_active' => false,
                         'version' => $version
@@ -54,6 +57,7 @@ class PluginController extends BaseController
                         $plugin->name !== $name ||
                         $plugin->description !== $description ||
                         $plugin->author !== $author ||
+                        ($plugin->author_url ?? null) !== $authorUrl ||
                         $dbRequires !== $requires
                     ) {
                         Plugin::where('slug', $slug)->update([
@@ -61,6 +65,7 @@ class PluginController extends BaseController
                             'description' => $description,
                             'version' => $version,
                             'author' => $author,
+                            'author_url' => $authorUrl,
                             'requires' => $requires
                         ]);
                     }
@@ -142,6 +147,123 @@ class PluginController extends BaseController
         $plugin->delete();
 
         return $this->jsonResponse(true, "Плъгинът беше премахнат успешно от системата.");
+    }
+
+    public function update()
+    {
+        $input = json_decode(file_get_contents('php://input'), true);
+        $id = $input['id'] ?? null;
+
+        if (!$id) {
+            return $this->jsonResponse(false, 'Невалидно ID на плъгин.');
+        }
+
+        $plugin = Plugin::find($id);
+        if (!$plugin) {
+            return $this->jsonResponse(false, 'Плъгинът не е намерен.');
+        }
+
+        $pluginsPath = dirname(__DIR__, 3) . '/plugins';
+        $manifestPath = $pluginsPath . '/' . $plugin->slug . '/plugin.json';
+
+        if (!file_exists($manifestPath)) {
+            return $this->jsonResponse(false, 'Манифестът (plugin.json) не беше намерен локално.');
+        }
+
+        $manifest = json_decode(file_get_contents($manifestPath), true);
+        $repoUrl = $manifest['repository'] ?? null;
+
+        if (!$repoUrl) {
+            return $this->jsonResponse(false, 'В plugin.json липсва линк към репозиториум ("repository").');
+        }
+
+        $zipUrl = rtrim($repoUrl, '/') . '/archive/refs/heads/main.zip';
+
+        $tempZipFile = sys_get_temp_dir() . '/' . $plugin->slug . '_update.zip';
+
+        $ch = curl_init($zipUrl);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($ch, CURLOPT_USERAGENT, 'Flex-CMS-Core');
+        curl_setopt($ch, CURLOPT_TIMEOUT, 60);
+        $zipContent = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($httpCode !== 200 || !$zipContent) {
+            return $this->jsonResponse(false, 'Неуспешно изтегляне на пакета от GitHub. Сървърът върна код ' . $httpCode);
+        }
+
+        file_put_contents($tempZipFile, $zipContent);
+
+        $zip = new \ZipArchive();
+        if ($zip->open($tempZipFile) === true) {
+            $extractPath = sys_get_temp_dir() . '/flex_extract_' . $plugin->slug;
+
+            if (!is_dir($extractPath)) {
+                mkdir($extractPath, 0755, true);
+            }
+
+            $zip->extractTo($extractPath);
+            $zip->close();
+
+            $extractedFolders = glob($extractPath . '/*', GLOB_ONLYDIR);
+            if (empty($extractedFolders)) {
+                return $this->jsonResponse(false, 'Невалидна структура на ZIP архива.');
+            }
+            $innerFolder = $extractedFolders[0];
+
+            $targetPluginPath = $pluginsPath . '/' . $plugin->slug;
+            $this->copyDirectory($innerFolder, $targetPluginPath);
+
+            $this->deleteDirectory($extractPath);
+            unlink($tempZipFile);
+
+            $newManifestPath = $targetPluginPath . '/plugin.json';
+            if (file_exists($newManifestPath)) {
+                $newManifest = json_decode(file_get_contents($newManifestPath), true);
+                if (json_last_error() === JSON_ERROR_NONE) {
+                    $plugin->version = $newManifest['version'] ?? $plugin->version;
+                    $plugin->name = $newManifest['name'] ?? $plugin->name;
+                    $plugin->description = $newManifest['description'] ?? $plugin->description;
+                    $plugin->save();
+                }
+            }
+
+            return $this->jsonResponse(true, 'Плъгинът беше актуализиран успешно до последна версия!');
+        } else {
+            return $this->jsonResponse(false, 'Грешка при отварянето на ZIP архива.');
+        }
+    }
+
+    private function copyDirectory(string $source, string $target): void
+    {
+        if (!is_dir($target)) {
+            mkdir($target, 0755, true);
+        }
+
+        $files = array_diff(scandir($source), ['.', '..']);
+        foreach ($files as $file) {
+            $srcFile = $source . '/' . $file;
+            $dstFile = $target . '/' . $file;
+
+            if (is_dir($srcFile)) {
+                $this->copyDirectory($srcFile, $dstFile);
+            } else {
+                copy($srcFile, $dstFile);
+            }
+        }
+    }
+
+    private function deleteDirectory(string $dir): void
+    {
+        if (!is_dir($dir))
+            return;
+        $files = array_diff(scandir($dir), ['.', '..']);
+        foreach ($files as $file) {
+            (is_dir("$dir/$file")) ? $this->deleteDirectory("$dir/$file") : unlink("$dir/$file");
+        }
+        rmdir($dir);
     }
 
     private function jsonResponse(bool $success, string $message)

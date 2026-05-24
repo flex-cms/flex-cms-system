@@ -13,6 +13,7 @@ class Plugin extends Model
         'slug',
         'description',
         'author',
+        'author_url',
         'requires',
         'is_active',
         'version'
@@ -20,6 +21,7 @@ class Plugin extends Model
 
     protected $casts = [
         'is_active' => 'boolean',
+        'author_url' => 'string',
         'requires' => 'array',
     ];
 

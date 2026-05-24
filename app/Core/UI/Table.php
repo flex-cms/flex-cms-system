@@ -359,11 +359,9 @@ class Table
         $class = $styles[$type] ?? $styles['neutral'];
 
         if ($reactiveId !== null) {
-            // Проверяваме дали е подаден комбиниран стринг с разделител "|" (напр. 'Активен|Деактивиран')
             if (str_contains($text, '|')) {
                 [$activeText, $inactiveText] = explode('|', $text, 2);
             } else {
-                // Автоматичен режим според рода на думата
                 $isFeminine = ($text === 'Активна' || $text === 'Неактивна');
                 $activeText = $isFeminine ? 'Активна' : 'Активен';
                 $inactiveText = $isFeminine ? 'Неактивна' : 'Неактивен';

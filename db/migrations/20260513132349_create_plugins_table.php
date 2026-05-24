@@ -13,6 +13,7 @@ final class CreatePluginsTable extends AbstractMigration
             ->addColumn('slug', 'string', ['limit' => 100, 'null' => false])
             ->addColumn('description', 'text', ['null' => true])
             ->addColumn('author', 'string', ['limit' => 100, 'null' => true])
+            ->addColumn('author_url', 'string', ['limit' => 255, 'null' => true])
             ->addColumn('requires', 'json', ['null' => true])
             ->addColumn('is_active', 'boolean', ['default' => false, 'null' => false])
             ->addColumn('version', 'string', ['limit' => 20, 'default' => '1.0.0', 'null' => false])

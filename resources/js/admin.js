@@ -10,6 +10,7 @@ import alertComponent from './admin/components/alert.js';
 import updater from './admin/components/updater.js';
 import deleteManager from './admin/components/deleteManager.js';
 import tableManager from './admin/components/table-manager.js';
+import pluginManager from './admin/components/plugin-manager';
 
 window.Alpine = Alpine;
 Alpine.plugin(collapse);
@@ -20,5 +21,6 @@ Alpine.data('alertComponent', alertComponent);
 Alpine.data('updater', updater);
 Alpine.data('deleteManager', deleteManager);
 Alpine.data('tableManager', tableManager);
+Alpine.data('pluginManager', pluginManager);
 
 Alpine.start();
