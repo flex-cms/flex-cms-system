@@ -1,21 +1,9 @@
 <?php
 
-define('SIDEBAR_LINKS', [
-    ['url' => '/admin/dashboard', 'icon' => 'fa-chart-line', 'label' => 'Табло'],
-    [
-        'url' => '/admin/users',
-        'icon' => 'fa-users',
-        'label' => 'Потребители',
-        'children' => [
-            ['url' => '/admin/users/index', 'label' => 'Всички потребители'],
-            ['url' => '/admin/users/roles', 'label' => 'Роли и права'],
-            ['url' => '/admin/users/permissions', 'label' => 'Разрешения'],
-            ['url' => '/admin/users/emails', 'label' => 'Имейли'],
-        ]
-    ],
-    ['url' => '/admin/plugins', 'icon' => 'fa-plug', 'label' => 'Плъгини'],
-    ['url' => '/admin/update', 'icon' => 'fa-arrow-rotate-right', 'label' => 'Обновяване'],
-]);
+use Flex\Core\UI\Sidebar;
+
+$currentSidebarName = $sidebarName ?? 'admin_main';
+$sidebarLinks = Sidebar::getLinks($currentSidebarName);
 ?>
 
 <div>
@@ -50,7 +38,7 @@ define('SIDEBAR_LINKS', [
             <?php $current_path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH); ?>
 
             <div class="p-2 space-y-1">
-                <?php foreach (SIDEBAR_LINKS as $link): ?>
+                <?php foreach ($sidebarLinks as $link): ?>
                     <?php $has_children = isset($link['children']) && !empty($link['children']);
 
                     $is_group_active = str_starts_with($current_path, $link['url']);

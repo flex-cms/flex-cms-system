@@ -19,6 +19,41 @@ class PluginManager
         $this->pluginsPath = dirname(__DIR__, 3) . '/plugins';
     }
 
+    public function initSinglePlugin(string $slug): void
+    {
+        $pluginPath = $this->pluginsPath . '/' . $slug;
+        $pluginFile = $pluginPath . '/plugin.php';
+
+        if (file_exists($pluginFile)) {
+            $loader = require dirname(__DIR__, 3) . '/vendor/autoload.php';
+            $namespacePart = str_replace(' ', '', ucwords(str_replace('-', ' ', $slug)));
+            $fullNamespace = "Plugins\\" . $namespacePart . "\\";
+
+            $loader->addPsr4($fullNamespace, $pluginPath . '/src');
+
+            $eventManager = $this->events;
+
+            include_once $pluginFile;
+        }
+    }
+
+    public static function activate(string $slug): void
+    {
+        $pluginsPath = dirname(__DIR__, 3) . '/plugins';
+        $pluginPath = $pluginsPath . '/' . $slug;
+
+        $loader = require dirname(__DIR__, 3) . '/vendor/autoload.php';
+        $namespacePart = str_replace(' ', '', ucwords(str_replace('-', ' ', $slug)));
+        $fullNamespace = "Plugins\\" . $namespacePart . "\\";
+        $loader->addPsr4($fullNamespace, $pluginPath . '/src');
+
+        $installerClass = $fullNamespace . "Installer";
+
+        if (class_exists($installerClass) && method_exists($installerClass, 'install')) {
+            $installerClass::install();
+        }
+    }
+
     public function loadPlugins(Router $router): void
     {
         $loader = require dirname(__DIR__, 3) . '/vendor/autoload.php';
@@ -49,7 +84,7 @@ class PluginManager
     protected function collectPluginAssets(string $pluginDir, string $currentUri): void
     {
         $manifest = $this->getManifest($pluginDir);
-        
+
         if (empty($manifest['assets'])) {
             return;
         }
@@ -77,7 +112,7 @@ class PluginManager
     {
         foreach ($patterns as $pattern) {
             $regex = '#^' . str_replace('\*', '.*', preg_quote($pattern, '#')) . '$#';
-            
+
             if (preg_match($regex, $currentUri)) {
                 return true;
             }

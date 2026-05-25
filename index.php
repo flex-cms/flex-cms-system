@@ -41,6 +41,7 @@ function db()
 db();
 
 $events = EventManager::getInstance();
+
 $router = new Router($events);
 
 try {
@@ -53,6 +54,9 @@ try {
 }
 
 $pluginManager = new PluginManager($events, $activePlugins);
+
+$router->setPluginManager($pluginManager);
+
 $pluginManager->loadPlugins($router);
 
 $content = "Здравей, това е съдържанието на сайта.";

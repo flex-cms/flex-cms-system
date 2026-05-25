@@ -3,11 +3,13 @@
 namespace Flex\Core\Routing;
 
 use Flex\Core\Events\EventManager;
+use Flex\Core\Plugins\PluginManager;
 
 class Router
 {
     protected array $routes = [];
     protected EventManager $events;
+    protected ?PluginManager $pluginManager = null;
 
     public function __construct(EventManager $events)
     {
@@ -20,6 +22,11 @@ class Router
             'handler' => $handler,
             'middlewares' => $middlewares
         ];
+    }
+    
+    public function setPluginManager(PluginManager $pluginManager): void
+    {
+        $this->pluginManager = $pluginManager;
     }
 
     public function post(string $path, array $handler, array $middlewares = []): void
@@ -71,7 +78,7 @@ class Router
                     $methodName = $handler[1];
 
                     if (class_exists($controllerClass)) {
-                        $controller = new $controllerClass();
+                        $controller = new $controllerClass($this->events, $this->pluginManager);
                         if (method_exists($controller, $methodName)) {
                             call_user_func_array([$controller, $methodName], $matches);
                             return;

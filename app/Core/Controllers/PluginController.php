@@ -2,11 +2,22 @@
 
 namespace Flex\Core\Controllers;
 
+use Flex\Core\Events\EventManager;
+use Flex\Core\Plugins\PluginManager;
 use Flex\Models\Plugin;
 use Flex\Core\Routing\View;
 
 class PluginController extends BaseController
 {
+    protected EventManager $events;
+    protected PluginManager $pluginManager;
+
+    public function __construct(EventManager $events, PluginManager $pluginManager)
+    {
+        $this->events = $events;
+        $this->pluginManager = $pluginManager;
+    }
+
     public function index()
     {
         $pluginsPath = dirname(__DIR__, 3) . '/plugins';
@@ -126,6 +137,12 @@ class PluginController extends BaseController
         $plugin->is_active = !$plugin->is_active;
         $plugin->save();
 
+        $this->pluginManager->initSinglePlugin($plugin->slug);
+
+        $plugin->is_active
+            ? $this->events->trigger("plugin.activated.{$plugin->slug}")
+            : $this->events->trigger("plugin.deactivated.{$plugin->slug}");
+
         $statusText = $plugin->is_active ? 'активиран' : 'деактивиран';
         return $this->jsonResponse(true, "Плъгинът беше {$statusText} успешно!");
     }
@@ -143,6 +160,10 @@ class PluginController extends BaseController
         if (!$plugin) {
             return $this->jsonResponse(false, 'Плъгинът вече е премахнат или не съществува.');
         }
+
+        $this->pluginManager->initSinglePlugin($plugin->slug);
+
+        $this->events->trigger("plugin.deleted.{$plugin->slug}");
 
         $plugin->delete();
 
