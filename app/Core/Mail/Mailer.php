@@ -57,6 +57,14 @@ class Mailer
         return $this;
     }
 
+    public function withVariables(array $variables): self
+    {
+        foreach ($variables as $key => $value) {
+            $this->body = str_replace('{{' . $key . '}}', $value, $this->body);
+        }
+        return $this;
+    }
+
     public function send(): bool
     {
         if (empty($this->to) || empty($this->subject) || empty($this->body)) {

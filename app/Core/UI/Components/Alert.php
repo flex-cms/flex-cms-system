@@ -5,9 +5,8 @@ namespace Flex\Core\UI\Components;
 class Alert
 {
     protected ?string $message;
-    protected string $type = 'error'; // Статус по подразбиране
+    protected string $type = 'error';
 
-    // Карта с Tailwind класове за различните статуси
     protected array $styles = [
         'error' => [
             'bg' => 'bg-red-50 dark:bg-red-900/30',
@@ -41,52 +40,36 @@ class Alert
         return new self($message);
     }
 
-    /**
-     * Превключва алерта в режим "Грешка"
-     */
     public function error(): self
     {
         $this->type = 'error';
         return $this;
     }
 
-    /**
-     * Превключва алерта в режим "Успех"
-     */
     public function success(): self
     {
         $this->type = 'success';
         return $this;
     }
 
-    /**
-     * Превключва алерта в режим "Информация"
-     */
     public function info(): self
     {
         $this->type = 'info';
         return $this;
     }
 
-    /**
-     * Превключва алерта в режим "Предупреждение"
-     */
     public function warning(): self
     {
         $this->type = 'warning';
         return $this;
     }
 
-    /**
-     * Динамично рендериране спрямо избрания статус
-     */
     public function render(): string
     {
         if (empty($this->message)) {
             return '';
         }
 
-        // Взимаме стиловете за текущия тип (ако типът е невалиден, дефолтваме към error)
         $style = $this->styles[$this->type] ?? $this->styles['error'];
 
         return '<div class="' . $style['bg'] . ' border-l-4 ' . $style['border'] . ' p-4 mb-4 rounded-r-lg shadow-sm">
