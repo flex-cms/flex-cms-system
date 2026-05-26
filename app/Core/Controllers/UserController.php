@@ -81,7 +81,7 @@ class UserController extends BaseController
                 'title' => 'Роли и права',
                 'button' => [
                     'label' => 'Нова роля',
-                    'url' => '/admin/roles/create',
+                    'url' => '/admin/users/roles/create',
                     'icon' => 'fa-plus'
                 ]
             ],

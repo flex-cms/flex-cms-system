@@ -13,8 +13,8 @@ foreach ($roles as $role) {
 ?>
 
 <div x-data="tableManager({
-    deleteUrl: '/admin/roles/delete',
-    toggleUrl: '/admin/roles/toggle',
+    deleteUrl: '/admin/users/roles/delete',
+    toggleUrl: '/admin/users/roles/toggle',
     confirmDeleteMessage: 'Сигурни ли сте, че искате да изтриете тази роля?',
     initialStatuses: <?= htmlspecialchars(json_encode($initialStatuses), ENT_QUOTES, 'UTF-8') ?>
 })">
@@ -31,7 +31,7 @@ foreach ($roles as $role) {
         ?>
 
         <?php Table::submit('Приложи'); ?>
-        <?php Table::reset('/admin/roles'); ?>
+        <?php Table::reset('/admin/users/roles'); ?>
     <?php }); ?>
 
     <?php Table::create($roles)

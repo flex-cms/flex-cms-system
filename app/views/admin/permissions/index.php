@@ -2,25 +2,68 @@
 
 use Flex\Core\UI\Table;
 
+$permissions = $permissions ?? [];
+
+$modules = \Flex\Models\Permission::select('module')->distinct()->pluck('module')->toArray();
+$moduleOptions = ['' => 'Всички модули'] + array_combine($modules, $modules);
 ?>
 
-<?php Table::header(slot: function () { ?>
-    <?php Table::search('Търсене на разрешение...'); ?>
-    <?php Table::submit('Приложи'); ?>
-    <?php Table::reset('/admin/permissions'); ?>
-<?php }); ?>
+<div x-data="tableManager({
+    deleteUrl: '/admin/users/permissions/delete',
+    confirmDeleteMessage: 'Сигурни ли сте, че искате да изтриете това разрешение?'
+})">
+    <?php Table::header(slot: function () use ($moduleOptions) { ?>
+        <?php Table::search('Търсене на разрешение...'); ?>
 
-<?php
-Table::create($permissions)
-    ->column('Име на разрешение', fn($permission) => isset($permission->name) 
-        ? "<span class='font-medium text-slate-900 dark:text-slate-100'>{$permission->name}</span>" 
-        : '---')
-    ->column('Slug', fn($permission) => isset($permission->slug) ? "<code class='bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded text-xs'>{$permission->slug}</code>" : '---')
-    ->column('Описание', fn($permission) => $permission->description ? $permission->description : '-')
-    ->column('Действия', fn($permission) => isset($permission->id) ? "
-            <div class='flex gap-3'>
-                <a href='/admin/permissions/edit/{$permission->id}' class='text-indigo-500 hover:text-indigo-700'><i class='fa-solid fa-pen-to-square'></i></a>
-                <button class='text-rose-500 hover:text-rose-700'><i class='fa-solid fa-trash'></i></button>
-            </div>
-        " : "")
-    ->render('mt-5');
+        <?php Table::select('module', $moduleOptions); ?>
+
+        <?php Table::submit('Приложи'); ?>
+        <?php Table::reset('/admin/users/permissions'); ?>
+    <?php }); ?>
+
+    <?php Table::create($permissions)
+        ->column('Име', function ($p) {
+            return '<span class="font-semibold text-slate-800 dark:text-white">' . ($p->name ?? '---') . '</span>';
+        }, 'name')
+
+        ->column('Slug', function ($p) {
+            return Table::statusBadge($p->slug ?? '', 'code');
+        }, 'slug')
+
+        ->column('Модул', function ($p) {
+            return Table::statusBadge($p->module ?? 'General', 'default');
+        }, 'module')
+
+        ->column('Описание', function ($p) {
+            return Table::textCell($p->description ?? null);
+        })
+
+        ->column('Действия', function ($p) {
+            if (!isset($p->id))
+                return '';
+            ob_start(); ?>
+        <div class="flex justify-end">
+            <?= Table::actionsMenu(slot: function ($item) {
+                ob_start(); ?>
+
+                <?= Table::actionLink(
+                    "/admin/users/permissions/edit/{$item->id}",
+                    'Редактирай',
+                    'fa-solid fa-pen-to-square'
+                ) ?>
+
+                <?= Table::actionButton(
+                    click: "deleteItem({$item->id})",
+                    label: 'Изтрий',
+                    icon: 'fa-solid fa-trash-can',
+                    type: 'delete',
+                    extraAttributes: ":disabled=\"loading[{$item->id}]\""
+                ) ?>
+
+                <?php return ob_get_clean();
+            }, item: $p); ?>
+        </div>
+        <?php return ob_get_clean();
+        }, null, 'right')
+        ->render('mt-5'); ?>
+</div>

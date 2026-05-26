@@ -30,7 +30,7 @@ class RoleController extends BaseController
             'roles' => $roles,
             'primaryButton' => [
                 'label' => 'Нова роля',
-                'url' => '/admin/roles/create',
+                'url' => '/admin/users/roles/create',
                 'icon' => 'fa-plus'
             ]
         ], 'admin'));
@@ -59,18 +59,20 @@ class RoleController extends BaseController
             $role->permissions()->sync($_POST['permissions'] ?? []);
         }
 
-        View::redirect('/admin/roles');
+        View::redirect('/admin/users/roles');
     }
 
     public function edit($id)
     {
         $role = Role::findOrFail($id);
         $permissions = Permission::all()->groupBy('module');
+        $assignedPermissions = $role->permissions->pluck('id')->toArray();
 
         $this->render(View::make('admin/roles/form', [
             'title' => 'Редактиране на роля: ' . $role->name,
             'role' => $role,
-            'permissions' => $permissions
+            'permissions' => $permissions,
+            'assignedPermissions' => $assignedPermissions
         ], 'admin'));
     }
 
@@ -81,6 +83,10 @@ class RoleController extends BaseController
 
         if ($data['is_default'] === true) {
             Role::where('id', '!=', $id)->update(['is_default' => false]);
+        }
+
+        if (isset($_POST['permissions']) && is_array($_POST['permissions'])) {
+            $_POST['permissions'] = array_keys($_POST['permissions']);
         }
 
         $role->update($data);

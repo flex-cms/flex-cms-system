@@ -6,14 +6,23 @@ use Flex\Core\UI\Page;
 $permissions = $permissions ?? [];
 $role = $role ?? null;
 
+$allPermissions = [];
+foreach ($permissions as $module => $list) {
+    foreach ($list as $p) {
+        $allPermissions[$p->id] = $p->name;
+    }
+}
+$assigned = $assignedPermissions ?? [];
+
 Page::header(
     title: $role ? 'Редактиране на роля' : 'Създаване на нова роля',
-    backUrl: '/admin/roles',
+    backUrl: '/admin/users/roles',
     subtitle: 'Дефинирайте името и специфичните разрешения за достъп'
 );
 ?>
 
-<form action="<?= $role ? '/admin/users/roles/edit/' . $role->id : '/admin/roles/create' ?>" method="POST" class="max-w-5xl">
+<form action="<?= $role ? '/admin/users/roles/edit/' . $role->id : '/admin/users/roles/create' ?>" method="POST"
+    class="max-w-5xl">
 
     <?php Form::section(function () use ($role) { ?>
         <?php Form::row(function () use ($role) { ?>
@@ -176,6 +185,25 @@ Page::header(
             ]); ?>
         </div>
     <?php }, 'Автоматизация и статус'); ?>
+
+    <?php Form::section(function () use ($permissions, $assigned) { ?>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <?php foreach ($permissions as $module => $list): ?>
+                <?php foreach ($list as $p): ?>
+                    <div class="p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg">
+                        <?php Form::toggle('permissions[' . $p->id . ']', $p->name, [
+                            'value' => is_array($assigned) && in_array($p->id, $assigned),
+                        ]); ?>
+                        <?php if (!empty($p->description)): ?>
+                            <p class="ml-15 mt-1 text-sm text-slate-500 dark:text-slate-400">
+                                <?= $p->description ?>
+                            </p>
+                        <?php endif; ?>
+                    </div>
+                <?php endforeach; ?>
+            <?php endforeach; ?>
+        </div>
+    <?php }, 'Разрешения на ролята'); ?>
 
     <?php Form::submit($role ? 'Запазване' : 'Създаване', 'fa-save'); ?>
 

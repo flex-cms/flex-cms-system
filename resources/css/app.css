@@ -32,3 +32,49 @@
     font-variant-ligatures: common-ligatures;
     line-height: 1.6;
 }
+
+/* TomSelect */
+
+.ts-wrapper.multi .ts-control {
+    @apply w-full px-4 py-2 rounded-md border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white transition-all outline-none min-h-[46px] focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500;
+}
+
+.ts-wrapper.multi .ts-control > div.item {
+    @apply bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded text-sm mt-0.5 mb-0.5 mr-1;
+}
+
+.ts-wrapper.multi .ts-control > div.item .remove {
+    @apply text-indigo-500 hover:text-indigo-700 font-bold ml-2 border-l border-indigo-200 dark:border-indigo-800 pl-2;
+}
+
+.ts-dropdown {
+    @apply bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 shadow-xl rounded-md mt-1;
+}
+
+.ts-dropdown .option {
+    @apply px-4 py-2 text-slate-700 dark:text-slate-300;
+}
+
+.ts-dropdown .option.active {
+    @apply bg-indigo-500 text-white;
+}
+
+.ts-hidden-accessible {
+    @apply hidden;
+}
+
+.ts-dropdown, .ts-control, .ts-control input {
+    @apply dark:text-white;
+}
+
+.ts-wrapper .ts-dropdown {
+    position: absolute !important;
+    z-index: 9999 !important;
+    margin-top: 4px;
+    width: 100%;
+}
+
+.ts-wrapper {
+    position: relative;
+    z-index: 100;
+}

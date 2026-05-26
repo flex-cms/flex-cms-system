@@ -41,7 +41,7 @@ $routes = [
     ['GET', '/admin/users/permissions/create', [PermissionController::class, 'create'], [AuthMiddleware::class, AdminMiddleware::class]],
     ['POST', '/admin/users/permissions/create', [PermissionController::class, 'store'], [AuthMiddleware::class, AdminMiddleware::class]],
     ['GET', '/admin/users/permissions/edit/{id}', [PermissionController::class, 'edit'], [AuthMiddleware::class, AdminMiddleware::class]],
-    ['POST', '/admin/users/permissions/edit/{id}', [PermissionController::class, 'update'], [AuthMiddleware::class, AdminMiddleware::class]],
+    ['POST', '/admin/users/permissions/update/{id}', [PermissionController::class, 'update'], [AuthMiddleware::class, AdminMiddleware::class]],
 
     // Updates
     ['GET', '/admin/update', [UpdateController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]],

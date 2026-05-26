@@ -17,6 +17,7 @@ class CreateRbacTables extends AbstractMigration
             ->addColumn('options', 'json', ['null' => true])
             ->addColumn('created_at', 'timestamp', ['default' => 'CURRENT_TIMESTAMP'])
             ->addColumn('updated_at', 'timestamp', ['null' => true, 'update' => 'CURRENT_TIMESTAMP'])
+            ->addColumn('deleted_at', 'timestamp', ['null' => true])
             ->addIndex(['slug'], ['unique' => true])
             ->addIndex(['priority'])
             ->create();
@@ -25,7 +26,10 @@ class CreateRbacTables extends AbstractMigration
         $permissions->addColumn('name', 'string', ['limit' => 50])
             ->addColumn('slug', 'string', ['limit' => 50])
             ->addColumn('module', 'string', ['limit' => 50])
+            ->addColumn('description', 'text', ['null' => true])
             ->addColumn('created_at', 'timestamp', ['default' => 'CURRENT_TIMESTAMP'])
+            ->addColumn('updated_at', 'timestamp', ['null' => true, 'update' => 'CURRENT_TIMESTAMP'])
+            ->addColumn('deleted_at', 'timestamp', ['null' => true])
             ->addIndex(['slug'], ['unique' => true])
             ->create();
 

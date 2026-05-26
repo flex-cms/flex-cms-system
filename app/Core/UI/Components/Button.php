@@ -71,7 +71,7 @@ class Button
 
     public function render(): string
     {
-        $classes = $this->customClasses ?: "inline-flex items-center px-4 py-2 bg-white hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-medium rounded-md border border-slate-200 dark:border-slate-700 transition-all outline-none focus:ring-2 focus:ring-slate-400";
+        $classes = $this->customClasses ?: "group relative w-full flex justify-center py-3 px-4 border border-transparent font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800 transition-all";
 
         if (!empty($this->watchConfig)) {
             $defaultIcon = $this->icon;

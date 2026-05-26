@@ -4,6 +4,7 @@ import 'ace-builds/src-noconflict/ace.js';
 import 'ace-builds/src-noconflict/mode-html.js';
 import 'ace-builds/src-noconflict/theme-monokai.js';
 import 'ace-builds/src-noconflict/ext-beautify.js';
+import 'tom-select/dist/css/tom-select.bootstrap5.css';
 
 import('ace-builds').then((ace) => {
     window.ace = ace;
@@ -21,6 +22,7 @@ import deleteManager from './admin/components/deleteManager.js';
 import tableManager from './admin/components/table-manager.js';
 import pluginManager from './admin/components/plugin-manager';
 import codeEditor from "./admin/components/code-editor.js";
+import selectComponent from './admin/components/select.js';
 
 window.Alpine = Alpine;
 Alpine.plugin(collapse);
@@ -33,5 +35,6 @@ Alpine.data('deleteManager', deleteManager);
 Alpine.data('tableManager', tableManager);
 Alpine.data('pluginManager', pluginManager);
 Alpine.data('codeEditor', codeEditor);
+Alpine.data('tomSelect', selectComponent);
 
 Alpine.start();

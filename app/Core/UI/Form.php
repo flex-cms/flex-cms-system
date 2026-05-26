@@ -172,7 +172,7 @@ class Form
         ?>
 
         <div x-data="uiSection('<?= $sectionId ?>', <?= $stateJs ?>)"
-            class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md overflow-hidden shadow-sm mb-5">
+            class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md shadow-sm mb-5">
 
             <?php if ($title): ?>
                 <div @click="toggle()"
@@ -233,5 +233,20 @@ class Form
         </div>
         <?php
         echo ob_get_clean();
+    }
+
+    public static function multiselect(string $name, string $label, array $options = [], array $selected = []): void
+    {
+        ?>
+        <div class="mb-4" x-data="tomSelect">
+            <select name="<?= $name ?>[]" multiple class="w-full">
+                <?php foreach ($options as $val => $text): ?>
+                    <option value="<?= $val ?>" <?= in_array($val, $selected) ? 'selected' : '' ?>>
+                        <?= $text ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        <?php
     }
 }

@@ -17,6 +17,7 @@ final class CreateUsersTable extends AbstractMigration
             ->addColumn('is_active', 'boolean', ['default' => true, 'null' => false])
             ->addColumn('options', 'json', ['null' => true])
             ->addColumn('last_login', 'timestamp', ['null' => true])
+            ->addColumn('deleted_at', 'timestamp', ['null' => true])
             ->addTimestamps()
             ->addIndex(['username'], ['unique' => true, 'name' => 'idx_users_username'])
             ->addIndex(['email'], ['unique' => true, 'name' => 'idx_users_email'])

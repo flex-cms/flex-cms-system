@@ -18,7 +18,8 @@
         "ace-builds": "^1.44.0",
         "alpinejs": "^3.14.0",
         "axios": "^1.16.1",
-        "tailwindcss": "^4.0.0"
+        "tailwindcss": "^4.0.0",
+        "tom-select": "^2.6.1"
     },
     "devDependencies": {
         "@tailwindcss/vite": "^4.3.0",
