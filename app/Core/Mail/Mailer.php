@@ -92,7 +92,7 @@ class Mailer
 
             return $mail->send();
         } catch (\Exception $e) {
-            return false;
+            throw new Exception($e->getMessage());
         }
     }
 }

@@ -29,6 +29,13 @@ class PasswordReset extends Model
             return true;
         }
 
-        return strtotime($this->expires_at) < time();
+        $nowUtc = gmdate('Y-m-d H:i:s');
+
+        return strtotime($this->expires_at) < strtotime($nowUtc);
+    }
+
+    public static function deleteExistingForEmail(string $email): void
+    {
+        self::where('email', $email)->delete();
     }
 }

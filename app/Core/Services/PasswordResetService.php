@@ -33,7 +33,7 @@ class PasswordResetService
         }
 
         $token = bin2hex(random_bytes(32));
-        $resetLink = "http://" . ($_SERVER['HTTP_HOST'] ?? 'localhost') . "/password/reset-form?token=" . $token;
+        $resetLink = "http://" . ($_SERVER['HTTP_HOST'] ?? 'localhost') . "/password/forgot-form?token=" . $token;
 
         PasswordReset::where('email', $email)->delete();
 
