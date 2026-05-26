@@ -24,8 +24,13 @@ $routes = [
     ['POST', '/admin/theme-toggle', [AdminController::class, 'toggleTheme'], [AuthMiddleware::class, AdminMiddleware::class]],
     ['POST', '/admin/ui/save-state', [AdminController::class, 'saveUiState'], [AuthMiddleware::class, AdminMiddleware::class]],
 
-    // Users (RBAC)
+    // Users
     ['GET', '/admin/users/index', [UserController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]],
+    ['GET', '/admin/users/create', [UserController::class, 'create'], [AuthMiddleware::class, AdminMiddleware::class]],
+    ['POST', '/admin/users/store', [UserController::class, 'store'], [AuthMiddleware::class, AdminMiddleware::class]],
+    ['GET', '/admin/users/edit/{id}', [UserController::class, 'edit'], [AuthMiddleware::class, AdminMiddleware::class]],
+    ['POST', '/admin/users/update/{id}', [UserController::class, 'update'], [AuthMiddleware::class, AdminMiddleware::class]],
+    ['POST', '/admin/users/delete/{id}', [UserController::class, 'delete'], [AuthMiddleware::class, AdminMiddleware::class]],
     ['POST', '/admin/users/toggle', [UserController::class, 'toggle'], [AuthMiddleware::class, AdminMiddleware::class]],
 
     // Roles

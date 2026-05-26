@@ -69,6 +69,83 @@ class UserController extends BaseController
         ], 'admin'));
     }
 
+    public function create()
+    {
+        $allRoles = Role::orderBy('name', 'asc')->get();
+
+        $this->render(View::make('admin/users/create', [
+            'title' => 'Създаване на нов потребител',
+            'user' => null,
+            'allRoles' => $allRoles,
+            'assignedRoleIds' => [],
+            'backUrl' => '/admin/users/index'
+        ], 'admin'));
+    }
+
+    public function store()
+    {
+        $data = $this->getUserDataFromRequest();
+        $user = User::create($data);
+
+        if (isset($_POST['roles'])) {
+            $user->roles()->sync($_POST['roles']);
+        }
+
+        $rolesInput = $_POST['roles'] ?? [];
+        $roleIds = array_keys($rolesInput);
+
+        $user->roles()->sync($roleIds);
+
+        View::redirect('/admin/users/edit/' . $user->id);
+    }
+
+    public function edit($id)
+    {
+        $user = User::findOrFail($id);
+
+        $allRoles = Role::orderBy('name', 'asc')->get();
+
+        $assignedRoleIds = $user->roles()->pluck('roles.id')->toArray();
+
+        $this->render(View::make('admin/users/form', [
+            'title' => 'Редактиране на потребител',
+            'user' => $user,
+            'allRoles' => $allRoles,
+            'assignedRoleIds' => $assignedRoleIds,
+            'backUrl' => '/admin/users/index'
+        ], 'admin'));
+    }
+
+    public function update($id)
+    {
+        $user = User::findOrFail($id);
+        $data = $this->getUserDataFromRequest();
+
+        if (empty($data['password'])) {
+            unset($data['password']);
+        } else {
+            $data['password'] = password_hash($data['password'], PASSWORD_DEFAULT);
+        }
+
+        $user->update($data);
+
+        $rolesInput = $_POST['roles'] ?? [];
+        $roleIds = array_keys($rolesInput);
+
+        $user->roles()->sync($roleIds);
+
+        View::redirect('/admin/users/edit/' . $id);
+    }
+
+    private function getUserDataFromRequest(): array
+    {
+        return [
+            'fullname' => $_POST['fullname'] ?? '',
+            'password' => $_POST['password'] ?? '',
+            'is_active' => isset($_POST['is_active']) ? 1 : 0
+        ];
+    }
+
     public function toggle()
     {
         $this->handleToggleStatus(User::class, 'is_active');

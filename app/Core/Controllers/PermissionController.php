@@ -4,6 +4,7 @@ namespace Flex\Core\Controllers;
 
 use Flex\Core\Routing\View;
 use Flex\Models\Permission;
+use Flex\Models\Role;
 
 class PermissionController extends BaseController
 {
@@ -38,33 +39,46 @@ class PermissionController extends BaseController
 
     public function create()
     {
+        $allRoles = Role::orderBy('name', 'asc')->get();
         $this->render(View::make('admin/permissions/form', [
-            'title' => 'Ново разрешение'
+            'title' => 'Създаване на ново разрешение',
+            'allRoles' => $allRoles,
+            'assignedRoleIds' => []
         ], 'admin'));
     }
 
     public function store()
     {
-        $permission = Permission::create($this->getPermissionDataFromRequest());
-        View::redirect('/admin/users/permissions/edit/' . $permission->id);
+        $data = $this->getPermissionData();
+        $permission = Permission::create($data);
+
+        $permission->roles()->sync(array_keys($_POST['roles'] ?? []));
+
+        View::redirect('/admin/users/permissions');
     }
 
     public function edit($id)
     {
         $permission = Permission::findOrFail($id);
+        $allRoles = Role::orderBy('name', 'asc')->get();
+        $assignedRoleIds = $permission->roles()->pluck('roles.id')->toArray();
 
         $this->render(View::make('admin/permissions/form', [
-            'title' => 'Редактиране: ' . $permission->name,
-            'permission' => $permission
+            'title'=> 'Редактиране на разрешение',
+            'permission' => $permission,
+            'allRoles' => $allRoles,
+            'assignedRoleIds' => $assignedRoleIds
         ], 'admin'));
     }
 
     public function update($id)
     {
         $permission = Permission::findOrFail($id);
-        $permission->update($this->getPermissionDataFromRequest());
+        $permission->update($this->getPermissionData());
 
-        View::redirect('/admin/users/permissions/edit/' . $id);
+        $permission->roles()->sync(array_keys($_POST['roles'] ?? []));
+
+        View::redirect('/admin/users/permissions');
     }
 
     public function delete($id)
@@ -73,7 +87,7 @@ class PermissionController extends BaseController
         View::redirect('/admin/users/permissions');
     }
 
-    private function getPermissionDataFromRequest(): array
+    private function getPermissionData(): array
     {
         return [
             'name' => $_POST['name'] ?? '',

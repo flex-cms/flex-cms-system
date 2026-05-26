@@ -12,17 +12,18 @@ class Form
         $type = $attrs['type'] ?? 'text';
         $placeholder = $attrs['placeholder'] ?? '';
         $required = isset($attrs['required']) ? 'required' : '';
+        $disabled = isset($attrs['disabled']) ? 'disabled' : '';
         $extra = $attrs['extra'] ?? '';
 
         $customClass = $attrs['class'] ?? '';
 
         ?>
-        <div class="mb-4">
+        <div>
             <label for="<?= $name ?>" class="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                 <?= $label ?>         <?= $required ? '<span class="text-rose-500">*</span>' : '' ?>
             </label>
             <input type="<?= $type ?>" name="<?= $name ?>" id="<?= $name ?>" value="<?= htmlspecialchars($value) ?>"
-                placeholder="<?= $placeholder ?>" <?= $required ?>         <?= $extra ?>
+                placeholder="<?= $placeholder ?>" <?= $required ?>         <?= $disabled ?>         <?= $extra ?>
                 class="w-full px-4 py-2.5 rounded-md border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 dark:focus:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-primary transition-all outline-none <?= $customClass ?>">
         </div>
         <?php
@@ -34,7 +35,7 @@ class Form
         $rows = $attrs['rows'] ?? 3;
 
         ?>
-        <div class="mb-4">
+        <div>
             <label for="<?= $name ?>" class="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                 <?= $label ?>
             </label>
@@ -51,7 +52,7 @@ class Form
         $extra = $attrs['extra'] ?? '';
 
         ?>
-        <div class="mb-4">
+        <div>
             <label for="<?= $name ?>" class="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                 <?= $label ?>         <?= $required ? '<span class="text-rose-500">*</span>' : '' ?>
             </label>
@@ -182,7 +183,7 @@ class Form
                         <?= $title ?>
                     </h3>
 
-                    <div class="text-slate-400 group-hover:text-indigo-500 transition-transform duration-300"
+                    <div class="text-slate-400 group-hover:text-primary transition-transform duration-300"
                         :class="isOpen ? 'rotate-180' : ''">
                         <i class="fa-solid fa-chevron-down"></i>
                     </div>
@@ -225,7 +226,8 @@ class Form
             <div class="mb-4">
                 <textarea x-ref="valueStore" class="hidden"><?= htmlspecialchars($value) ?></textarea>
 
-                <div x-ref="editorContainer" class="w-full h-96 border border-slate-300 dark:border-slate-700 rounded-lg shadow-sm">
+                <div x-ref="editorContainer"
+                    class="w-full h-96 border border-slate-300 dark:border-slate-700 rounded-lg shadow-sm">
                 </div>
 
                 <textarea name="<?= $name ?>" x-ref="textarea" class="hidden"><?= htmlspecialchars($value) ?></textarea>
@@ -239,6 +241,8 @@ class Form
     {
         ?>
         <div class="mb-4" x-data="tomSelect">
+            <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5"><?= $label ?></label>
+
             <select name="<?= $name ?>[]" multiple class="w-full">
                 <?php foreach ($options as $val => $text): ?>
                     <option value="<?= $val ?>" <?= in_array($val, $selected) ? 'selected' : '' ?>>
