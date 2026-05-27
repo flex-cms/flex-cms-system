@@ -1,5 +1,6 @@
 <?php
 
+use Flex\Core\Helpers\DateHelper;
 use Flex\Core\UI\Form;
 use Flex\Models\Setting;
 
@@ -52,6 +53,13 @@ $dateFormats = $dateFormats ?? [];
         );
     }, 2); ?>
 
+    <div class="mt-2 p-3 bg-slate-50 dark:bg-slate-900/30 rounded border border-slate-200 dark:border-slate-700 text-sm">
+        <span class="text-slate-500 dark:text-slate-400">Текущо системно време: </span>
+        <span class="font-mono font-medium text-slate-800 dark:text-slate-200">
+            <?php echo DateHelper::format(); ?>
+        </span>
+    </div>
+
     <div class="mt-4">
         <?php Form::toggle('settings[debug_mode]', 'Debug режим', [
             'value' => (bool) Setting::get('debug_mode', false),
@@ -67,7 +75,10 @@ $dateFormats = $dateFormats ?? [];
             <?php Form::toggle('settings[enable_multilang]', 'Активиране на многоезичност', [
                 'value' => (bool) Setting::get('enable_multilang', false),
                 'description' => 'Ако е активирано, сайтът ще поддържа множество езици едновременно.',
-                'attr' => ['@change' => 'multipleLanguages = $event.target.checked']
+                'attr' => [
+                    'name' => 'settings[enable_multilang]',
+                    '@change' => 'multipleLanguages = $event.target.checked'
+                ]
             ]); ?>
         </div>
 

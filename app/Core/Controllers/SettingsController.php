@@ -64,10 +64,20 @@ class SettingsController extends BaseController
 
     public function update(string $group)
     {
-        $data = $_POST['settings'] ?? [];
+        $postedSettings = $_POST['settings'] ?? [];
 
-        foreach ($data as $key => $value) {
-            $this->saveSetting($key, $value, $group);
+        $existingSettings = Setting::where('group', $group)->whereIn('value', ['1', '0', true, false])->get();
+
+        foreach ($existingSettings as $setting) {
+            $key = $setting->key;
+
+            if (!isset($postedSettings[$key])) {
+                $this->saveSetting($key, false, $group);
+            }
+        }
+
+        foreach ($postedSettings as $key => $value) {
+            $this->saveSetting($key, ($value === '1' ? true : $value), $group);
         }
 
         $_SESSION['flash_success'] = 'Настройките бяха записани успешно.';
@@ -89,10 +99,13 @@ class SettingsController extends BaseController
     {
         $setting = Setting::firstOrNew(['key' => $key]);
 
+        $type = is_bool($value) ? 'boolean' : 'string';
+
         $setting->fill([
             'key' => $key,
             'value' => $value,
-            'group' => $group
+            'group' => $group,
+            'type' => $type
         ]);
 
         $setting->save();

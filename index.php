@@ -1,8 +1,6 @@
 <?php
 
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
+use Flex\Models\Setting;
 
 session_start();
 
@@ -40,6 +38,17 @@ function db()
 }
 db();
 
+$debugMode = Setting::get('debug_mode', false); 
+
+if ($debugMode) {
+    error_reporting(E_ALL);
+    ini_set('display_errors', '1');
+    ini_set('display_startup_errors', '1');
+} else {
+    error_reporting(0);
+    ini_set('display_errors', '0');
+}
+
 $events = EventManager::getInstance();
 
 $router = new Router($events);
@@ -61,6 +70,9 @@ $pluginManager->loadPlugins($router);
 
 $content = "Здравей, това е съдържанието на сайта.";
 $content = $events->applyFilters('the_content', $content);
+
+$timezone = Setting::get('timezone', 'Europe/Sofia');
+date_default_timezone_set($timezone);
 
 require_once __DIR__ . '/app/routes.php';
 

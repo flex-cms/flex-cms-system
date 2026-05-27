@@ -2,6 +2,7 @@
 
 namespace Flex\Core\Mail;
 
+use Flex\Models\Setting;
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 use Flex\Core\Routing\View;
@@ -17,8 +18,8 @@ class Mailer
 
     public function __construct()
     {
-        $this->fromEmail = $_ENV['MAIL_FROM_ADDRESS'] ?? $this->fromEmail;
-        $this->fromName = $_ENV['MAIL_FROM_NAME'] ?? $this->fromName;
+        $this->fromEmail = Setting::get('from_email', $_ENV['MAIL_FROM_ADDRESS'] ?? 'info@kriskata.com');
+        $this->fromName = Setting::get('site_name', $_ENV['MAIL_FROM_NAME'] ?? 'Flex CMS');
     }
 
     public static function to(string $email): self
@@ -75,12 +76,16 @@ class Mailer
 
         try {
             $mail->isSMTP();
-            $mail->Host = $_ENV['MAIL_HOST'] ?? 'smtp.example.com';
+
+            $mail->Host = Setting::get('smtp_host', $_ENV['MAIL_HOST'] ?? '');
             $mail->SMTPAuth = true;
-            $mail->Username = $_ENV['MAIL_USERNAME'] ?? 'your-email@example.com';
-            $mail->Password = $_ENV['MAIL_PASSWORD'] ?? 'your-password';
-            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-            $mail->Port = $_ENV['MAIL_PORT'] ?? 587;
+            $mail->Username = Setting::get('smtp_user', $_ENV['MAIL_USERNAME'] ?? '');
+            $mail->Password = Setting::get('smtp_pass', $_ENV['MAIL_PASSWORD'] ?? '');
+
+            $encryption = Setting::get('smtp_encryption', 'tls');
+            $mail->SMTPSecure = ($encryption === 'ssl') ? PHPMailer::ENCRYPTION_SMTPS : PHPMailer::ENCRYPTION_STARTTLS;
+
+            $mail->Port = (int) Setting::get('smtp_port', $_ENV['MAIL_PORT'] ?? 587);
             $mail->CharSet = 'UTF-8';
 
             $mail->setFrom($this->fromEmail, $this->fromName);
@@ -92,7 +97,7 @@ class Mailer
 
             return $mail->send();
         } catch (\Exception $e) {
-            throw new Exception($e->getMessage());
+            throw new \Exception("Mailer Error: " . $mail->ErrorInfo);
         }
     }
 }
