@@ -11,31 +11,14 @@ $currentConfig = require dirname(__DIR__, 2) . '/Core/version.php';
 $currentVersion = $currentConfig['version'];
 ?>
 
-<html lang="bg" 
-      x-data="sidebar('admin-sidebar', <?= $sidebarOpen ? 'true' : 'false' ?>, <?= $darkMode ? 'true' : 'false' ?>)" 
-      :class="{ 'dark': darkMode }">
+<html lang="bg"
+    x-data="sidebar('admin-sidebar', <?= $sidebarOpen ? 'true' : 'false' ?>, <?= $darkMode ? 'true' : 'false' ?>)"
+    :class="{ 'dark': darkMode }">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title><?= $title ?></title>
-
-    <style>
-        [x-cloak] {
-            display: none !important;
-        }
-
-        html.dark {
-            background-color: #0f172a;
-            color: #f1f5f9;
-        }
-
-        body {
-            margin: 0;
-            transition: background-color 0.3s ease;
-        }
-    </style>
 
     <script>
         (function () {
@@ -48,7 +31,28 @@ $currentVersion = $currentConfig['version'];
         })();
     </script>
 
+    <style>
+        body {
+            opacity: 0;
+        }
+
+        body.alpine-ready {
+            opacity: 1;
+            transition: opacity 0s ease-out;
+        }
+
+        [x-cloak] {
+            display: none !important;
+        }
+    </style>
+
     <?= Vite::use('admin') ?>
+
+    <script>
+        document.addEventListener('alpine:init', () => {
+            document.body.classList.add('alpine-ready');
+        });
+    </script>
 </head>
 
 <body class="bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100 min-h-screen font-sans">
@@ -57,14 +61,16 @@ $currentVersion = $currentConfig['version'];
 
         <?php View::component('sidebar', ['is_open' => $sidebarOpen]); ?>
 
-        <div class="flex-1 flex flex-col min-w-0 bg-slate-50 dark:bg-slate-900 <?= $sidebarOpen ? 'lg:pl-72' : 'lg:pl-0' ?>"
+        <div x-cloak
+            class="flex-1 flex flex-col min-w-0 bg-slate-50 dark:bg-slate-900 <?= $sidebarOpen ? 'lg:pl-72' : 'lg:pl-0' ?>"
             x-data="{ mounted: false }" x-init="$nextTick(() => mounted = true)" :class="{ 
                 'lg:pl-72': isOpen, 
                 'lg:pl-0': !isOpen,
                 'duration-300': mounted 
             }">
 
-            <header class="h-16 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between px-4 sticky top-0 z-30">
+            <header
+                class="h-16 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between px-4 sticky top-0 z-30">
                 <div class="flex items-center gap-4">
                     <button @click="toggle()" class="p-2 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700">
                         <i class="fa-solid fa-bars text-xl"></i>
@@ -125,7 +131,8 @@ $currentVersion = $currentConfig['version'];
                 </div>
             </main>
 
-            <footer class="py-4 px-6 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 text-sm text-slate-500 flex flex-col sm:flex-row justify-between items-center gap-2">
+            <footer
+                class="py-4 px-6 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 text-sm text-slate-500 flex flex-col sm:flex-row justify-between items-center gap-2">
                 <p>&copy;
                     <?= date('Y'); ?> Flex CMS версия <?= $currentVersion ?>. Всички права запазени.
                 </p>

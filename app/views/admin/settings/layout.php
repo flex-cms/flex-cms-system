@@ -8,7 +8,7 @@ use Flex\Core\UI\Form;
         <?php foreach ($definedGroups as $key => $label): ?>
             <?php $isActive = ($key === $currentGroup); ?>
             <a href="/admin/settings/<?= $key ?>" class="<?= $isActive
-                  ? 'text-white'
+                  ? 'text-primary dark:text-white'
                   : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 dark:text-slate-400 dark:hover:text-slate-200'
                   ?> flex items-center px-6 py-4 font-semibold border-b-2 transition-all duration-200">
 

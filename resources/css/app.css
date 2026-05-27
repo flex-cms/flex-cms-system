@@ -24,10 +24,6 @@
     }
 }
 
-[x-cloak] {
-    display: none !important;
-}
-
 .ace_editor {
     font-variant-ligatures: common-ligatures;
     line-height: 1.6;

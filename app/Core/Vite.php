@@ -26,7 +26,7 @@ class Vite
             return sprintf(
                 '<script type="module" src="%1$s/@vite/client"></script>' . PHP_EOL .
                 '<link rel="stylesheet" href="%1$s/resources/css/app.css">' . PHP_EOL .
-                '<script type="module" src="%1$s/resources/js/admin.js"></script>',
+                '<script type="module" src="%1$s/resources/js/admin.js" defer></script>',
                 self::$devServer,
             );
         }

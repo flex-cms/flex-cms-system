@@ -34,7 +34,7 @@ $sidebarLinks = Sidebar::getLinks($currentSidebarName);
 
         <hr class="border-t border-gray-800" />
 
-        <nav class="space-y-2 flex-1 text-lg">
+        <nav x-cloak x-data class="space-y-2 flex-1 text-lg">
             <?php $current_path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH); ?>
 
             <div class="p-2 space-y-1">
@@ -53,36 +53,42 @@ $sidebarLinks = Sidebar::getLinks($currentSidebarName);
                     } ?>
 
                     <?php if ($has_children): ?>
-                        <div x-data="{ subOpen: <?= $is_group_active ? 'true' : 'false' ?> }" class="space-y-1">
+                        <div x-cloak x-data="{ subOpen: <?= $is_group_active ? 'true' : 'false' ?> }" class="space-y-1">
+
                             <button @click="subOpen = !subOpen"
                                 class="w-full flex items-center justify-between px-3 py-2 rounded-md font-semibold text-left transition-colors"
                                 :class="subOpen ? 'text-white bg-neutral-900/50' : 'text-slate-400 hover:bg-primary hover:text-white'">
                                 <div class="flex items-center gap-3">
                                     <i class="fa-solid <?= $link['icon'] ?> text-xl w-6"
                                         :class="subOpen ? 'text-primary' : ''"></i>
-                                    <span><?= $link['label'] ?></span>
+                                    <span>
+                                        <?= $link['label'] ?>
+                                    </span>
                                 </div>
                                 <i class="fa-solid fa-chevron-down text-sm transition-transform duration-200"
                                     :class="{ 'rotate-180': subOpen }"></i>
                             </button>
 
-                            <div x-show="subOpen" x-cloak class="pl-9 space-y-1" x-collapse>
-                                <?php foreach ($link['children'] as $child): ?>
-                                    <?php $is_child_active = str_starts_with($current_path, $child['url']); ?>
-                                    <a href="<?= $child['url'] ?>" @click.prevent="navigateTo('<?= $child['url'] ?>')"
-                                        class="block px-3 py-1.5 rounded-md text-base transition-colors <?= $is_child_active ? 'text-secondary font-bold bg-neutral-900/30' : 'text-slate-400 hover:text-white' ?>">
-                                        <?= $child['label'] ?>
-                                    </a>
-                                <?php endforeach; ?>
+                            <div x-show="subOpen" x-collapse style="<?= $is_group_active ? '' : 'display: none;' ?>" class="sidebar-child-menu">
+                                <div class="pl-9 space-y-1">
+                                    <?php foreach ($link['children'] as $child): ?>
+                                        <?php $is_child_active = str_starts_with($current_path, $child['url']); ?>
+                                        <a href="<?= $child['url'] ?>" @click.prevent="navigateTo('<?= $child['url'] ?>')"
+                                            class="block px-3 py-1.5 rounded-md text-base transition-colors <?= $is_child_active ? 'text-secondary font-bold bg-neutral-900/30' : 'text-slate-400 hover:text-white' ?>">
+                                            <?= $child['label'] ?>
+                                        </a>
+                                    <?php endforeach; ?>
+                                </div>
                             </div>
                         </div>
                     <?php else: ?>
-                        <a href="<?= $link['url'] ?>" @click.prevent="navigateTo('<?= $link['url'] ?>')"
-                            class="flex items-center gap-3 px-3 py-2 rounded-md font-semibold transition-colors"
-                            :class="isOpen ? (<?= $is_group_active ? 'true' : 'false' ?> ? 'bg-primary text-white' : 'text-slate-400 hover:bg-primary hover:text-white') : ''">
-
+                        <a href="<?= $link['url'] ?>"
+                            class="flex items-center gap-3 px-3 py-2 rounded-md font-semibold transition-colors 
+                            <?= $is_group_active ? 'bg-primary text-white' : 'text-slate-400 hover:bg-primary hover:text-white' ?>">
                             <i class="fa-solid <?= $link['icon'] ?> text-xl w-6"></i>
-                            <span><?= $link['label'] ?></span>
+                            <span>
+                                <?= $link['label'] ?>
+                            </span>
                         </a>
                     <?php endif; ?>
                 <?php endforeach; ?>

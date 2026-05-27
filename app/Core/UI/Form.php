@@ -169,10 +169,11 @@ class Form
             ?? $user->options['ui_states'][$sectionId]
             ?? true;
 
-        $stateJs = $isOpen ? 'true' : 'false';
+        // ВНИМАНИЕ: Не слагаме display: none тук. 
+        // Оставяме Alpine да управлява видимостта чрез x-show.
         ?>
 
-        <div x-data="uiSection('<?= $sectionId ?>', <?= $stateJs ?>)"
+        <div x-cloak x-data="uiSection('<?= $sectionId ?>', <?= $isOpen ? 'true' : 'false' ?>)"
             class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md shadow-sm mb-5">
 
             <?php if ($title): ?>
@@ -265,7 +266,7 @@ class Form
             placement: 'bottom' 
         }">
             <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5"><?= $label ?></label>
-            
+
             <select name="<?= $name ?>" class="hidden">
                 <?php foreach ($options as $val => $text): ?>
                     <option value="<?= $val ?>" :selected="selected === '<?= $val ?>'"><?= $text ?></option>
@@ -285,10 +286,7 @@ class Form
                     <i class="fas fa-chevron-down text-xs text-slate-400"></i>
                 </button>
 
-                <ul x-show="open" 
-                    x-cloak
-                    x-transition
-                    :class="placement === 'top' ? 'bottom-full mb-1' : 'top-full mt-1'"
+                <ul x-show="open" x-cloak x-transition :class="placement === 'top' ? 'bottom-full mb-1' : 'top-full mt-1'"
                     class="absolute z-50 w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md shadow-lg max-h-60 overflow-y-auto">
                     <?php foreach ($options as $val => $text): ?>
                         <li @click="selected = '<?= $val ?>'; label = '<?= $text ?>'; open = false"
