@@ -50,6 +50,16 @@ Sidebar::register('admin_main', [
         ]
     ],
     ['url' => '/admin/plugins', 'icon' => 'fa-plug', 'label' => 'Плъгини'],
+    [
+        'url' => '/admin/settings',
+        'icon' => 'fa-cogs',
+        'label' => 'Настройки',
+        'children' => [
+            ['url' => '/admin/settings/general', 'label' => 'Общи'],
+            ['url' => '/admin/settings/mail', 'label' => 'Поща'],
+            ['url' => '/admin/settings/system', 'label' => 'Системни'],
+        ]
+    ],
     ['url' => '/admin/update', 'icon' => 'fa-arrow-rotate-right', 'label' => 'Обновяване'],
 ]);
 

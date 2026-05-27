@@ -12,6 +12,7 @@ use Flex\Core\Controllers\PluginController;
 use Flex\Core\Middlewares\AuthMiddleware;
 use Flex\Core\Controllers\FileStructureController;
 use Flex\Core\Middlewares\AdminMiddleware;
+use Flex\Core\Controllers\SettingsController;
 
 $routes = [
     ['GET', '/admin', [AuthController::class, 'showLogin']],
@@ -48,6 +49,10 @@ $routes = [
     ['GET', '/admin/users/permissions/edit/{id}', [PermissionController::class, 'edit'], [AuthMiddleware::class, AdminMiddleware::class]],
     ['POST', '/admin/users/permissions/update/{id}', [PermissionController::class, 'update'], [AuthMiddleware::class, AdminMiddleware::class]],
 
+    // Settings
+    ['GET', '/admin/settings/{group}', [SettingsController::class, 'show'], [AuthMiddleware::class, AdminMiddleware::class]],
+    ['POST', '/admin/settings/{group}/update', [SettingsController::class, 'update'], [AuthMiddleware::class, AdminMiddleware::class]],
+    
     // Updates
     ['GET', '/admin/update', [UpdateController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]],
     ['POST', '/admin/update', [UpdateController::class, 'update'], [AuthMiddleware::class, AdminMiddleware::class]],

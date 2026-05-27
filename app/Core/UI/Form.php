@@ -155,7 +155,7 @@ class Form
 
     public static function row(callable $slot, int $cols = 2): void
     {
-        echo "<div class='grid grid-cols-1 md:grid-cols-{$cols} gap-6'>";
+        echo "<div class='space-y-5 grid grid-cols-1 md:grid-cols-{$cols} gap-6'>";
         $slot();
         echo "</div>";
     }
@@ -250,6 +250,55 @@ class Form
                     </option>
                 <?php endforeach; ?>
             </select>
+        </div>
+        <?php
+    }
+
+    public static function customSelect(string $name, string $label, array $options = [], string $selected = ''): void
+    {
+        $selectedText = $options[$selected] ?? 'Изберете...';
+        ?>
+        <div x-data="{ 
+            open: false, 
+            selected: '<?= $selected ?>', 
+            label: '<?= $selectedText ?>',
+            placement: 'bottom' 
+        }">
+            <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5"><?= $label ?></label>
+            
+            <select name="<?= $name ?>" class="hidden">
+                <?php foreach ($options as $val => $text): ?>
+                    <option value="<?= $val ?>" :selected="selected === '<?= $val ?>'"><?= $text ?></option>
+                <?php endforeach; ?>
+            </select>
+
+            <div class="relative" x-init="$watch('open', value => {
+                if (value) {
+                    const rect = $el.getBoundingClientRect();
+                    const windowHeight = window.innerHeight;
+                    placement = (windowHeight - rect.bottom < 300) ? 'top' : 'bottom';
+                }
+            })">
+                <button type="button" @click="open = !open" @click.away="open = false"
+                    class="w-full flex justify-between items-center px-4 py-2.5 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-indigo-500">
+                    <span x-text="label"></span>
+                    <i class="fas fa-chevron-down text-xs text-slate-400"></i>
+                </button>
+
+                <ul x-show="open" 
+                    x-cloak
+                    x-transition
+                    :class="placement === 'top' ? 'bottom-full mb-1' : 'top-full mt-1'"
+                    class="absolute z-50 w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                    <?php foreach ($options as $val => $text): ?>
+                        <li @click="selected = '<?= $val ?>'; label = '<?= $text ?>'; open = false"
+                            class="px-4 py-2 cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-900/50"
+                            :class="selected === '<?= $val ?>' ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-200' : ''">
+                            <?= $text ?>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
         </div>
         <?php
     }
