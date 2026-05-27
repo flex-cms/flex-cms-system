@@ -1,0 +1,22 @@
+<?php
+
+declare(strict_types=1);
+
+use Phinx\Migration\AbstractMigration;
+
+class CreatePagesTable extends AbstractMigration
+{
+    public function change(): void
+    {
+        $pages = $this->table('pages');
+        $pages->addColumn('name', 'string', ['limit' => 255])
+            ->addColumn('slug', 'string', ['limit' => 255])
+            ->addColumn('options', 'json', ['null' => true])
+            ->addColumn('created_at', 'timestamp', ['default' => 'CURRENT_TIMESTAMP'])
+            ->addColumn('updated_at', 'timestamp', ['null' => true, 'update' => 'CURRENT_TIMESTAMP'])
+            ->addColumn('deleted_at', 'timestamp', ['null' => true])
+
+            ->addIndex(['slug'], ['unique' => true])
+            ->create();
+    }
+}

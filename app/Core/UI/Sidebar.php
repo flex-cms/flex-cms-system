@@ -49,6 +49,11 @@ Sidebar::register('admin_main', [
             ['url' => '/admin/users/permissions', 'label' => 'Разрешения'],
         ]
     ],
+    [
+        'url' => '/admin/pages', 
+        'icon' => 'fa-file-lines',
+        'label' => 'Страници'
+    ],
     ['url' => '/admin/plugins', 'icon' => 'fa-plug', 'label' => 'Плъгини'],
     [
         'url' => '/admin/settings',

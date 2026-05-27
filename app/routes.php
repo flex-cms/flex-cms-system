@@ -13,6 +13,7 @@ use Flex\Core\Middlewares\AuthMiddleware;
 use Flex\Core\Controllers\FileStructureController;
 use Flex\Core\Middlewares\AdminMiddleware;
 use Flex\Core\Controllers\SettingsController;
+use Flex\Core\Controllers\PageController;
 
 $routes = [
     ['GET', '/admin', [AuthController::class, 'showLogin']],
@@ -62,6 +63,14 @@ $routes = [
     ['POST', '/admin/plugins/toggle', [PluginController::class, 'toggle'], [AuthMiddleware::class, AdminMiddleware::class]],
     ['POST', '/admin/plugins/delete', [PluginController::class, 'delete'], [AuthMiddleware::class, AdminMiddleware::class]],
     ['POST', '/admin/plugins/update', [PluginController::class, 'update'], [AuthMiddleware::class, AdminMiddleware::class]],
+
+    // Pages
+    ['GET', '/admin/pages', [PageController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]],
+    ['GET', '/admin/pages/create', [PageController::class, 'create'], [AuthMiddleware::class, AdminMiddleware::class]],
+    ['POST', '/admin/pages/store', [PageController::class, 'store'], [AuthMiddleware::class, AdminMiddleware::class]],
+    ['GET', '/admin/pages/edit/{id}', [PageController::class, 'edit'], [AuthMiddleware::class, AdminMiddleware::class]],
+    ['POST', '/admin/pages/update/{id}', [PageController::class, 'update'], [AuthMiddleware::class, AdminMiddleware::class]],
+    ['POST', '/admin/pages/toggle', [PageController::class, 'toggle'], [AuthMiddleware::class, AdminMiddleware::class]],
 
     // File Structure
     ['GET', '/admin/file-structure', [FileStructureController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]],

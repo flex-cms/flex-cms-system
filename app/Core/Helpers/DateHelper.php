@@ -7,16 +7,21 @@ use Flex\Models\Setting;
 
 class DateHelper
 {
-    public static function format()
+    public static function format($date = null, bool $includeTime = false)
     {
         $timezone = Setting::get('timezone', 'Europe/Sofia');
-        $format = Setting::get('date_format', 'd.m.Y H:i');
         $lang = Setting::get('site_default_lang', 'bg');
+        
+        $format = Setting::get('date_format', 'd.m.Y');
+        
+        if ($includeTime) {
+            $format .= ' : H:i';
+        }
 
-        $date = Carbon::now($timezone);
+        $carbonDate = $date ? Carbon::parse($date) : Carbon::now();
+        $carbonDate->setTimezone($timezone);
+        $carbonDate->locale($lang);
 
-        $date->locale($lang);
-
-        return $date->translatedFormat($format);
+        return $carbonDate->translatedFormat($format);
     }
 }

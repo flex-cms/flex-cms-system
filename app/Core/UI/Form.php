@@ -6,6 +6,65 @@ use Flex\Core\Auth;
 
 class Form
 {
+    public static function file(string $name, string $label, array $attrs = []): void
+    {
+        $id = 'file_' . $name;
+        $currentImage = $attrs['current_image'] ?? null;
+        $description = $attrs['description'] ?? null;
+        $inputName = $name; 
+
+        ?>
+        <div x-data="{ previewUrl: null }" class="space-y-1.5">
+            <label class="block font-semibold text-slate-700 dark:text-slate-300">
+                <?= $label ?>
+            </label>
+            
+            <div class="flex items-center gap-4 p-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-md">
+                <input type="file" name="<?= $inputName ?>" id="<?= $id ?>" class="hidden" 
+                    @change="previewUrl = URL.createObjectURL($event.target.files[0])">
+
+                <div @click="document.getElementById('<?= $id ?>').click()" 
+                    class="w-40 h-40 shrink-0 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-800 flex items-center justify-center cursor-pointer hover:ring-2 hover:ring-indigo-500 transition-all overflow-hidden relative shadow-sm">
+                    
+                    <img x-show="previewUrl" :src="previewUrl" class="w-full h-full object-cover" x-cloak>
+                    <?php if ($currentImage): ?>
+                        <img x-show="!previewUrl" src="<?= $currentImage ?>" class="w-full h-full object-cover">
+                    <?php endif; ?>
+                    
+                    <div x-show="!previewUrl && !<?= $currentImage ? 'true' : 'false' ?>" class="text-slate-400">
+                        <i class="fa-solid fa-plus text-sm"></i>
+                    </div>
+                </div>
+
+                <div class="flex flex-col">
+                    <?php if ($description): ?>
+                        <span class="text-slate-500 dark:text-slate-400"><?= $description ?></span>
+                    <?php endif; ?>
+                    
+                    <button type="button" @click="document.getElementById('<?= $id ?>').click()" 
+                            class="font-semibold mt-1 self-start">
+                        <?= $currentImage ? 'Промени' : 'Избери' ?>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <?php
+    }
+
+    public static function create(array $options = []): void
+    {
+        $action = $options['action'] ?? '';
+        $method = $options['method'] ?? 'POST';
+        $enctype = ($options['files'] ?? false) ? 'enctype="multipart/form-data"' : '';
+
+        echo "<form action='{$action}' method='{$method}' {$enctype} class='space-y-6'>";
+    }
+
+    public static function close(): void
+    {
+        echo "</form>";
+    }
+
     public static function input(string $name, string $label, array $attrs = []): void
     {
         $value = $attrs['value'] ?? '';
