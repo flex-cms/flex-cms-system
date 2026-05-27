@@ -15,6 +15,7 @@ class CreatePagesTable extends AbstractMigration
             ->addColumn('created_at', 'timestamp', ['default' => 'CURRENT_TIMESTAMP'])
             ->addColumn('updated_at', 'timestamp', ['null' => true, 'update' => 'CURRENT_TIMESTAMP'])
             ->addColumn('deleted_at', 'timestamp', ['null' => true])
+            ->addColumn('is_active', 'boolean', ['default' => true, 'null' => false])
 
             ->addIndex(['slug'], ['unique' => true])
             ->create();

@@ -20,8 +20,8 @@ $action = $isEdit ? "/admin/pages/update/{$page->id}" : "/admin/pages/store";
 <?php }); ?>
 
 <?php Form::section(title: 'Изображения', slot: function () use ($page) { ?>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        
+    <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-5">
+
         <?php Form::file('featured_image', 'Предно изображение', [
             'current_image' => $page->options['featured_image'] ?? null,
             'title' => 'Desktop',
@@ -40,6 +40,19 @@ $action = $isEdit ? "/admin/pages/update/{$page->id}" : "/admin/pages/store";
             'description' => '400x800px'
         ]); ?>
 
+    </div>
+<?php }); ?>
+
+<?php Form::section(title: 'Настройки на страницата', slot: function () use ($page) { ?>
+    <div class="space-y-4">
+        <?php Form::toggle('is_active', 'Активна страница', [
+            'value' => $page->is_active ?? true,
+            'description' => 'Ако е изключено, страницата няма да бъде достъпна за потребителите.'
+        ]); ?>
+
+        <?php Form::date('created_at', 'Дата на публикуване', [
+            'value' => date('Y-m-d H:i', strtotime($page->created_at ?? 'now'))
+        ]); ?>
     </div>
 <?php }); ?>
 

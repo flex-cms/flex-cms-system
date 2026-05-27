@@ -89,6 +89,19 @@ abstract class BaseController
         echo json_encode($data);
         exit;
     }
+
+    protected function jsonResponse(bool $success, string $message = '', array $data = []): void
+    {
+        header('Content-Type: application/json');
+        
+        echo json_encode([
+            'success' => $success,
+            'message' => $message,
+            'data'    => $data
+        ]);
+        
+        exit;
+    }
 }
 
 trait HandlesMedia
@@ -114,5 +127,14 @@ trait HandlesMedia
             }
         }
         return $options;
+    }
+}
+
+trait RequestHelper
+{
+    public function getCheckboxValue(string $key, array|null $data = null): int
+    {
+        $data = $data ?? $_POST;
+        return isset($data[$key]) ? 1 : 0;
     }
 }

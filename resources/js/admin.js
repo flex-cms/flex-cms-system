@@ -10,6 +10,13 @@ import('ace-builds').then((ace) => {
     window.ace = ace;
 });
 
+import flatpickr from "flatpickr";
+import "flatpickr/dist/flatpickr.min.css";
+import { Bulgarian } from "flatpickr/dist/l10n/bg.js";
+
+window.flatpickr = flatpickr;
+window.Bulgarian = Bulgarian;
+
 import "../css/app.css";
 import Alpine from "alpinejs";
 import collapse from '@alpinejs/collapse';
@@ -23,6 +30,7 @@ import tableManager from './admin/components/table-manager.js';
 import pluginManager from './admin/components/plugin-manager';
 import codeEditor from "./admin/components/code-editor.js";
 import selectComponent from './admin/components/select.js';
+import initDatepicker from './admin/components/datepicker';
 
 window.Alpine = Alpine;
 Alpine.plugin(collapse);
@@ -36,5 +44,6 @@ Alpine.data('tableManager', tableManager);
 Alpine.data('pluginManager', pluginManager);
 Alpine.data('codeEditor', codeEditor);
 Alpine.data('tomSelect', selectComponent);
+Alpine.data('datepicker', initDatepicker);
 
 Alpine.start();

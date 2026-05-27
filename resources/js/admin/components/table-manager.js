@@ -37,9 +37,7 @@ export default (config = {}) => ({
     async deleteItem(id) {
         if (!this.deleteUrl || this.loading[id]) return;
 
-        if (!confirm(this.confirmDeleteMessage)) {
-            return;
-        }
+        if (!confirm(this.confirmDeleteMessage)) return;
 
         this.loading[id] = true;
 
@@ -47,30 +45,30 @@ export default (config = {}) => ({
             const res = await axios.post(this.deleteUrl, { id: id });
 
             if (res.data && res.data.success) {
-                if (res.data.message) alert(res.data.message);
-
-                const row =
-                    document.querySelector(`tr[data-row-id="${id}"]`) ||
-                    document
-                        .querySelector(`button[*|click*="deleteItem(${id})"]`)
-                        ?.closest("tr") ||
-                    document
-                        .querySelector(`button[@click*="deleteItem(${id})"]`)
-                        ?.closest("tr");
+                const row = this.$el.closest("tr");
+                const tbody = row.closest("tbody");
 
                 if (row) {
                     row.style.transition = "all 0.3s ease";
                     row.style.opacity = "0";
-                    row.style.transform = "translateX(20px)";
-                    setTimeout(() => row.remove(), 300);
-                } else {
-                    window.location.reload();
+
+                    setTimeout(() => {
+                        row.remove();
+
+                        const remainingRows =
+                            tbody.querySelectorAll("tr").length;
+
+                        if (remainingRows === 0) {
+                            window.location.reload();
+                        }
+                    }, 300);
                 }
             } else {
-                alert(res.data.message || "Възникна грешка при изтриването.");
+                alert(res.data.message || "Грешка при изтриването.");
             }
         } catch (error) {
-            alert("Грешка при премахване на елемента.");
+            console.error(error);
+            alert("Грешка при комуникация със сървъра.");
         } finally {
             this.loading[id] = false;
         }

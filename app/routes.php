@@ -69,8 +69,8 @@ $routes = [
     ['GET', '/admin/pages/create', [PageController::class, 'create'], [AuthMiddleware::class, AdminMiddleware::class]],
     ['POST', '/admin/pages/store', [PageController::class, 'store'], [AuthMiddleware::class, AdminMiddleware::class]],
     ['GET', '/admin/pages/edit/{id}', [PageController::class, 'edit'], [AuthMiddleware::class, AdminMiddleware::class]],
+    ['POST', '/admin/pages/delete', [PageController::class, 'delete'], [AuthMiddleware::class, AdminMiddleware::class]],
     ['POST', '/admin/pages/update/{id}', [PageController::class, 'update'], [AuthMiddleware::class, AdminMiddleware::class]],
-    ['POST', '/admin/pages/toggle', [PageController::class, 'toggle'], [AuthMiddleware::class, AdminMiddleware::class]],
 
     // File Structure
     ['GET', '/admin/file-structure', [FileStructureController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]],
