@@ -286,11 +286,4 @@ class PluginController extends BaseController
         }
         rmdir($dir);
     }
-
-    private function jsonResponse(bool $success, string $message)
-    {
-        header('Content-Type: application/json');
-        echo json_encode(['success' => $success, 'message' => $message]);
-        exit;
-    }
 }

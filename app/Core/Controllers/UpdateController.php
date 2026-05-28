@@ -245,11 +245,4 @@ class UpdateController extends BaseController
 
         return $response;
     }
-
-    private function jsonResponse(bool $success, string $message)
-    {
-        header('Content-Type: application/json');
-        echo json_encode(['success' => $success, 'message' => $message]);
-        exit;
-    }
 }

@@ -43,7 +43,7 @@ class Form
                     
                     <button type="button" @click="document.getElementById('<?= $id ?>').click()" 
                             class="font-semibold mt-1 self-start">
-                        <?= $currentImage ? 'Промени' : 'Избери' ?>
+                        <?= $currentImage ? 'Промяна' : 'Качване' ?>
                     </button>
                 </div>
             </div>
@@ -92,14 +92,14 @@ class Form
     {
         $value = $attrs['value'] ?? '';
         $rows = $attrs['rows'] ?? 3;
+        $placeholder = $attrs['placeholder'] ?? '';
 
         ?>
         <div>
             <label for="<?= $name ?>" class="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                 <?= $label ?>
             </label>
-            <textarea name="<?= $name ?>" id="<?= $name ?>" rows="<?= $rows ?>"
-                class="w-full px-4 py-2.5 rounded-md border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 dark:focus:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"><?= htmlspecialchars($value) ?></textarea>
+            <textarea name="<?= $name ?>" id="<?= $name ?>" rows="<?= $rows ?>" placeholder="<?= $placeholder ?>" class="w-full px-4 py-2.5 rounded-md border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 dark:focus:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"><?= htmlspecialchars($value) ?></textarea>
         </div>
         <?php
     }
@@ -232,7 +232,7 @@ class Form
 
     public static function row(callable $slot, int $cols = 2): void
     {
-        echo "<div class='space-y-5 grid grid-cols-1 md:grid-cols-{$cols} gap-6'>";
+        echo "<div style='grid-template-columns: repeat($cols, minmax(0, 1fr));' class='grid gap-5'>";
         $slot();
         echo "</div>";
     }
@@ -266,7 +266,7 @@ class Form
             <?php endif; ?>
 
             <div x-show="isOpen" x-collapse x-cloak>
-                <div class="p-6">
+                <div class="p-5 space-y-5">
                     <?php $slot(); ?>
                 </div>
             </div>
@@ -373,5 +373,10 @@ class Form
             </div>
         </div>
         <?php
+    }
+    
+    public static function heading(string $text, string $tag = 'h2', string $class = 'text-lg md:text-xl font-semibold'): void
+    {
+        echo "<$tag class='$class'>$text</$tag>";
     }
 }
