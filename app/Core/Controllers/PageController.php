@@ -83,26 +83,26 @@ class PageController extends BaseController
     public function update($id)
     {
         $page = Page::findOrFail($id);
+        $postData = $_POST;
 
-        $options = $this->handleFileUploads($page->options->getArrayCopy(), 'pages');
+        $directFields = ['name', 'slug', 'is_active', 'created_at'];
 
-        $exclude = ['name', 'slug', 'submit', '_token', 'is_active', 'created_at'];
+        $updateData = [
+            'name' => $postData['name'],
+            'slug' => !empty($postData['slug']) ? SlugHelper::generate($postData['slug']) : SlugHelper::generate($postData['name']),
+            'is_active' => $postData['is_active'] ?? 0,
+            'created_at' => $postData['created_at'] ?? $page->created_at,
+        ];
 
-        $newOptions = array_diff_key($_POST, array_flip($exclude));
-        $options = array_merge($options, $newOptions);
+        $options = $page->options->getArrayCopy();
 
-        $name = $_POST['name'];
-        $slug = !empty($_POST['slug'])
-            ? SlugHelper::generate($_POST['slug'])
-            : SlugHelper::generate($name);
+        $allPosted = array_diff_key($postData, array_flip(array_merge($directFields, ['submit', '_token'])));
 
-        $page->update([
-            'name' => $_POST['name'],
-            'slug' => $slug,
-            'is_active' => $this->getCheckboxValue('is_active'),
-            'created_at' => $_POST['created_at'] ?? $page->created_at,
-            'options' => $options
-        ]);
+        $options = array_merge($options, $allPosted['options'] ?? [], array_diff_key($allPosted, ['options' => []]));
+
+        $options = $this->handleFileUploads($options, 'pages');
+
+        $page->update(array_merge($updateData, ['options' => $options]));
 
         View::redirect('/admin/pages/edit/' . $page->id);
     }

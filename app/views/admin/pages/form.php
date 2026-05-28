@@ -1,4 +1,5 @@
 <?php
+use Flex\Core\Helpers\PageCustomFields;
 use Flex\Core\UI\Form;
 
 $isEdit = isset($page->id);
@@ -70,6 +71,12 @@ $action = $isEdit ? "/admin/pages/update/{$page->id}" : "/admin/pages/store";
 
     <?php }); ?>
 <?php }); ?>
+
+<?php $themeClassName = "\\Themes\\" . ACTIVE_THEME . "\\Helpers\\CustomAdminPageFields";
+
+if (class_exists($themeClassName) && method_exists($themeClassName, 'render')) {
+    echo $themeClassName::render($page->id, $page);
+} ?>
 
 <?php Form::submit(!$isEdit ? 'Създаване' : 'Запазване', 'fa-save') ?>
 

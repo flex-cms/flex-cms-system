@@ -134,7 +134,7 @@ class Form
 
     public static function toggle(string $name, string $label, array $options = []): void
     {
-        $value = $options['value'] ?? true;
+        $value = $options['value'] ?? false;
         $id = $options['id'] ?? 'toggle-' . bin2hex(random_bytes(4));
         $description = $options['description'] ?? null;
         $checked = $value ? 'checked' : '';
@@ -149,6 +149,8 @@ class Form
         ?>
         <div class="flex items-center gap-4">
             <label for="<?= $id ?>" class="relative inline-flex items-center cursor-pointer shrink-0 mt-0.5">
+                <input type="hidden" name="<?= $name ?>" value="0">
+                
                 <input type="checkbox" name="<?= $name ?>" id="<?= $id ?>" value="1" class="sr-only peer" <?= $checked ?>
                     <?= $attributes ?>>
 
