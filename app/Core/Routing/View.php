@@ -7,13 +7,14 @@ class View
     public function __construct(
         public string $path,
         public array $data = [],
-        public string $layout = 'main'
+        public string $layout = 'main',
+        public string $source = 'core'
     ) {
     }
 
-    public static function make(string $path, array $data = [], string $layout = 'main'): self
+    public static function make(string $path, array $data = [], string $layout = 'main', string $source = 'core'): self
     {
-        return new self($path, $data, $layout);
+        return new self($path, $data, $layout, $source);
     }
 
     public static function redirect(string $url, int $code = 302): void

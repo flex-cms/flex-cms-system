@@ -4,7 +4,6 @@ namespace Flex\Core;
 
 class Vite
 {
-    private static string $outDir = 'dist';
     private static string $manifestPath = '/public/dist/.vite/manifest.json';
     private static string $devServer = 'http://localhost:5173';
 
@@ -18,29 +17,39 @@ class Vite
         return false;
     }
 
-    public static function use(string $entry): string
+    public static function use(string $entry, string $type = 'core'): string
     {
-        $entryPath = "resources/js/{$entry}.js";
+        $isTheme = ($type === 'theme');
+
+        if ($isTheme) {
+            $manifestPath = "themes/" . ACTIVE_THEME . "/assets/dist/.vite/manifest.json";
+            $publicPath = "/themes/" . ACTIVE_THEME . "/assets/dist/";
+            $entryPath = "resources/js/{$entry}.js";
+        } else {
+            $manifestPath = ltrim(self::$manifestPath, '/');
+            $publicPath = "/public/dist/";
+            $entryPath = "resources/js/{$entry}.js";
+        }
 
         if (self::isDev()) {
+            $devUrl = self::$devServer . "/" . ($isTheme ? "themes/" . ACTIVE_THEME . "/" : "") . $entryPath;
             return sprintf(
                 '<script type="module" src="%1$s/@vite/client"></script>' . PHP_EOL .
-                '<link rel="stylesheet" href="%1$s/resources/css/app.css">' . PHP_EOL .
-                '<script type="module" src="%1$s/resources/js/admin.js" defer></script>',
+                '<script type="module" src="%2$s" defer></script>',
                 self::$devServer,
+                $devUrl
             );
         }
 
-        $root = rtrim($_SERVER['DOCUMENT_ROOT'], '/');
-        $fullManifestPath = $root . self::$manifestPath;
+        $fullManifestPath = rtrim($_SERVER['DOCUMENT_ROOT'], '/') . '/' . $manifestPath;
 
         if (!file_exists($fullManifestPath)) {
-            return "<!-- Vite Error: Manifest not found -->";
+            return "";
         }
 
         $manifest = json_decode(file_get_contents($fullManifestPath), true);
         if (!isset($manifest[$entryPath])) {
-            return "<!-- Vite Error: Entry $entryPath not found -->";
+            return "";
         }
 
         $asset = $manifest[$entryPath];
@@ -61,10 +70,10 @@ class Vite
         $allCss = array_unique($collectCss($asset, $manifest));
 
         foreach ($allCss as $cssFile) {
-            $html .= sprintf('<link rel="stylesheet" href="/public/dist/%s">' . PHP_EOL, $cssFile);
+            $html .= sprintf('<link rel="stylesheet" href="%s%s">' . PHP_EOL, $publicPath, $cssFile);
         }
 
-        $html .= sprintf('<script type="module" src="/public/dist/%s"></script>', $asset['file']);
+        $html .= sprintf('<script type="module" src="%s%s"></script>', $publicPath, $asset['file']);
 
         return $html;
     }

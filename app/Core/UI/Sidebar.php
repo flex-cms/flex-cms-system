@@ -13,19 +13,36 @@ class Sidebar
         }
     }
 
-    public static function addLink(string $sidebarName, array $link): void
+    public static function addLink(string $sidebarName, array $link, ?int $index = null): void
     {
-        self::$sidebars[$sidebarName][] = $link;
+        if (!isset(self::$sidebars[$sidebarName])) {
+            return;
+        }
+
+        if ($index === null || $index >= count(self::$sidebars[$sidebarName])) {
+            self::$sidebars[$sidebarName][] = $link;
+        } else {
+            array_splice(self::$sidebars[$sidebarName], $index, 0, [$link]);
+        }
     }
 
-    public static function addChildLink(string $sidebarName, string $parentUrl, array $childLink): void
+    public static function addChildLink(string $sidebarName, string $parentUrl, array $childLink, ?int $index = null): void
     {
-        if (!isset(self::$sidebars[$sidebarName]))
+        if (!isset(self::$sidebars[$sidebarName])) {
             return;
+        }
 
         foreach (self::$sidebars[$sidebarName] as &$link) {
             if ($link['url'] === $parentUrl) {
-                $link['children'][] = $childLink;
+                if (!isset($link['children'])) {
+                    $link['children'] = [];
+                }
+
+                if ($index === null || $index >= count($link['children'])) {
+                    $link['children'][] = $childLink;
+                } else {
+                    array_splice($link['children'], $index, 0, [$childLink]);
+                }
                 break;
             }
         }
@@ -47,6 +64,14 @@ Sidebar::register('admin_main', [
             ['url' => '/admin/users/index', 'label' => 'Всички потребители'],
             ['url' => '/admin/users/roles', 'label' => 'Роли и права'],
             ['url' => '/admin/users/permissions', 'label' => 'Разрешения'],
+        ]
+    ],
+    [
+        'url' => '/admin/themes',
+        'icon' => 'fa-envelope',
+        'label' => 'Теми',
+        'children' => [
+            ['url' => '/admin/themes/all', 'label' => 'Всички']
         ]
     ],
     [

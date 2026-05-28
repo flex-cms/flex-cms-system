@@ -1,16 +1,17 @@
 {
-  "autoload": {
-    "psr-4": {
-      "Flex\\": "app/",
-      "Flex\\Core\\": "app/Core/",
-      "Plugins\\": "plugins/"
+    "autoload": {
+        "psr-4": {
+            "Flex\\": "app/",
+            "Flex\\Core\\": "app/Core/",
+            "Plugins\\": "plugins/",
+            "Themes\\": "themes/"
+        }
+    },
+    "require": {
+        "vlucas/phpdotenv": "^5.6",
+        "illuminate/database": "^12.58",
+        "robmorgan/phinx": "^0.16.11",
+        "phpmailer/phpmailer": "^7.1",
+        "nesbot/carbon": "^3.11"
     }
-  },
-  "require": {
-    "vlucas/phpdotenv": "^5.6",
-    "illuminate/database": "^12.58",
-    "robmorgan/phinx": "^0.16.11",
-    "phpmailer/phpmailer": "^7.1",
-    "nesbot/carbon": "^3.11"
-  }
 }

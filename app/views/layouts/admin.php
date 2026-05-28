@@ -92,7 +92,7 @@ $currentVersion = $currentConfig['version'];
                         </a>
                     <?php endif; ?>
 
-                    <button @click="toggleTheme()" ...>
+                    <button @click="toggleTheme()">
                         <i class="fa-solid" :class="darkMode ? 'fa-sun' : 'fa-moon'"></i>
                     </button>
 

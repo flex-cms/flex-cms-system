@@ -3,6 +3,7 @@
 namespace Flex\Core\Controllers;
 
 use Flex\Core\Routing\View;
+use Flex\Core\Services\ThemeService;
 
 abstract class BaseController
 {
@@ -54,24 +55,21 @@ abstract class BaseController
     {
         extract($view->data);
 
-        $reflection = new \ReflectionClass($this);
-        $controllerDir = dirname($reflection->getFileName(), 2);
-
-        $fullViewPath = dirname($controllerDir) . '/views/' . $view->path . '.php';
-
-        if (strpos($controllerDir, 'app' . DIRECTORY_SEPARATOR . 'Controllers') !== false) {
-            $fullViewPath = dirname($controllerDir, 2) . '/views/' . $view->path . '.php';
+        if ($view->source === 'theme') {
+            $fullViewPath = dirname(__DIR__, 3) . '/themes/' . ACTIVE_THEME . '/views/' . $view->path . '.php';
+            $layoutPath = dirname(__DIR__, 2) . "/views/layouts/{$view->layout}.php";
+        } else {
+            $fullViewPath = dirname(__DIR__, 2) . '/views/' . $view->path . '.php';
+            $layoutPath = dirname(__DIR__, 2) . "/views/layouts/{$view->layout}.php";
         }
 
         ob_start();
         if (file_exists($fullViewPath)) {
             include $fullViewPath;
         } else {
-            echo "View file not found: " . htmlspecialchars($fullViewPath);
+            die("View not found: " . htmlspecialchars($fullViewPath));
         }
         $content = ob_get_clean();
-
-        $layoutPath = dirname(__DIR__, 2) . "/views/layouts/{$view->layout}.php";
 
         if (file_exists($layoutPath)) {
             include $layoutPath;
@@ -93,13 +91,13 @@ abstract class BaseController
     protected function jsonResponse(bool $success, string $message = '', array $data = []): void
     {
         header('Content-Type: application/json');
-        
+
         echo json_encode([
             'success' => $success,
             'message' => $message,
-            'data'    => $data
+            'data' => $data
         ]);
-        
+
         exit;
     }
 }

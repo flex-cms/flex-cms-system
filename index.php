@@ -38,7 +38,7 @@ function db()
 }
 db();
 
-$debugMode = Setting::get('debug_mode', false); 
+$debugMode = Setting::get('debug_mode', false);
 
 if ($debugMode) {
     error_reporting(E_ALL);
@@ -67,6 +67,21 @@ $pluginManager = new PluginManager($events, $activePlugins);
 $router->setPluginManager($pluginManager);
 
 $pluginManager->loadPlugins($router);
+
+$activeTheme = Setting::get('active_theme', 'Modern');
+
+$themePath = __DIR__ . '/themes/' . $activeTheme;
+
+if (is_dir($themePath)) {
+    define('ACTIVE_THEME', $activeTheme);
+    $themeClass = "Themes\\" . $activeTheme . "\\ThemeServiceProvider";
+
+    if (class_exists($themeClass)) {
+        $themeClass::init();
+    }
+} else {
+    define('ACTIVE_THEME', 'Modern');
+}
 
 $content = "Здравей, това е съдържанието на сайта.";
 $content = $events->applyFilters('the_content', $content);

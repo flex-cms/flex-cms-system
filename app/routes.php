@@ -14,6 +14,7 @@ use Flex\Core\Controllers\FileStructureController;
 use Flex\Core\Middlewares\AdminMiddleware;
 use Flex\Core\Controllers\SettingsController;
 use Flex\Core\Controllers\PageController;
+use Flex\Core\Controllers\ThemeController;
 
 $routes = [
     ['GET', '/admin', [AuthController::class, 'showLogin']],
@@ -53,7 +54,7 @@ $routes = [
     // Settings
     ['GET', '/admin/settings/{group}', [SettingsController::class, 'show'], [AuthMiddleware::class, AdminMiddleware::class]],
     ['POST', '/admin/settings/{group}/update', [SettingsController::class, 'update'], [AuthMiddleware::class, AdminMiddleware::class]],
-    
+
     // Updates
     ['GET', '/admin/update', [UpdateController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]],
     ['POST', '/admin/update', [UpdateController::class, 'update'], [AuthMiddleware::class, AdminMiddleware::class]],
@@ -63,6 +64,10 @@ $routes = [
     ['POST', '/admin/plugins/toggle', [PluginController::class, 'toggle'], [AuthMiddleware::class, AdminMiddleware::class]],
     ['POST', '/admin/plugins/delete', [PluginController::class, 'delete'], [AuthMiddleware::class, AdminMiddleware::class]],
     ['POST', '/admin/plugins/update', [PluginController::class, 'update'], [AuthMiddleware::class, AdminMiddleware::class]],
+
+    // Themes
+    ['GET', '/admin/themes/all', [ThemeController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]],
+    ['POST', '/admin/themes/activate', [ThemeController::class, 'activate'], [AuthMiddleware::class, AdminMiddleware::class]],
 
     // Pages
     ['GET', '/admin/pages', [PageController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]],
