@@ -2,6 +2,7 @@
 
 namespace Flex\Core\Controllers;
 
+use Flex\Core\Auth;
 use Flex\Core\Routing\View;
 use Flex\Models\Setting;
 
@@ -36,8 +37,27 @@ class BaseThemeController
 {
     use ViewRendererTrait;
 
+    protected function getThemeGlobals(): array
+    {
+        $user = Auth::user();
+        $settings = $this->getThemeSettings();
+
+        $enableDark = (bool) ($settings['enable_dark_mode'] ?? false);
+        $theme = $user->options['theme'] ?? ($_SESSION['dark_mode'] ?? false ? 'dark' : 'light');
+        
+        return [
+            'settings'          => $settings,
+            'enableDark'        => $enableDark,
+            'darkMode'          => $enableDark ? ($theme === 'dark') : false,
+            'allowRegistration' => (bool) ($settings['allow_registration'] ?? false),
+        ];
+    }
+
     protected function renderTheme(string $viewPath, array $data = [], string $layout = 'main')
     {
+        $globals = $this->getThemeGlobals();
+        $data = array_merge($globals, $data);
+        
         $themeSettings = [];
         $settingsClass = "Themes\\" . ACTIVE_THEME . "\\Models\\ThemeSettings";
 
@@ -53,12 +73,7 @@ class BaseThemeController
 
     protected function getThemeSettings(string $key = 'theme_basic_settings')
     {
-        $settings = Setting::get($key, '[]');
-
-        if (is_string($settings)) {
-            return json_decode($settings, true) ?? [];
-        }
-
+        $settings = Setting::get($key, []);
         return is_array($settings) ? $settings : [];
     }
 

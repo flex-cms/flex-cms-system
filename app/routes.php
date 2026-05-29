@@ -15,6 +15,7 @@ use Flex\Core\Middlewares\AdminMiddleware;
 use Flex\Core\Controllers\SettingsController;
 use Flex\Core\Controllers\PageController;
 use Flex\Core\Controllers\ThemeController;
+use Flex\Core\Controllers\EmailTemplateController;
 
 $routes = [
     ['GET', '/admin', [AuthController::class, 'showLogin']],
@@ -76,6 +77,14 @@ $routes = [
     ['GET', '/admin/pages/edit/{id}', [PageController::class, 'edit'], [AuthMiddleware::class, AdminMiddleware::class]],
     ['POST', '/admin/pages/delete', [PageController::class, 'delete'], [AuthMiddleware::class, AdminMiddleware::class]],
     ['POST', '/admin/pages/update/{id}', [PageController::class, 'update'], [AuthMiddleware::class, AdminMiddleware::class]],
+
+    // Email Templates
+    ['GET', '/admin/email-templates', [EmailTemplateController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]],
+    ['GET', '/admin/email-templates/create', [EmailTemplateController::class, 'create'], [AuthMiddleware::class, AdminMiddleware::class]],
+    ['POST', '/admin/email-templates/store', [EmailTemplateController::class, 'store'], [AuthMiddleware::class, AdminMiddleware::class]],
+    ['GET', '/admin/email-templates/edit/{id}', [EmailTemplateController::class, 'edit'], [AuthMiddleware::class, AdminMiddleware::class]],
+    ['POST', '/admin/email-templates/update/{id}', [EmailTemplateController::class, 'update'], [AuthMiddleware::class, AdminMiddleware::class]],
+    ['POST', '/admin/email-templates/delete', [EmailTemplateController::class, 'destroy'], [AuthMiddleware::class, AdminMiddleware::class]],
 
     // File Structure
     ['GET', '/admin/file-structure', [FileStructureController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]],

@@ -79,6 +79,11 @@ Sidebar::register('admin_main', [
         'icon' => 'fa-file-lines',
         'label' => 'Страници'
     ],
+    [
+        'url' => '/admin/email-templates',
+        'icon' => 'fa-envelope',
+        'label' => 'Имейл шаблони'
+    ],
     ['url' => '/admin/plugins', 'icon' => 'fa-plug', 'label' => 'Плъгини'],
     [
         'url' => '/admin/settings',
