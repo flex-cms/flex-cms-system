@@ -42,4 +42,53 @@ class View
             }
         }
     }
+
+    public static function renderTheme(string $path, array $data = [], string $layout = 'main'): void
+    {
+        $helperClass = "Themes\\" . ACTIVE_THEME . "\\Helpers\\ThemeHelper";
+
+        $globals = [];
+        if (class_exists($helperClass) && method_exists($helperClass, 'getGlobals')) {
+            $globals = $helperClass::getGlobals();
+        }
+
+        $data = array_merge($globals, $data);
+
+        $view = self::make($path, $data, $layout, 'theme');
+
+        extract($view->data);
+
+        $root = dirname(__DIR__, 3);
+        $fullViewPath = $root . '/themes/' . ACTIVE_THEME . '/views/' . $view->path . '.php';
+        $layoutPath = $root . '/themes/' . ACTIVE_THEME . '/views/layouts/' . $view->layout . '.php';
+
+        ob_start();
+        if (file_exists($fullViewPath)) {
+            include $fullViewPath;
+        } else {
+            die("View not found: " . htmlspecialchars($fullViewPath));
+        }
+        $content = ob_get_clean();
+
+        if (file_exists($layoutPath)) {
+            include $layoutPath;
+        } else {
+            echo $content;
+        }
+        exit;
+    }
+
+    public static function renderPageTemplate(object $page): void
+    {
+        $template = preg_replace('/[^a-zA-Z0-9\-]/', '', $page->options['page_template'] ?? 'default');
+        $template = ucfirst($template);
+
+        $class = "\\Themes\\" . ACTIVE_THEME . "\\PageTemplates\\" . $template . 'Template';
+
+        if (!class_exists($class)) {
+            $class = "\\Themes\\" . ACTIVE_THEME . "\\PageTemplates\\DefaultTemplate";
+        }
+
+        (new $class($page->id, $page))->render();
+    }
 }

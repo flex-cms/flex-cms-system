@@ -81,6 +81,29 @@ class Alert
         </div>';
     }
 
+    public static function renderFromSession(): string
+    {
+        $keys = [
+            'flash_success' => 'success',
+            'flash_error'   => 'error',
+            'flash_info'    => 'info',
+            'flash_warning' => 'warning'
+        ];
+
+        foreach ($keys as $sessionKey => $type) {
+            if (!empty($_SESSION[$sessionKey])) {
+                $message = $_SESSION[$sessionKey];
+                unset($_SESSION[$sessionKey]);
+
+                $alert = self::make($message);
+                $alert->type = $type;
+                return $alert->render();
+            }
+        }
+
+        return '';
+    }
+
     public function __toString(): string
     {
         return $this->render();

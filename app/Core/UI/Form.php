@@ -6,6 +6,74 @@ use Flex\Core\Auth;
 
 class Form
 {
+    public static function videoGallery(string $name, string $label, array $options = []): void
+    {
+        $videos = $options['value'] ?? [];
+        $jsData = htmlspecialchars(json_encode($videos), ENT_QUOTES, 'UTF-8');
+        $componentId = 'video_gallery_' . preg_replace('/[^a-zA-Z0-9]/', '_', $name);
+
+        ?>
+        <div x-data="videoGalleryManager(<?= $jsData ?>)" id="<?= $componentId ?>" class="space-y-4">
+            <label class="block font-semibold text-slate-700 dark:text-slate-300"><?= $label ?></label>
+
+            <input type="hidden" :name="'<?= $name ?>'" :value="JSON.stringify(videos)">
+
+            <input type="file" multiple accept="video/*" class="hidden" :id="'<?= $name ?>_input'" 
+                @change="addVideos($event.target.files)">
+
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                <template x-for="(video, index) in videos" :key="index">
+                    <div class="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden bg-slate-50 dark:bg-slate-900 group">
+                        <div class="relative bg-black h-48 group">
+                            <video :id="'vid_' + index" :src="video.url" class="w-full h-full object-contain" @ended="video.isPlaying = false"></video>
+                            
+                            <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 gap-4">
+                                <button type="button" @click="togglePlay(video, index)" class="text-white text-2xl hover:text-indigo-400">
+                                    <i class="fas" :class="video.isPlaying ? 'fa-pause' : 'fa-play'"></i>
+                                </button>
+                                <button type="button" @click="toggleFullscreen(index)" class="text-white text-2xl hover:text-indigo-400">
+                                    <i class="fas fa-expand"></i>
+                                </button>
+                            </div>
+                            
+                            <button type="button" @click="removeVideo(index)" class="absolute top-2 right-2 bg-rose-500/80 hover:bg-rose-600 text-white rounded-full w-6 h-6 flex items-center justify-center z-10">
+                                <i class="fas fa-times text-xs"></i>
+                            </button>
+                        </div>
+
+                        <div class="p-3 bg-white dark:bg-slate-800">
+                            <div x-show="video.isUploading" class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 mb-3 overflow-hidden">
+                                <div class="bg-indigo-600 h-2 transition-all duration-300" 
+                                    :style="'width: ' + video.progress + '%'"></div>
+                            </div>
+
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs text-slate-500 truncate max-w-[50%]" x-text="video.file ? video.file.name : 'Видео'"></span>
+                                
+                                <button type="button" 
+                                        @click="uploadVideo(video, index)" 
+                                        :disabled="video.isUploading || video.isUploaded"
+                                        class="px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-2"
+                                        :class="video.isUploaded ? 'bg-green-100 text-green-700' : 'bg-indigo-600 hover:bg-indigo-700 text-white'">
+                                    
+                                    <i class="fas" :class="video.isUploading ? 'fa-spinner fa-spin' : (video.isUploaded ? 'fa-check' : 'fa-cloud-upload-alt')"></i>
+                                    <span x-text="video.isUploading ? video.progress + '%' : (video.isUploaded ? 'Качено' : 'Качи')"></span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+
+                <button type="button" @click="document.getElementById('<?= $name ?>_input').click()" 
+                        class="h-48 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg flex flex-col items-center justify-center text-slate-400 hover:text-indigo-500 hover:border-indigo-400 transition-all bg-slate-50 dark:bg-slate-800/50">
+                    <i class="fas fa-video text-2xl mb-2"></i>
+                    <span class="text-sm font-medium">Качи видео</span>
+                </button>
+            </div>
+        </div>
+        <?php
+    }
+
     public static function file(string $name, string $label, array $attrs = []): void
     {
         $id = 'file_' . $name;
@@ -51,6 +119,82 @@ class Form
         <?php
     }
 
+    public static function gallery(string $name, string $label, array $options = []): void
+    {
+        $images = $options['value'] ?? [];
+        $jsData = htmlspecialchars(json_encode($images), ENT_QUOTES, 'UTF-8');
+        $componentId = 'gallery_' . preg_replace('/[^a-zA-Z0-9]/', '_', $name);
+
+        ?>
+        <div x-data="galleryManager(<?= $jsData ?>)" id="<?= $componentId ?>" class="space-y-4">
+            <label class="block font-semibold text-slate-700 dark:text-slate-300"><?= $label ?></label>
+
+            <input type="hidden" :name="'<?= $name ?>'" :value="JSON.stringify(images)">
+
+            <input type="file" multiple class="hidden" :id="'<?= $name ?>_input'" 
+                @change="addImages($event.target.files)">
+
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                <template x-for="(url, index) in images" :key="index">
+                    <div class="relative aspect-square border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden group cursor-move"
+                        draggable="true"
+                        @dragstart="dragStart(index)"
+                        @dragover.prevent="dragOver(index)"
+                        @dragend="dragEnd()"
+                        :class="dragging === index ? 'opacity-50 border-indigo-500' : 'opacity-100'">
+                        
+                        <img :src="url" class="w-full h-full object-cover">
+                        
+                        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-2">
+                            
+                            <div class="flex justify-between">
+                                <button type="button" @click="move(index, -1)" :disabled="index === 0"
+                                        class="bg-black/50 text-white rounded w-6 h-6 flex items-center justify-center disabled:opacity-30">
+                                    <i class="fas fa-arrow-left text-xs"></i>
+                                </button>
+                                <button type="button" @click="move(index, 1)" :disabled="index === images.length - 1"
+                                        class="bg-black/50 text-white rounded w-6 h-6 flex items-center justify-center disabled:opacity-30">
+                                    <i class="fas fa-arrow-right text-xs"></i>
+                                </button>
+                            </div>
+
+                            <button type="button" @click="removeImage(index)" 
+                                    class="ml-auto bg-rose-500 text-white rounded-full w-6 h-6 flex items-center justify-center">
+                                <i class="fas fa-times text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                </template>
+
+                <button type="button" @click="document.getElementById('<?= $name ?>_input').click()" 
+                        class="aspect-square border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg flex flex-col items-center justify-center text-slate-400 hover:text-indigo-500 hover:border-indigo-400 transition-all bg-slate-50 dark:bg-slate-800/50">
+                    <i class="fas fa-plus text-2xl mb-2"></i>
+                    <span class="text-sm font-medium">Качи</span>
+                </button>
+            </div>
+
+            <div x-show="images.length === 0" 
+                class="p-4 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-400 text-sm flex items-center gap-3">
+                <i class="fas fa-info-circle"></i>
+                <span>Все още няма качени снимки в галерията. Използвайте бутона „Качи“, за да добавите.</span>
+            </div>
+
+            <div x-show="showFullscreen" 
+                x-cloak
+                class="fixed inset-0 z-9999 flex items-center justify-center bg-black/95 p-4"
+                @keydown.escape.window="closeFullscreen()"
+                @click.self="closeFullscreen()">
+                
+                <button type="button" @click="closeFullscreen()" class="absolute top-5 right-5 text-white text-3xl hover:text-gray-300 transition-colors">
+                    <i class="fas fa-times"></i>
+                </button>
+                
+                <img :src="activeImage" class="max-w-full max-h-full object-contain shadow-2xl">
+            </div>
+        </div>
+        <?php
+    }
+
     public static function create(array $options = []): void
     {
         $action = $options['action'] ?? '';
@@ -73,16 +217,16 @@ class Form
         $required = isset($attrs['required']) ? 'required' : '';
         $disabled = isset($attrs['disabled']) ? 'disabled' : '';
         $extra = $attrs['extra'] ?? '';
-
+        $xModel = isset($attrs['x-model']) ? "x-model=\"{$attrs['x-model']}\"" : '';
         $customClass = $attrs['class'] ?? '';
 
         ?>
         <div>
             <label for="<?= $name ?>" class="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                <?= $label ?>         <?= $required ? '<span class="text-rose-500">*</span>' : '' ?>
+                <?= $label ?> <?= $required ? '<span class="text-rose-500">*</span>' : '' ?>
             </label>
             <input type="<?= $type ?>" name="<?= $name ?>" id="<?= $name ?>" value="<?= htmlspecialchars($value) ?>"
-                placeholder="<?= $placeholder ?>" <?= $required ?>         <?= $disabled ?>         <?= $extra ?>
+                placeholder="<?= $placeholder ?>" <?= $required ?> <?= $disabled ?> <?= $extra ?> <?= $xModel ?>
                 class="w-full px-4 py-2.5 rounded-md border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 dark:focus:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-primary transition-all outline-none <?= $customClass ?>">
         </div>
         <?php
@@ -93,13 +237,14 @@ class Form
         $value = $attrs['value'] ?? '';
         $rows = $attrs['rows'] ?? 3;
         $placeholder = $attrs['placeholder'] ?? '';
+        $xModel = isset($attrs['x-model']) ? "x-model=\"{$attrs['x-model']}\"" : '';
 
         ?>
         <div>
             <label for="<?= $name ?>" class="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                 <?= $label ?>
             </label>
-            <textarea name="<?= $name ?>" id="<?= $name ?>" rows="<?= $rows ?>" placeholder="<?= $placeholder ?>" class="w-full px-4 py-2.5 rounded-md border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 dark:focus:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"><?= htmlspecialchars($value) ?></textarea>
+            <textarea name="<?= $name ?>" id="<?= $name ?>" rows="<?= $rows ?>" placeholder="<?= $placeholder ?>" <?= $xModel ?> class="w-full px-4 py-2.5 rounded-md border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 dark:focus:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"><?= isset($attrs['x-model']) ? '' : htmlspecialchars($value) ?></textarea>
         </div>
         <?php
     }
@@ -380,5 +525,58 @@ class Form
     public static function heading(string $text, string $tag = 'h2', string $class = 'text-lg md:text-xl font-semibold'): void
     {
         echo "<$tag class='$class'>$text</$tag>";
+    }
+
+    public static function repeater(string $name, string $label, array $options = []): void
+    {
+        $items = $options['value'] ?? [[]];
+        $fields = $options['fields'] ?? [];
+        $jsData = htmlspecialchars(json_encode($items), ENT_QUOTES, 'UTF-8');
+
+        ?>
+        <div x-data="repeater(<?= $jsData ?>)" class="space-y-6">
+            <label class="block font-semibold text-slate-700 dark:text-slate-300"><?= $label ?></label>
+
+            <template x-for="(item, index) in items" :key="index">
+                <div class="p-5 bg-slate-50 dark:bg-slate-900/30 border border-slate-200 dark:border-slate-700 rounded-lg relative group">
+                    <div class="grid gap-4">
+                        <?php foreach ($fields as $key => $field): ?>
+                            <div>
+                                <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                                    <?= $field['label'] ?>
+                                </label>
+
+                                <?php if ($field['type'] === 'textarea'): ?>
+                                    <textarea 
+                                        :name="'<?= $name ?>[' + index + '][<?= $key ?>]'" 
+                                        x-model="item.<?= $key ?>" 
+                                        rows="3"
+                                        class="w-full px-4 py-2.5 rounded-md border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 transition-all outline-none"
+                                    ></textarea>
+                                <?php else: ?>
+                                    <input 
+                                        type="text"
+                                        :name="'<?= $name ?>[' + index + '][<?= $key ?>]'" 
+                                        x-model="item.<?= $key ?>" 
+                                        class="w-full px-4 py-2.5 rounded-md border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 transition-all outline-none"
+                                    >
+                                <?php endif; ?>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+
+                    <button type="button" @click="removeItem(index)" 
+                            class="absolute -right-2 -top-2 bg-rose-500 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-lg hover:bg-rose-600">
+                        <i class="fas fa-times text-xs"></i>
+                    </button>
+                </div>
+            </template>
+
+            <button type="button" @click="addItem()" 
+                    class="inline-flex items-center gap-2 text-sm font-semibold text-indigo-600 hover:text-indigo-800">
+                <i class="fas fa-plus"></i> Добави нов елемент
+            </button>
+        </div>
+        <?php
     }
 }

@@ -1,5 +1,7 @@
 <?php
-use Flex\Core\Helpers\PageCustomFields;
+
+use Flex\Core\PageTemplates\PageTemplateDiscovery;
+use Flex\Core\Routing\View;
 use Flex\Core\UI\Form;
 
 $isEdit = isset($page->id);
@@ -58,6 +60,19 @@ $action = $isEdit ? "/admin/pages/update/{$page->id}" : "/admin/pages/store";
 <?php }); ?>
 
 <?php Form::section(title: 'Настройки на страницата', slot: function () use ($page) { ?>
+    <?php
+        $templates = [
+            '' => 'Без шаблон',
+        ] + PageTemplateDiscovery::getTemplates(ACTIVE_THEME);
+        
+        Form::customSelect(
+            'page_template', 
+            'Шаблон на страницата', 
+            $templates, 
+            $page->options['page_template'] ?? 'default'
+        );
+    ?>
+
     <?php Form::row(function () use ($page) { ?>
 
         <?php Form::toggle('is_active', 'Активна страница', [
@@ -72,11 +87,7 @@ $action = $isEdit ? "/admin/pages/update/{$page->id}" : "/admin/pages/store";
     <?php }); ?>
 <?php }); ?>
 
-<?php $themeClassName = "\\Themes\\" . ACTIVE_THEME . "\\Helpers\\CustomAdminPageFields";
-
-if (class_exists($themeClassName) && method_exists($themeClassName, 'render')) {
-    echo $themeClassName::render($page->id, $page);
-} ?>
+<?php if (!empty($page->options['page_template'])) View::renderPageTemplate($page); ?>
 
 <?php Form::submit(!$isEdit ? 'Създаване' : 'Запазване', 'fa-save') ?>
 

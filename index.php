@@ -6,6 +6,8 @@ session_start();
 
 require_once 'vendor/autoload.php';
 
+require_once 'functions.php';
+
 use Dotenv\Dotenv;
 use Flex\Core\Database;
 use Flex\Core\Events\EventManager;

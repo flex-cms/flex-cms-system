@@ -23,15 +23,21 @@ class PasswordReset extends Model
 
     protected $keyType = 'string';
 
-    public function isExpired(): bool
+    public static function checkToken(string $token): self|false
     {
-        if (!$this->expires_at) {
-            return true;
+        $record = static::where('token', $token)->first();
+
+        if (!$record || !$record->expires_at) {
+            return false;
         }
 
         $nowUtc = gmdate('Y-m-d H:i:s');
 
-        return strtotime($this->expires_at) < strtotime($nowUtc);
+        if (strtotime($record->expires_at) < strtotime($nowUtc)) {
+            return false;
+        }
+
+        return $record;
     }
 
     public static function deleteExistingForEmail(string $email): void
