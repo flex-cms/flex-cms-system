@@ -2,122 +2,95 @@
 
 namespace Flex\Core\Controllers;
 
+use Flex\Core\Filters\Shared\StatusFilter;
 use Flex\Core\Helpers\SlugHelper;
 use Flex\Core\Services\MediaManager;
+use Flex\Core\Traits\CrudHelper;
+use Flex\Core\Traits\HandlesMedia;
+use Flex\Core\Traits\HandlesTableFilters;
+use Flex\Core\Traits\RequestHelper;
 use Flex\Models\Page;
 use Flex\Core\Routing\View;
 use Flex\Core\Controllers\BaseController;
 
 class PageController extends BaseController
 {
-    use HandlesMedia;
-    use RequestHelper;
+    use HandlesMedia, HandlesTableFilters, RequestHelper, CrudHelper;
+    protected string $indexTitle;
+    protected string $createTitle;
+    protected string $editTitle;
+    protected string $createBtn;
+    protected string $deleteSuccessMessage;
+    protected string $deleteErrorMessage;
+
+    public function __construct()
+    {
+        $this->indexTitle               = 'Управление на страници';
+        $this->createTitle              = 'Нова страница';
+        $this->editTitle                = 'Редактиране на страница';
+        $this->createBtn                = 'Нова страница';
+        $this->deleteSuccessMessage     = 'Изтрито успешно.';
+        $this->deleteErrorMessage       = 'Тази страница не съществува.';
+    }
 
     public function index()
     {
-        $query = Page::orderBy('name', 'asc');
+        $pages = $this->applyFilters(
+            Page::query(),
+            ['name', 'slug'],
+            ['name', 'slug', 'created_at'],
+            ['status' => StatusFilter::class],
+            'name'
+        )->get();
 
-        if (!empty($_GET['search'])) {
-            $search = trim($_GET['search']);
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'LIKE', "%{$search}%")
-                    ->orWhere('slug', 'LIKE', "%{$search}%");
-            });
-        }
-
-        $pages = $query->get();
-
-        $this->render(View::make('admin/pages/index', [
-            'title' => 'Управление на страници',
+        $this->renderAdmin('pages/index', [
+            'title' => $this->indexTitle,
             'pages' => $pages,
-            'primaryButton' => [
-                'label' => 'Нова страница',
-                'url' => '/admin/pages/create',
-                'icon' => 'fa-plus'
-            ]
-        ], 'admin'));
+            'primaryButton' => $this->createButton('/admin/pages/create', $this->createTitle)
+        ]);
     }
 
     public function create()
     {
-        $this->render(View::make('admin/pages/form', [
-            'title' => 'Нова страница',
-            'page' => new Page()
-        ], 'admin'));
+        $this->renderAdmin('pages/form', [
+            'title' => $this->createTitle,
+            'page' => new Page(),
+            'primaryButton' => $this->createButton('/admin/pages/create', $this->createTitle)
+        ]);
     }
 
     public function edit($id)
     {
         $page = Page::findOrFail($id);
 
-        $this->render(View::make('admin/pages/form', [
-            'title' => 'Редактиране на страница',
-            'page' => $page
-        ], 'admin'));
+        $this->renderAdmin('pages/form', [
+            'title' => $this->editTitle,
+            'page' => $page,
+            'primaryButton' => $this->createButton('/admin/pages/create', $this->createTitle)
+        ]);
     }
 
     public function store()
     {
-        $exclude = ['name', 'slug', 'submit', '_token', 'is_active', 'created_at'];
-
-        $options = array_diff_key($_POST, array_flip($exclude));
-
-        $options = $this->handleFileUploads($options, 'pages');
-
-        $name = $_POST['name'];
-        $slug = !empty($_POST['slug'])
-            ? SlugHelper::generate($_POST['slug'])
-            : SlugHelper::generate($name);
-
-        $page = Page::create([
-            'name' => $_POST['name'],
-            'slug' => $slug,
-            'is_active' => $this->getCheckboxValue('is_active'),
-            'created_at' => $_POST['created_at'] ?? date('Y-m-d H:i:s'),
-            'options' => $options
-        ]);
-
+        $data = $this->prepareData($_POST);
+        $page = Page::create($data);
+        
         View::redirect('/admin/pages/edit/' . $page->id);
     }
 
     public function update($id)
     {
         $page = Page::findOrFail($id);
-        $postData = $_POST;
+        $data = $this->prepareData($_POST, $page);
 
-        $directFields = ['name', 'slug', 'is_active', 'created_at'];
-
-        $updateData = [
-            'name' => $postData['name'],
-            'slug' => !empty($postData['slug']) ? SlugHelper::generate($postData['slug']) : SlugHelper::generate($postData['name']),
-            'is_active' => $postData['is_active'] ?? 0,
-            'created_at' => $postData['created_at'] ?? $page->created_at,
-        ];
-
-        $options = $page->options->getArrayCopy();
-
-        $allPosted = array_diff_key($postData, array_flip(array_merge($directFields, ['submit', '_token'])));
-
-        $options = array_merge($options, $allPosted['options'] ?? [], array_diff_key($allPosted, ['options' => []]));
-
-        $options = $this->handleFileUploads($options, 'pages');
-
-        $page->update(array_merge($updateData, ['options' => $options]));
+        $page->update($data);
 
         View::redirect('/admin/pages/edit/' . $page->id);
     }
 
     public function delete()
     {
-        $id = json_decode(file_get_contents('php://input'), true)['id'] ?? null;
-
-        if (!is_numeric($id)) {
-            return $this->jsonResponse(false, 'Невалидно ID.');
-        }
-
-        Page::destroy($id);
-
-        return $this->jsonResponse(true, 'Изтрито успешно.');
+        return $this->deleteRecord(Page::class);
     }
 
     public function deleteImage($id)
@@ -137,5 +110,35 @@ class PageController extends BaseController
         }
 
         return json_encode(['success' => true]);
+    }
+
+    public function toggle()
+    {
+        $result = $this->toggleStatus(Page::class, 'is_active');
+
+        if (!$result['success']) {
+            return $this->jsonResponse(false, $result['message']);
+        }
+
+        $statusText = $result['new_status'] ? 'активирана' : 'деактивирана';
+        
+        return $this->jsonResponse(true, "Страницата беше {$statusText} успешно!");
+    }
+
+    private function prepareData(array $post, $model = null): array
+    {
+        $post = $this->normalizeCheckboxes($post);
+
+        $data = $this->buildUpdateData($post, $model, ['name', 'slug', 'is_active', 'created_at' => 'default_date']);
+
+        if (empty($data['slug'])) {
+            $data['slug'] = SlugHelper::generate($data['name']);
+        }
+
+        $currentOptions = $model ? $model->options->getArrayCopy() : [];
+        $data['options'] = $this->mergeOptions($post, $currentOptions);
+        $data['options'] = $this->handleFileUploads($data['options'], 'pages');
+
+        return $data;
     }
 }

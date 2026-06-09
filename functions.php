@@ -13,3 +13,10 @@ if (!function_exists('themes_path')) {
         return __DIR__ . '/themes/' . $path;
     }
 }
+
+if (!function_exists('plugins_path')) {
+    function plugins_path(string $path = ''): string
+    {
+        return __DIR__ . '/plugins/' . ltrim($path, '/');
+    }
+}

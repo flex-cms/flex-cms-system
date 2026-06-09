@@ -20,6 +20,7 @@ class Page extends Model
 
     protected $casts = [
         'options' => AsArrayObject::class,
+        'is_active' => 'boolean',
     ];
 
     public function hasImage(): bool

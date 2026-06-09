@@ -4,11 +4,14 @@ namespace Flex\Core\Controllers;
 
 use Flex\Core\Helpers\Str;
 use Flex\Core\Routing\View;
+use Flex\Core\Traits\CrudHelper;
 use Flex\Models\Role;
 use Flex\Models\Permission;
 
 class RoleController extends BaseController
 {
+    use CrudHelper;
+    
     public function index()
     {
         $query = Role::orderBy('name', 'asc');
@@ -97,7 +100,15 @@ class RoleController extends BaseController
 
     public function toggle()
     {
-        $this->handleToggleStatus(Role::class, 'is_active');
+        $result = $this->toggleStatus(Role::class, 'is_active');
+
+        if (!$result['success']) {
+            return $this->jsonResponse(false, $result['message']);
+        }
+
+        $statusText = $result['new_status'] ? 'активирана' : 'деактивирана';
+        
+        return $this->jsonResponse(true, "Ролята беше {$statusText} успешно!");
     }
 
     private function getRoleDataFromRequest(): array

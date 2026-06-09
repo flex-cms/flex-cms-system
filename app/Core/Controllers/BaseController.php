@@ -3,43 +3,22 @@
 namespace Flex\Core\Controllers;
 
 use Flex\Core\Routing\View;
-use Flex\Core\Services\ThemeService;
 
 abstract class BaseController
 {
-    protected function handleToggleStatus(string $modelClass, string $statusField = 'is_active'): void
+    protected function renderAdmin(string $view, array $data = [])
     {
-        $jsonInput = file_get_contents('php://input');
-        $data = json_decode($jsonInput, true);
+        $viewName = '/admin/' . $view;
+        $this->render(View::make($viewName, $data, 'admin'));
+    }
 
-        $id = $data['id'] ?? null;
-
-        if (!$id) {
-            $this->json(['success' => false, 'message' => 'Невалидно или липсващо ID.'], 400);
-        }
-
-        if (!class_exists($modelClass)) {
-            $this->json(['success' => false, 'message' => 'Системна грешка: Моделът не съществува.'], 500);
-        }
-
-        $item = $modelClass::find($id);
-
-        if (!$item) {
-            $this->json(['success' => false, 'message' => 'Елементът не беше намерен.'], 404);
-        }
-
-        try {
-            $item->{$statusField} = $item->{$statusField} ? 0 : 1;
-            $item->save();
-
-            $this->json([
-                'success' => true,
-                'message' => 'Статусът беше променен успешно.',
-                'new_status' => (bool) $item->{$statusField}
-            ]);
-        } catch (\Exception $e) {
-            $this->json(['success' => false, 'message' => 'Възникна грешка при записа в базата данни.'], 500);
-        }
+    protected function createButton(string $url, string $label = 'Добави')
+    {
+        return [
+            'label' => $label,
+            'url' => $url,
+            'icon' => 'fa-plus'
+        ];
     }
 
     public function callAction(string $method, array $parameters = [])
@@ -99,40 +78,5 @@ abstract class BaseController
         ]);
 
         exit;
-    }
-}
-
-trait HandlesMedia
-{
-    public function handleFileUploads(array $currentOptions, string $folder = 'uploads'): array
-    {
-        $manager = new \Flex\Core\Services\MediaManager();
-        $options = $currentOptions;
-
-        if (!empty($_FILES)) {
-            foreach ($_FILES as $key => $file) {
-                if (isset($file['error']) && $file['error'] === UPLOAD_ERR_OK) {
-
-                    if (!empty($options[$key])) {
-                        $manager->remove($options[$key]);
-                    }
-
-                    $path = $manager->upload($file, $folder);
-                    if ($path) {
-                        $options[$key] = $path;
-                    }
-                }
-            }
-        }
-        return $options;
-    }
-}
-
-trait RequestHelper
-{
-    public function getCheckboxValue(string $key, array|null $data = null): int
-    {
-        $data = $data ?? $_POST;
-        return isset($data[$key]) ? 1 : 0;
     }
 }

@@ -17,18 +17,68 @@ class Table
         return new self($items);
     }
 
-    public function column(string $label, callable $renderer, ?string $sortKey = null, string $align = 'left'): self
+    public static function statusToggle(int|string $id, string $deactiveLabel = 'Деактивиране', string $activeLabel = 'Активиране', string $clickAction = 'toggleStatus'): string
     {
+        ob_start();
+        ?>
+        <template x-if="statuses[<?= $id ?>]">
+            <?= self::actionButton(
+                click: "{$clickAction}({$id})",
+                label: $deactiveLabel,
+                icon: 'fa-solid fa-power-off',
+                type: 'danger',
+                extraAttributes: ":disabled=\"loading[{$id}]\""
+            ) ?>
+        </template>
+        <template x-if="!statuses[<?= $id ?>]">
+            <?= self::actionButton(
+                click: "{$clickAction}({$id})",
+                label: $activeLabel,
+                icon: 'fa-solid fa-play',
+                type: 'success',
+                extraAttributes: ":disabled=\"loading[{$id}]\""
+            ) ?>
+        </template>
+        <?php
+        return ob_get_clean();
+    }
+
+    public function column(
+        string $label, 
+        callable $renderer, 
+        ?string $sortKey = null, 
+        string $align = 'left', 
+        ?callable $linkUrl = null,
+        string $target = '_self'
+    ): self {
         $validAlignments = ['left', 'center', 'right'];
-        if (!in_array($align, $validAlignments)) {
+        if (!in_array($align, $validAlignments, true)) {
             $align = 'left';
         }
 
+        $wrappedRenderer = function ($row) use ($renderer, $linkUrl, $target) {
+            $value = $renderer($row);
+
+            if ($linkUrl) {
+                $url = $linkUrl($row);
+                
+                ob_start();
+                ?>
+                <a href="<?= htmlspecialchars($url) ?>" target="<?= htmlspecialchars($target) ?>" class="text-primary hover:underline">
+                    <?= $value ?>
+                </a>
+                <?php
+                return ob_get_clean();
+            }
+
+            return $value;
+        };
+
         $this->columns[] = [
-            'label' => $label,
-            'renderer' => $renderer,
-            'sortKey' => $sortKey,
-            'align' => $align
+            'label'    => $label,
+            'renderer' => $wrappedRenderer,
+            'sortKey'  => $sortKey,
+            'align'    => $align,
         ];
         
         return $this;
@@ -137,11 +187,14 @@ class Table
         if ($value === '') {
             $value = $_GET[$name] ?? '';
         }
+        
         ?>
         <div class="relative w-full max-w-full sm:max-w-xs">
-            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-            <input type="text" name="<?= $name ?>" value="<?= htmlspecialchars($value) ?>" placeholder="<?= $placeholder ?>"
-                class="w-full pl-10 pr-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all dark:text-white">
+            <?php Form::input($name, '', [
+                'value'    => $value,
+                'placeholder' => $placeholder,
+                'icon' => 'fa-magnifying-glass'
+            ]); ?>
         </div>
         <?php
     }
@@ -244,6 +297,11 @@ class Table
         $item = null, 
         string $align = 'right'
     ): string {
+        $align = strtolower($align) === 'left' ? 'left' : 'right';
+        
+        $anchorPlacement = ($align === 'left') ? 'bottom-start' : 'bottom-end';
+        $alignClass = ($align === 'left') ? 'left-0' : 'right-0';
+
         ob_start(); ?>
         <div x-data="{ open: false }" @click.away="open = false" class="relative inline-block text-left">
             <button @click="open = !open" type="button" 
@@ -252,14 +310,14 @@ class Table
             </button>
 
             <div x-show="open" 
-                x-anchor.bottom-end="$el.parentElement"
+                x-anchor.<?= $anchorPlacement ?>="$el.parentElement"
                 x-transition:enter="transition ease-out duration-100"
                 x-transition:enter-start="transform opacity-0 scale-95"
                 x-transition:enter-end="transform opacity-100 scale-100"
                 x-transition:leave="transition ease-in duration-75"
                 x-transition:leave-start="transform opacity-100 scale-100"
                 x-transition:leave-end="transform opacity-0 scale-95"
-                class="fixed z-100 mt-2 py-1 w-44 rounded-md bg-white dark:bg-slate-800 shadow-lg border border-slate-200 dark:border-slate-700 focus:outline-none text-left right-0" 
+                class="fixed z-100 mt-2 py-1 w-44 rounded-md bg-white dark:bg-slate-800 shadow-lg border border-slate-200 dark:border-slate-700 focus:outline-none text-left <?= $alignClass ?>" 
                 style="display: none;"
                 @click="open = false"> 
                 <div class="px-1.5 space-y-0.5">
@@ -321,7 +379,7 @@ class Table
         
         ob_start(); ?>
         <button type="button" @click="<?= $click ?>" <?= $extraAttributes ?>
-            class="flex w-full items-center px-3 py-2 text-sm rounded-md transition-colors disabled:opacity-50 <?= $style['btn'] ?>">
+            class="flex w-full items-center px-3 py-2 text-sm border border-slate-200 rounded-md transition-colors disabled:opacity-50 <?= $style['btn'] ?>">
             <i class="<?= $icon ?> <?= $style['icon'] ?> mr-2 w-4 text-center"></i> <?= $label ?>
         </button>
         <?php

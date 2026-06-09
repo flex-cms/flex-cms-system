@@ -4,6 +4,7 @@ namespace Flex\Core\Plugins;
 
 use Flex\Core\Events\EventManager;
 use Flex\Core\Routing\Router;
+use Flex\Core\Services\PluginDatabaseService;
 
 class PluginManager
 {
@@ -39,13 +40,29 @@ class PluginManager
 
     public static function activate(string $slug): void
     {
-        $pluginsPath = dirname(__DIR__, 3) . '/plugins';
-        $pluginPath = $pluginsPath . '/' . $slug;
+        $pluginsPath = rtrim(plugins_path(), '/') . '/';
+        $pluginPath = $pluginsPath . $slug;
 
         $loader = require dirname(__DIR__, 3) . '/vendor/autoload.php';
         $namespacePart = str_replace(' ', '', ucwords(str_replace('-', ' ', $slug)));
         $fullNamespace = "Plugins\\" . $namespacePart . "\\";
         $loader->addPsr4($fullNamespace, $pluginPath . '/src');
+
+        $version = '1.0.0';
+        $manifestPath = $pluginPath . '/plugin.json';
+        if (file_exists($manifestPath)) {
+            $manifest = json_decode(file_get_contents($manifestPath), true);
+            if (isset($manifest['version'])) {
+                $version = $manifest['version'];
+            }
+        }
+
+        $sqlPath = $pluginPath . "/database/migrations/{$version}.sql";
+
+        if (file_exists($sqlPath)) {
+            $dbService = new PluginDatabaseService();
+            $dbService->executeSqlFile($slug, $sqlPath);
+        }
 
         $installerClass = $fullNamespace . "Installer";
 
@@ -160,5 +177,49 @@ class PluginManager
         }
 
         return [];
+    }
+
+    public function deletePlugin(string $slug, bool $dropTables = false): void
+    {
+        $pluginsPath = rtrim($this->pluginsPath, '/\\') . DIRECTORY_SEPARATOR;
+        $pluginPath = $pluginsPath . $slug;
+
+        $pluginPath = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $pluginPath);
+
+        if ($dropTables) {
+            $uninstallSqlPath = $pluginPath . DIRECTORY_SEPARATOR . 'database' . DIRECTORY_SEPARATOR . 'uninstall.sql';
+
+            if (file_exists($uninstallSqlPath)) {
+                $dbService = new PluginDatabaseService();
+                $dbService->executeSqlFile($slug, $uninstallSqlPath);
+            }
+        }
+
+        $this->initSinglePlugin($slug);
+
+        $this->events->trigger("plugin.deleted.{$slug}");
+
+        if (is_dir($pluginPath)) {
+            $this->deleteDirectory($pluginPath);
+        }
+    }
+
+    private function deleteDirectory(string $dir): void
+    {
+        $dir = rtrim(str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $dir), DIRECTORY_SEPARATOR);
+
+        if (!is_dir($dir)) {
+            return;
+        }
+
+        if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+            pclose(popen('cmd.exe /c rd /s /q ' . escapeshellarg($dir), 'r'));
+        } else {
+            pclose(popen('rm -rf ' . escapeshellarg($dir), 'r'));
+        }
+
+        if (is_dir($dir)) {
+            usleep(100000);
+        }
     }
 }

@@ -1,7 +1,6 @@
 import axios from "axios";
 
 export default (config = {}) => ({
-    // Първоначални настройки с дефолтни стойности
     toggleUrl: config.toggleUrl || null,
     deleteUrl: config.deleteUrl || null,
     statuses: config.initialStatuses || {},
@@ -39,10 +38,15 @@ export default (config = {}) => ({
 
         if (!confirm(this.confirmDeleteMessage)) return;
 
+        const dropTables = confirm("Желаете ли да премахнете и таблиците, свързани с този плъгин от базата данни?");
+
         this.loading[id] = true;
 
         try {
-            const res = await axios.post(this.deleteUrl, { id: id });
+            const res = await axios.post(this.deleteUrl, { 
+                id: id, 
+                dropTables: dropTables 
+            });
 
             if (res.data && res.data.success) {
                 const row = this.$el.closest("tr");
@@ -55,8 +59,7 @@ export default (config = {}) => ({
                     setTimeout(() => {
                         row.remove();
 
-                        const remainingRows =
-                            tbody.querySelectorAll("tr").length;
+                        const remainingRows = tbody.querySelectorAll("tr").length;
 
                         if (remainingRows === 0) {
                             window.location.reload();

@@ -1,60 +1,76 @@
 <?php
 
 use Flex\Core\Helpers\DateHelper;
+use Flex\Core\UI\Form;
 use Flex\Core\UI\Table;
 
 $pages = $pages ?? [];
+
+$initialStatuses = [];
+foreach ($pages as $page) {
+    if (isset($page->id)) {
+        $initialStatuses[$page->id] = (bool) $page->is_active;
+    }
+}
+
+$tableManagerConfig = [
+    'toggleUrl' => '/admin/pages/toggle',
+    'deleteUrl' => '/admin/pages/delete',
+    'initialStatuses' => $initialStatuses,
+    'confirmDeleteMessage' => 'Сигурни ли сте, че искате да изтриете тази страница?',
+];
 ?>
 
-<div x-data="tableManager({
-    deleteUrl: '/admin/pages/delete',
-    confirmDeleteMessage: 'Сигурни ли сте, че искате да изтриете тази страница?'
-})">
+<div x-data='tableManager(<?= json_encode($tableManagerConfig, JSON_UNESCAPED_UNICODE) ?>)'>
     <?php Table::header(slot: function () { ?>
         <?php Table::search('Търсене на страница...'); ?>
+
+        <?php $statusOptions = [
+            '' => 'По подразбиране',
+            'active' => 'Активни',
+            'inactive' => 'Неактивни',
+            'deleted' => 'В кошчето'
+        ];
+
+        Form::customSelect('status', '', $statusOptions, $_GET['status'] ?? ''); ?>
+
         <?php Table::submit('Приложи'); ?>
         <?php Table::reset('/admin/pages'); ?>
     <?php }); ?>
 
     <?php Table::create($pages)
-        ->column('Име на страница', function ($page) {
-            return '<div class="font-medium text-slate-900 dark:text-white">' . htmlspecialchars($page->name) . '</div>';
-        }, 'name')
+        ->column('Име на страница', fn($page) => $page->name, 'name', 'left', fn($page) => '/admin/pages/edit/' . $page->id)
+        ->column('Slug', fn($page) => Table::statusBadge('/' . $page->slug, 'code'), 'slug', 'left', fn($page) => '/' . $page->slug, '__blank')
+        ->column('Създадена', fn($page) => DateHelper::format($page->created_at, true), 'created_at')
 
-        ->column('Slug', function ($page) {
-            return Table::statusBadge('/' . $page->slug, 'code');
-        }, 'slug')
-
-        ->column('Създадена', function ($page) {
-            return '<span class="text-sm text-slate-500">' . DateHelper::format($page->created_at, true) . '</span>';
-        })
+        ->column('Статус', function ($page) {
+        return Table::statusBadge('Активирана|Деактивирана', 'success', $page->id ?? null);
+    }, 'is_active')
 
         ->column('Действия', function ($page) {
-            if (!isset($page->id)) return '';
-            
-            ob_start(); ?>
-            <div class="flex justify-end">
-                <?= Table::actionsMenu(slot: function ($p) {
-                    ob_start(); ?>
+        if (!isset($page->id))
+            return '';
 
-                    <?= Table::actionLink(
-                        "/admin/pages/edit/{$p->id}",
-                        'Редактирай',
-                        'fa-solid fa-pen-to-square'
-                    ) ?>
+        return Table::actionsMenu(slot: function ($p) {
+            ?>
+            <?= Table::actionLink(
+                "/admin/pages/edit/{$p->id}",
+                'Редактирай',
+                'fa-solid fa-pen-to-square'
+            ) ?>
 
-                    <?= Table::actionButton(
-                        click: "deleteItem({$p->id})",
-                        label: 'Изтрий',
-                        icon: 'fa-solid fa-trash-can',
-                        type: 'delete',
-                        extraAttributes: ":disabled=\"loading[{$p->id}]\""
-                    ) ?>
+            <?= Table::statusToggle($p->id) ?>
 
-                    <?php return ob_get_clean();
-                }, item: $page); ?>
-            </div>
-            <?php return ob_get_clean();
-        }, null, 'right')
+            <?= Table::actionButton(
+                click: "deleteItem({$p->id})",
+                label: 'Изтриване',
+                icon: 'fa-solid fa-trash-can',
+                type: 'delete',
+                extraAttributes: ":disabled=\"loading[{$p->id}]\""
+            ) ?>
+            <?php
+        }, item: $page);
+
+    }, null, 'right')
         ->render('mt-5'); ?>
 </div>

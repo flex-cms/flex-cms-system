@@ -77,6 +77,7 @@ $routes = [
     ['GET', '/admin/pages/edit/{id}', [PageController::class, 'edit'], [AuthMiddleware::class, AdminMiddleware::class]],
     ['POST', '/admin/pages/delete', [PageController::class, 'delete'], [AuthMiddleware::class, AdminMiddleware::class]],
     ['POST', '/admin/pages/update/{id}', [PageController::class, 'update'], [AuthMiddleware::class, AdminMiddleware::class]],
+    ['POST', '/admin/pages/toggle', [PageController::class, 'toggle'], [AuthMiddleware::class, AdminMiddleware::class]],
 
     // Email Templates
     ['GET', '/admin/email-templates', [EmailTemplateController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]],
