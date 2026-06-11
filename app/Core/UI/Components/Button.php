@@ -8,7 +8,10 @@ class Button
     protected string $type;
     protected string $attributes = '';
     protected string $customClasses = '';
+    protected string $addedClasses = '';
     protected string $icon = '';
+    protected string $size = 'md';
+    protected string $fontSize = '';
     protected array $watchConfig = [];
 
     public function __construct(string $text, string $type = 'submit')
@@ -46,6 +49,41 @@ class Button
         return $this;
     }
 
+    public function addClasses(string $classes): self
+    {
+        if (!empty($this->addedClasses)) {
+            $this->addedClasses .= ' ';
+        }
+        $this->addedClasses .= $classes;
+        return $this;
+    }
+
+    public function variant(string $variant): self
+    {
+        switch ($variant) {
+            case 'secondary':
+            case 'light':
+                $this->customClasses = "bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-600 font-medium text-slate-700 dark:text-slate-200 transition-all inline-flex items-center justify-center gap-2";
+                break;
+            default:
+                $this->customClasses = "group relative inline-flex justify-center border border-transparent font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800 transition-all items-center gap-2";
+                break;
+        }
+        return $this;
+    }
+
+    public function size(string $size): self
+    {
+        $this->size = $size;
+        return $this;
+    }
+
+    public function fontSize(string $size): self
+    {
+        $this->fontSize = $size;
+        return $this;
+    }
+
     public function watch(string $variable, string $condition, string $activeIcon, string $activeText): self
     {
         $this->watchConfig = [
@@ -71,7 +109,33 @@ class Button
 
     public function render(): string
     {
-        $classes = $this->customClasses ?: "group relative w-full flex justify-center py-3 px-4 border border-transparent font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800 transition-all";
+        $baseClasses = $this->customClasses ?: "group relative inline-flex justify-center border border-transparent font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800 transition-all items-center gap-2";
+
+        $sizeClasses = '';
+        switch ($this->size) {
+            case 'xs':
+                $sizeClasses = ' py-1.5 px-2.5 text-xs rounded';
+                break;
+            case 'sm':
+                $sizeClasses = ' py-2 px-3 text-xs rounded-md';
+                break;
+            case 'lg':
+                $sizeClasses = ' py-3.5 px-6 text-base rounded-lg';
+                break;
+            case 'xl':
+                $sizeClasses = ' py-4 px-8 text-lg rounded-xl';
+                break;
+            case 'md':
+            default:
+                $sizeClasses = ' py-2.5 px-4 text-sm rounded-md h-10';
+                break;
+        }
+
+        $classes = trim($baseClasses . $sizeClasses);
+
+        if (!empty($this->addedClasses)) {
+            $classes .= ' ' . $this->addedClasses;
+        }
 
         if (!empty($this->watchConfig)) {
             $defaultIcon = $this->icon;
@@ -99,7 +163,12 @@ class Button
             $iconHtml = '<i class="' . $this->icon . ' mr-2"></i>';
         }
 
-        return '<button type="' . $this->type . '" class="' . $classes . '"' . $this->attributes . '>
+        $inlineStyle = '';
+        if (!empty($this->fontSize)) {
+            $inlineStyle = ' style="font-size: ' . $this->fontSize . ';"';
+        }
+
+        return '<button type="' . $this->type . '" class="' . trim($classes) . '"' . $this->attributes . $inlineStyle . '>
             ' . $iconHtml . '<span>' . $this->text . '</span>
         </button>';
     }

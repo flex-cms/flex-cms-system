@@ -37,7 +37,7 @@ class User extends Model
     protected function password(): Attribute
     {
         return Attribute::make(
-            set: fn(string $value) => password_hash($value, PASSWORD_BCRYPT)
+            set: fn(?string $value) => !empty($value) ? password_hash($value, PASSWORD_BCRYPT) : ($this->attributes['password'] ?? null)
         );
     }
 

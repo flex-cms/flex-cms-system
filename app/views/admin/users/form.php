@@ -1,16 +1,21 @@
 <?php
 
+use Flex\Core\Routing\View;
 use Flex\Core\UI\Form;
 
 $user = $user ?? null;
 $allRoles = $allRoles ?? [];
 $assignedRoleIds = $assignedRoleIds ?? [];
+
+$isEdit = isset($user->id);
+$action = $isEdit ? '/admin/users/update/' . $user->id : '/admin/users/create';
 ?>
 
-<form action="<?= $user ? '/admin/users/update/' . $user->id : '/admin/users/create' ?>" method="POST"
-    class="max-w-5xl">
-    <?php Form::section(function () use ($user) { ?>
+<?php Form::create(['action' => $action, 'method' => 'POST', 'class' => 'max-w-5xl']) ?>
 
+    <?php Form::heading('Основна информация'); ?>
+
+    <?php Form::section(title: 'Основни данни за потребителя', slot: function () use ($user) { ?>
         <?php Form::row(function () use ($user) { ?>
             <?php Form::input('fullname', 'Пълно име', [
                 'value' => $user?->fullname,
@@ -22,29 +27,24 @@ $assignedRoleIds = $assignedRoleIds ?? [];
                 'value' => $user?->email,
                 'placeholder' => 'ivan@example.com',
                 'required' => true,
-                'disabled' => true,
+                'readonly' => true,
                 'type' => 'email'
             ]); ?>
         <?php }); ?>
+    <?php }); ?>
 
-    <?php }, 'Основни данни за потребителя'); ?>
+    <?php Form::section(title: 'Сигурност', slot: function () use ($user) { ?>
+        <?php View::component('password-strength', ['user' => $user], 'admin/users/components'); ?>
+    <?php }); ?>
 
-    <?php Form::section(function () use ($user) { ?>
-        <?php Form::input('password', 'Парола', [
-            'value' => '',
-            'placeholder' => $user ? 'Оставете празно, за да запазите текущата' : 'Въведете парола',
-            'type' => 'password'
-        ]); ?>
-    <?php }, 'Сигурност'); ?>
-
-    <?php Form::section(function () use ($user) { ?>
-        <?php Form::toggle('is_active', 'Активна роля', [
+    <?php Form::section(title: 'Статус на потребителя', slot: function () use ($user) { ?>
+        <?php Form::toggle('is_active', 'Активен потребител', [
             'value' => $user?->is_active ?? true,
-            'description' => 'Ако деактивирате ролята, потребителите с тази роля няма да могат да използват свързаните с нея права.'
+            'description' => 'Ако деактивирате потребителя, той няма да има достъп до системата.'
         ]); ?>
-    <?php }, 'Статус на потребителя'); ?>
+    <?php }); ?>
 
-    <?php Form::section(function () use ($allRoles, $assignedRoleIds) { ?>
+    <?php Form::section(title: 'Роли на потребителя', slot: function () use ($allRoles, $assignedRoleIds) { ?>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <?php foreach ($allRoles as $role): ?>
                 <div class="p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg">
@@ -55,7 +55,8 @@ $assignedRoleIds = $assignedRoleIds ?? [];
                 </div>
             <?php endforeach; ?>
         </div>
-    <?php }, 'Роли на потребителя'); ?>
+    <?php }); ?>
 
     <?php Form::submit($user ? 'Запазване' : 'Създаване', 'fa-save'); ?>
-</form>
+
+<?php Form::close(); ?>

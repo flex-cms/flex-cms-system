@@ -2,182 +2,175 @@
 
 namespace Flex\Core\Controllers;
 
-use Flex\Core\Routing\View;
+use Flex\Core\Filters\Shared\StatusFilter;
+use Flex\Core\Traits\CrudHelper;
+use Flex\Core\Traits\HandlesTableFilters;
+use Flex\Core\Traits\RequestHelper;
 use Flex\Models\User;
 use Flex\Models\Role;
-use Flex\Models\Permission;
+use Flex\Core\Routing\View;
+use Flex\Core\Controllers\BaseController;
 
 class UserController extends BaseController
 {
+    use HandlesTableFilters, RequestHelper, CrudHelper;
+
+    protected string $indexTitle;
+    protected string $createTitle;
+    protected string $editTitle;
+    protected string $createBtn;
+    protected string $deleteSuccessMessage;
+    protected string $deleteErrorMessage;
+
+    public function __construct()
+    {
+        $this->indexTitle = 'Управление на потребители';
+        $this->createTitle = 'Нов потребител';
+        $this->editTitle = 'Редактиране на потребител';
+        $this->createBtn = 'Нов потребител';
+        $this->deleteSuccessMessage = 'Потребителят е изтрит успешно.';
+        $this->deleteErrorMessage = 'Този потребител не съществува.';
+    }
+
     public function index()
     {
-        $currentTab = $_GET['tab'] ?? 'users';
+        $query = User::with('roles');
 
-        $usersQuery = User::with('roles');
-
+        // Ръчно прилагене на търсенето и филтрите (или чрез вградените методи)
         if (!empty($_GET['search'])) {
             $search = $_GET['search'];
-            $usersQuery->where(function ($query) use ($search) {
-                $query->where('username', 'like', "%{$search}%")
+            $query->where(function ($q) use ($search) {
+                $q->where('fullname', 'like', "%{$search}%")
                     ->orWhere('email', 'like', "%{$search}%");
             });
         }
 
         if (!empty($_GET['role'])) {
-            $usersQuery->whereHas('roles', function ($query) {
-                $query->where('slug', $_GET['role']);
+            $query->whereHas('roles', function ($q) {
+                $q->where('slug', $_GET['role']);
             });
         }
 
         if (!empty($_GET['status'])) {
             $status = $_GET['status'];
             if ($status === 'active') {
-                $usersQuery->where('is_active', true);
+                $query->where('is_active', true);
             } elseif ($status === 'inactive') {
-                $usersQuery->where('is_active', false);
+                $query->where('is_active', false);
             }
         }
 
         $sort = $_GET['sort'] ?? 'created_at';
         $direction = $_GET['direction'] ?? 'desc';
 
-        $validSorts = ['username', 'email', 'role', 'created_at'];
+        $validSorts = ['fullname', 'email', 'role', 'created_at'];
         if (in_array($sort, $validSorts)) {
             if ($sort === 'role') {
-                $usersQuery->join('user_roles', 'users.id', '=', 'user_roles.user_id')
+                $query->join('user_roles', 'users.id', '=', 'user_roles.user_id')
                     ->join('roles', 'user_roles.role_id', '=', 'roles.id')
                     ->orderBy('roles.name', $direction)
                     ->select('users.*');
             } else {
-                $usersQuery->orderBy($sort, $direction);
+                $query->orderBy($sort, $direction);
             }
         }
 
-        $users = $usersQuery->get();
+        $users = $query->get();
         $roles = Role::orderBy('name', 'asc')->get();
-        $permissions = Permission::orderBy('module', 'asc')->get();
 
-        $config = $this->getTabConfig($currentTab);
-
-        $this->render(View::make('admin/users/index', [
-            'title' => $config['title'],
+        $this->renderAdmin('users/index', [
+            'title' => $this->indexTitle,
             'users' => $users,
             'roles' => $roles,
-            'permissions' => $permissions,
-            'currentTab' => $currentTab,
-            'primaryButton' => $config['button']
-        ], 'admin'));
+            'primaryButton' => $this->createButton('/admin/users/create', $this->createBtn)
+        ]);
     }
 
     public function create()
     {
-        $allRoles = Role::orderBy('name', 'asc')->get();
+        $roles = Role::orderBy('name', 'asc')->get();
 
-        $this->render(View::make('admin/users/create', [
-            'title' => 'Създаване на нов потребител',
-            'user' => null,
-            'allRoles' => $allRoles,
+        $this->renderAdmin('users/form', [
+            'title' => $this->createTitle,
+            'user' => new User(),
+            'allRoles' => $roles,
             'assignedRoleIds' => [],
-            'backUrl' => '/admin/users/index'
-        ], 'admin'));
-    }
-
-    public function store()
-    {
-        $data = $this->getUserDataFromRequest();
-        $user = User::create($data);
-
-        if (isset($_POST['roles'])) {
-            $user->roles()->sync($_POST['roles']);
-        }
-
-        $rolesInput = $_POST['roles'] ?? [];
-        $roleIds = array_keys($rolesInput);
-
-        $user->roles()->sync($roleIds);
-
-        View::redirect('/admin/users/edit/' . $user->id);
+            'primaryButton' => $this->createButton('/admin/users/create', $this->createBtn)
+        ]);
     }
 
     public function edit($id)
     {
-        $user = User::findOrFail($id);
+        $user = User::with('roles')->findOrFail($id);
+        $roles = Role::orderBy('name', 'asc')->get();
+        $assignedRoleIds = $user->roles->pluck('id')->toArray();
 
-        $allRoles = Role::orderBy('name', 'asc')->get();
-
-        $assignedRoleIds = $user->roles()->pluck('roles.id')->toArray();
-
-        $this->render(View::make('admin/users/form', [
-            'title' => 'Редактиране на потребител',
+        $this->renderAdmin('users/form', [
+            'title' => $this->editTitle,
             'user' => $user,
-            'allRoles' => $allRoles,
+            'allRoles' => $roles,
             'assignedRoleIds' => $assignedRoleIds,
-            'backUrl' => '/admin/users/index'
-        ], 'admin'));
+            'primaryButton' => $this->createButton('/admin/users/create', $this->createBtn)
+        ]);
+    }
+
+    public function store()
+    {
+        $data = $this->prepareData($_POST);
+        $user = User::create($data);
+
+        if (isset($_POST['roles']) && is_array($_POST['roles'])) {
+            $user->roles()->sync(array_keys($_POST['roles']));
+        }
+
+        View::redirect('/admin/users/edit/' . $user->id);
     }
 
     public function update($id)
     {
         $user = User::findOrFail($id);
-        $data = $this->getUserDataFromRequest();
-
-        if (empty($data['password'])) {
-            unset($data['password']);
-        } else {
-            $data['password'] = password_hash($data['password'], PASSWORD_DEFAULT);
-        }
+        $data = $this->prepareData($_POST, $user);
 
         $user->update($data);
 
-        $rolesInput = $_POST['roles'] ?? [];
-        $roleIds = array_keys($rolesInput);
+        if (isset($_POST['roles']) && is_array($_POST['roles'])) {
+            $activeRoles = array_keys(array_filter($_POST['roles'], function ($val) {
+                return (string) $val === '1' || $val === 'on' || $val === true;
+            }));
+            $user->roles()->sync($activeRoles);
+        } else {
+            $user->roles()->sync([]);
+        }
 
-        $user->roles()->sync($roleIds);
-
-        View::redirect('/admin/users/edit/' . $id);
+        View::redirect('/admin/users/edit/' . $user->id);
     }
 
-    private function getUserDataFromRequest(): array
+    public function delete()
     {
-        return [
-            'fullname' => $_POST['fullname'] ?? '',
-            'password' => $_POST['password'] ?? '',
-            'is_active' => isset($_POST['is_active']) ? 1 : 0
-        ];
+        return $this->deleteRecord(User::class);
     }
 
     public function toggle()
     {
-        $this->handleToggleStatus(User::class, 'is_active');
+        $result = $this->toggleStatus(User::class, 'is_active');
+
+        if (!$result['success']) {
+            return $this->jsonResponse(false, $result['message']);
+        }
+
+        $statusText = $result['new_status'] ? 'активиран' : 'деактивиран';
+
+        return $this->jsonResponse(true, "Потребителят беше {$statusText} успешно!");
     }
 
-    private function getTabConfig(string $tab): array
+    private function prepareData(array $post, $model = null): array
     {
-        return match ($tab) {
-            'roles' => [
-                'title' => 'Роли и права',
-                'button' => [
-                    'label' => 'Нова роля',
-                    'url' => '/admin/users/roles/create',
-                    'icon' => 'fa-plus'
-                ]
-            ],
-            'permissions' => [
-                'title' => 'Системни разрешения',
-                'button' => [
-                    'label' => 'Ново разрешение',
-                    'url' => '/admin/permission/create',
-                    'icon' => 'fa-plus'
-                ]
-            ],
-            default => [
-                'title' => 'Потребители',
-                'button' => [
-                    'label' => 'Нов потребител',
-                    'url' => '/admin/users/create',
-                    'icon' => 'fa-plus'
-                ]
-            ],
-        };
+        $post = $this->normalizeCheckboxes($post);
+
+        if (empty($post['password']) || empty($post['password_confirmation'])) {
+            unset($post['password']);
+        }
+
+        return $this->buildUpdateData($post, $model, ['fullname', 'email', 'password', 'is_active']);
     }
 }

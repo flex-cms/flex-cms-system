@@ -212,7 +212,6 @@ class Form
     public static function input(string $name, string $label, array $attrs = []): void
     {
         $value = $attrs['value'] ?? '';
-        $type = $attrs['type'] ?? 'text';
         $placeholder = $attrs['placeholder'] ?? '';
         $required = isset($attrs['required']) ? 'required' : '';
         $disabled = isset($attrs['disabled']) ? 'disabled' : '';
@@ -220,6 +219,23 @@ class Form
         $xModel = isset($attrs['x-model']) ? "x-model=\"{$attrs['x-model']}\"" : '';
         $customClass = $attrs['class'] ?? '';
         $icon = $attrs['icon'] ?? '';
+
+        $typeAttr = '';
+        if (isset($attrs['type'])) {
+            $typeAttr = 'type="' . $attrs['type'] . '"';
+        } elseif (isset($attrs[':type'])) {
+            $typeAttr = ':type="' . $attrs[':type'] . '"';
+        } else {
+            $typeAttr = 'type="text"';
+        }
+
+        $ignoredKeys = ['value', 'type', ':type', 'placeholder', 'required', 'disabled', 'extra', 'x-model', 'class', 'icon'];
+        $dynamicAttrs = '';
+        foreach ($attrs as $key => $val) {
+            if (!in_array($key, $ignoredKeys)) {
+                $dynamicAttrs .= " {$key}=\"{$val}\"";
+            }
+        }
 
         ?>
         <div>
@@ -231,8 +247,8 @@ class Form
                     <?= $label ?> <?= $required ? '<span class="text-rose-500">*</span>' : '' ?>
                 </label>
             <?php endif; ?>
-            <input type="<?= $type ?>" name="<?= $name ?>" id="<?= $name ?>" value="<?= htmlspecialchars($value) ?>"
-                placeholder="<?= $placeholder ?>" <?= $required ?> <?= $disabled ?> <?= $extra ?> <?= $xModel ?>
+            <input <?= $typeAttr ?> name="<?= $name ?>" id="<?= $name ?>" value="<?= htmlspecialchars($value) ?>"
+                placeholder="<?= $placeholder ?>" <?= $required ?> <?= $disabled ?> <?= $extra ?> <?= $xModel ?> <?= $dynamicAttrs ?>
                 class="<?= !empty($icon) ? 'pr-4 pl-9' : 'px-4' ?> w-full py-2.5 rounded-md border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 dark:focus:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-primary transition-all outline-none <?= $customClass ?>">
         </div>
         <?php

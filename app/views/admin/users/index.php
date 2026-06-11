@@ -1,5 +1,6 @@
 <?php
 
+use Flex\Core\UI\Form;
 use Flex\Core\UI\Table;
 
 $users = $users ?? [];
@@ -11,99 +12,85 @@ foreach ($users as $user) {
         $initialStatuses[$user->id] = (bool) $user->is_active;
     }
 }
+
+$tableManagerConfig = [
+    'toggleUrl' => '/admin/users/toggle',
+    'deleteUrl' => '/admin/users/delete',
+    'initialStatuses' => $initialStatuses,
+    'confirmDeleteMessage' => 'Сигурни ли сте, че искате да изтриете този потребител?',
+];
 ?>
 
-<div x-data="tableManager({
-    deleteUrl: '/admin/users/delete',
-    toggleUrl: '/admin/users/toggle',
-    initialStatuses: <?= htmlspecialchars(json_encode($initialStatuses), ENT_QUOTES, 'UTF-8') ?>,
-    confirmDeleteMessage: 'Сигурни ли сте, че искате да изтриете този потребител?'
-})">
+<div x-data='tableManager(<?= json_encode($tableManagerConfig, JSON_UNESCAPED_UNICODE) ?>)'>
     <?php Table::header(slot: function () use ($roles) { ?>
         <?php Table::search('Търсене на потребител...'); ?>
 
-        <?php $roleOptions = ['' => 'Всички роли'];
-
+        <?php 
+        $roleOptions = ['' => 'Всички роли'];
         if (!empty($roles)) {
             foreach ($roles as $role) {
                 $roleOptions[$role->slug] = $role->name;
             }
         }
-        Table::select('role', $roleOptions); ?>
+        Form::customSelect('role', '', $roleOptions, $_GET['role'] ?? ''); 
+        ?>
 
-        <?php $statusOptions = [
+        <?php 
+        $statusOptions = [
             '' => 'Всички статуси',
             'active' => 'Активни',
             'inactive' => 'Неактивни'
         ];
-        Table::select('status', $statusOptions); ?>
+        Form::customSelect('status', '', $statusOptions, $_GET['status'] ?? ''); 
+        ?>
 
         <?php Table::submit('Приложи'); ?>
         <?php Table::reset('/admin/users'); ?>
     <?php }); ?>
 
     <?php Table::create($users)
-        ->column('Потребител', fn($user) => Table::textCell($user->fullname ?? null), 'fullname')
-
+        ->column('Потребител', fn($user) => Table::textCell($user->fullname ?? null), 'fullname', 'left', fn($user) => '/admin/users/edit/' . $user->id)
+        
         ->column('Имейл', fn($user) => Table::textCell($user->email ?? null), 'email')
-
+        
         ->column('Роля', function ($user) {
             $userRoles = $user->roles;
             $roleName = $userRoles->isNotEmpty() ? $userRoles->first()->name : null;
-
             return Table::textCell($roleName, 'Няма');
         }, 'role')
-
+        
         ->column('Статус', function ($user) {
-            return Table::statusBadge('Активен', 'success', $user->id ?? null);
+            return Table::statusBadge('Активен|Неактивен', 'success', $user->id ?? null);
         }, 'is_active')
-
-        ->column('Действие', function ($user) {
-            if (!isset($user->id))
+        
+        ->column('Действия', function ($user) {
+            if (!isset($user->id)) {
                 return '';
-            ob_start(); ?>
-            <div class="flex justify-end">
-                <?= Table::actionsMenu(slot: function ($u) {
-                    ob_start(); ?>
+            }
 
-                    <?= Table::actionLink(
-                        "/admin/users/edit/{$u->id}",
-                        'Редактирай',
-                        'fa-solid fa-user-pen'
+            return Table::actionsMenu(slot: function ($u) {
+                ?>
+                <?= Table::actionLink(
+                    "/admin/users/edit/{$u->id}",
+                    'Редактирай',
+                    'fa-solid fa-user-pen'
+                ) ?>
+
+                <?php if ($u->id !== ($_SESSION['user_id'] ?? null)): ?>
+                    
+                    <?= Table::statusToggle($u->id, 'Деактивирай', 'Активирай') ?>
+
+                    <?= Table::actionButton(
+                        click: "deleteItem({$u->id})",
+                        label: 'Изтрий',
+                        icon: 'fa-solid fa-trash-can',
+                        type: 'delete',
+                        extraAttributes: ":disabled=\"typeof loading !== 'undefined' && loading[{$u->id}]\""
                     ) ?>
 
-                    <?php if ($u->id !== ($_SESSION['user_id'] ?? null)): ?>
-
-                        <?= Table::actionButton(
-                            click: "toggleStatus({$u->id})",
-                            label: 'Деактивирай',
-                            icon: 'fa-solid fa-power-off',
-                            type: 'danger',
-                            extraAttributes: "x-show=\"typeof statuses !== 'undefined' && statuses[{$u->id}]\" :disabled=\"typeof loading !== 'undefined' && loading[{$u->id}]\""
-                        ) ?>
-
-                        <?= Table::actionButton(
-                            click: "toggleStatus({$u->id})",
-                            label: 'Активирай',
-                            icon: 'fa-solid fa-play',
-                            type: 'success',
-                            extraAttributes: "x-show=\"typeof statuses !== 'undefined' && !statuses[{$u->id}]\" :disabled=\"typeof loading !== 'undefined' && loading[{$u->id}]\""
-                        ) ?>
-
-                        <?= Table::actionButton(
-                            click: "deleteItem({$u->id})",
-                            label: 'Изтрий',
-                            icon: 'fa-solid fa-trash-can',
-                            type: 'delete',
-                            extraAttributes: ":disabled=\"typeof loading !== 'undefined' && loading[{$u->id}]\""
-                        ) ?>
-
-                    <?php endif; ?>
-
-                    <?php return ob_get_clean();
-                }, item: $user) ?>
-            </div>
-        <?php return ob_get_clean();
-    }, null, 'right')
+                <?php endif; ?>
+                <?php
+            }, item: $user);
+        }, null, 'right')
         ->render('mt-5'); ?>
 </div>
