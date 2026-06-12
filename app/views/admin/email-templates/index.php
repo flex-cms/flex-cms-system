@@ -1,61 +1,69 @@
 <?php
+
+use Flex\Core\UI\Form;
 use Flex\Core\UI\Table;
 
 $templates = $templates ?? [];
+$categories = $categories ?? [];
+
 $categoryOptions = ['' => 'Всички категории'];
 foreach ($categories as $cat) {
     $categoryOptions[$cat] = $cat;
 }
+
+$tableManagerConfig = [
+    'deleteUrl' => '/admin/email-templates/delete',
+    'confirmDeleteMessage' => 'Сигурни ли сте, че искате да изтриете този шаблон?',
+];
 ?>
 
-<div x-data="tableManager({
-    deleteUrl: '/admin/email-templates/delete',
-    confirmDeleteMessage: 'Сигурни ли сте, че искате да изтриете този шаблон?'
-})">
-<?php Table::header(slot: function ($_ = null) use ($categoryOptions) { ?>
-    <?php Table::search('Търсене на шаблон...'); ?>
-    <?php Table::select('category', $categoryOptions, $_GET['category'] ?? ''); ?>
-    <?php Table::submit('Приложи'); ?>
-    <?php Table::reset('/admin/email-templates'); ?>
-<?php }); ?>
+<div x-data='tableManager(<?= json_encode($tableManagerConfig, JSON_UNESCAPED_UNICODE) ?>)'>
+    <?php Table::header(slot: function () use ($categoryOptions) { ?>
+        <?php Table::search('Търсене на шаблон...'); ?>
+        
+        <?php 
+        Form::customSelect('category', '', $categoryOptions, $_GET['category'] ?? ''); 
+        ?>
 
-<?php Table::create($templates)
-    ->column('Име на шаблон', function ($t, $_ = null) {
+        <?php Table::submit('Приложи'); ?>
+        <?php Table::reset('/admin/email-templates'); ?>
+    <?php }); ?>
+
+    <?php Table::create($templates)
+    ->column('Име на шаблон', function ($t) {
         return Table::textCell($t->name ?? '---');
-    }, 'name')
+    }, 'name', 'left', fn($t) => '/admin/email-templates/edit/' . $t->id)
 
-    ->column('Slug', function ($t, $_ = null) {
+    ->column('Slug', function ($t) {
         return Table::statusBadge($t->slug ?? '', 'code');
     }, 'slug')
 
-    ->column('Категория', function ($t, $_ = null) {
+    ->column('Категория', function ($t) {
         return Table::textCell($t->category ?? '---');
     }, 'category')
 
-    ->column('Действия', function ($t, $_ = null) {
-        if (!isset($t->id)) return '';
-        ob_start(); ?>
-            <div class="flex justify-end">
-                <?= Table::actionsMenu(slot: function ($t) {
-                    ob_start(); ?>
+    ->column('Действия', function ($t) {
+        if (!isset($t->id)) {
+            return '';
+        }
 
-                    <?= Table::actionLink(
-                        "/admin/email-templates/edit/{$t->id}",
-                        'Редактирай',
-                        'fa-solid fa-pen-to-square'
-                    ) ?>
+        return Table::actionsMenu(slot: function ($item) {
+            ?>
+            <?= Table::actionLink(
+                "/admin/email-templates/edit/{$item->id}",
+                'Редактирай',
+                'fa-solid fa-pen-to-square'
+            ) ?>
 
-                    <?= Table::actionButton(
-                        click: "deleteItem({$t->id})",
-                        label: 'Изтрий',
-                        icon: 'fa-solid fa-trash-can',
-                        type: 'delete'
-                    ) ?>
-
-                    <?php return ob_get_clean();
-                }, item: $t); ?>
-            </div>
-        <?php return ob_get_clean();
+            <?= Table::actionButton(
+                click: "deleteItem({$item->id})",
+                label: 'Изтрий',
+                icon: 'fa-solid fa-trash-can',
+                type: 'delete',
+                extraAttributes: ":disabled=\"typeof loading !== 'undefined' && loading[{$item->id}]\""
+            ) ?>
+            <?php
+        }, item: $t);
     }, null, 'right')
     ->render('mt-5'); ?>
 </div>

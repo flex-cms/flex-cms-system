@@ -81,12 +81,6 @@ class PermissionController extends BaseController
         View::redirect('/admin/users/permissions');
     }
 
-    public function delete($id)
-    {
-        Permission::findOrFail($id)->delete();
-        View::redirect('/admin/users/permissions');
-    }
-
     private function getPermissionData(): array
     {
         return [

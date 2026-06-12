@@ -1,5 +1,6 @@
 <?php
 
+use Flex\Core\UI\Form;
 use Flex\Core\UI\Table;
 
 $roles = $roles ?? [];
@@ -10,24 +11,26 @@ foreach ($roles as $role) {
         $initialStatuses[$role->id] = (bool) $role->is_active;
     }
 }
+
+$tableManagerConfig = [
+    'toggleUrl' => '/admin/users/roles/toggle',
+    'deleteUrl' => '/admin/users/roles/delete',
+    'initialStatuses' => $initialStatuses,
+    'confirmDeleteMessage' => 'Сигурни ли сте, че искате да изтриете тази роля?',
+];
 ?>
 
-<div x-data="tableManager({
-    deleteUrl: '/admin/users/roles/delete',
-    toggleUrl: '/admin/users/roles/toggle',
-    confirmDeleteMessage: 'Сигурни ли сте, че искате да изтриете тази роля?',
-    initialStatuses: <?= htmlspecialchars(json_encode($initialStatuses), ENT_QUOTES, 'UTF-8') ?>
-})">
+<div x-data='tableManager(<?= json_encode($tableManagerConfig, JSON_UNESCAPED_UNICODE) ?>)'>
     <?php Table::header(slot: function () { ?>
         <?php Table::search('Търсене на роля...'); ?>
 
-        <?php
+        <?php 
         $statusOptions = [
             '' => 'Всички статуси',
             'active' => 'Активни',
             'inactive' => 'Неактивни'
         ];
-        Table::select('status', $statusOptions);
+        Form::customSelect('status', '', $statusOptions, $_GET['status'] ?? ''); 
         ?>
 
         <?php Table::submit('Приложи'); ?>
@@ -36,35 +39,34 @@ foreach ($roles as $role) {
 
     <?php Table::create($roles)
         ->column('Име на роля', function ($role) {
-        return Table::avatarWithLabel(
-            avatarUrl: $role->avatar_url ?? null,
-            label: $role->name ?? '---',
-            color: $role->color ?? '#6366f1',
-            size: 36,
-            isDefault: !empty($role->is_default)
-        );
-    }, 'name')
+            return Table::avatarWithLabel(
+                avatarUrl: $role->avatar_url ?? null,
+                label: $role->name ?? '---',
+                color: $role->color ?? '#6366f1',
+                size: 36,
+                isDefault: !empty($role->is_default)
+            );
+        }, 'name', 'left', fn($role) => '/admin/users/roles/edit/' . $role->id)
 
         ->column('Slug', function ($role) {
-        return Table::statusBadge($role->slug ?? '', 'code');
-    }, 'slug')
+            return Table::statusBadge($role->slug ?? '', 'code');
+        }, 'slug')
 
         ->column('Описание', function ($role) {
-        return Table::textCell($role->description ?? null);
-    })
+            return Table::textCell($role->description ?? null);
+        })
 
         ->column('Статус', function ($role) {
-        return Table::statusBadge('Активна', 'success', $role->id ?? null);
-    }, 'is_active')
+            return Table::statusBadge('Активна|Неактивна', 'success', $role->id ?? null);
+        }, 'is_active')
 
         ->column('Действия', function ($role) {
-        if (!isset($role->id))
-            return '';
-        ob_start(); ?>
-        <div class="flex justify-end">
-            <?= Table::actionsMenu(slot: function ($r) {
-                ob_start(); ?>
+            if (!isset($role->id)) {
+                return '';
+            }
 
+            return Table::actionsMenu(slot: function ($r) {
+                ?>
                 <?= Table::actionLink(
                     "/admin/users/roles/edit/{$r->id}",
                     'Редактирай',
@@ -72,37 +74,20 @@ foreach ($roles as $role) {
                 ) ?>
 
                 <?php if ($r->slug !== 'admin'): ?>
-
-                    <?= Table::actionButton(
-                        click: "toggleStatus({$r->id})",
-                        label: 'Деактивирай',
-                        icon: 'fa-solid fa-power-off',
-                        type: 'danger',
-                        extraAttributes: "x-show=\"statuses[{$r->id}]\" :disabled=\"loading[{$r->id}]\""
-                    ) ?>
-
-                    <?= Table::actionButton(
-                        click: "toggleStatus({$r->id})",
-                        label: 'Активирай',
-                        icon: 'fa-solid fa-play',
-                        type: 'success',
-                        extraAttributes: "x-show=\"!statuses[{$r->id}]\" :disabled=\"loading[{$r->id}]\""
-                    ) ?>
+                    
+                    <?= Table::statusToggle($r->id, 'Деактивирай', 'Активирай') ?>
 
                     <?= Table::actionButton(
                         click: "deleteItem({$r->id})",
                         label: 'Изтрий',
                         icon: 'fa-solid fa-trash-can',
                         type: 'delete',
-                        extraAttributes: ":disabled=\"loading[{$r->id}]\""
+                        extraAttributes: ":disabled=\"typeof loading !== 'undefined' && loading[{$r->id}]\""
                     ) ?>
 
                 <?php endif; ?>
-
-                <?php return ob_get_clean();
-            }, item: $role); ?>
-        </div>
-        <?php return ob_get_clean();
-    }, null, 'right')
-        ->render('mt-5'); ?>
+                <?php
+            }, item: $role);
+        }, null, 'right')
+    ->render('mt-5'); ?>
 </div>

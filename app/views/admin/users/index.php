@@ -45,7 +45,7 @@ $tableManagerConfig = [
         ?>
 
         <?php Table::submit('Приложи'); ?>
-        <?php Table::reset('/admin/users'); ?>
+        <?php Table::reset('/admin/users/index'); ?>
     <?php }); ?>
 
     <?php Table::create($users)

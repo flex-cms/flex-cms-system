@@ -4,7 +4,6 @@ namespace Flex\Core\Controllers;
 
 use Flex\Core\Filters\Shared\StatusFilter;
 use Flex\Core\Helpers\SlugHelper;
-use Flex\Core\Services\MediaManager;
 use Flex\Core\Traits\CrudHelper;
 use Flex\Core\Traits\HandlesMedia;
 use Flex\Core\Traits\HandlesTableFilters;
@@ -91,25 +90,6 @@ class PageController extends BaseController
     public function delete()
     {
         return $this->deleteRecord(Page::class);
-    }
-
-    public function deleteImage($id)
-    {
-        $page = Page::findOrFail($id);
-        $manager = new MediaManager();
-
-        $imagePath = $page->options['featured_image'] ?? null;
-
-        if ($imagePath) {
-            $manager->remove($imagePath);
-
-            $options = $page->options;
-            unset($options['featured_image']);
-            $page->options = $options;
-            $page->save();
-        }
-
-        return json_encode(['success' => true]);
     }
 
     public function toggle()

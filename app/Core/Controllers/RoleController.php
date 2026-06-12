@@ -2,41 +2,51 @@
 
 namespace Flex\Core\Controllers;
 
+use Flex\Core\Filters\Shared\StatusFilter;
 use Flex\Core\Helpers\Str;
 use Flex\Core\Routing\View;
 use Flex\Core\Traits\CrudHelper;
+use Flex\Core\Traits\HandlesTableFilters;
 use Flex\Models\Role;
 use Flex\Models\Permission;
 
 class RoleController extends BaseController
 {
     use CrudHelper;
+    use HandlesTableFilters;
+
+    protected string $indexTitle;
+    protected string $createTitle;
+    protected string $editTitle;
+    protected string $createBtn;
+    protected string $deleteSuccessMessage;
+    protected string $deleteErrorMessage;
+
+    public function __construct()
+    {
+        $this->indexTitle               = 'Управление на роли';
+        $this->createTitle              = 'Нова роля';
+        $this->editTitle                = 'Редактиране на роля';
+        $this->createBtn                = 'Нова роля';
+        $this->deleteSuccessMessage     = 'Изтрито успешно.';
+        $this->deleteErrorMessage       = 'Тази роля не съществува.';
+    }
     
     public function index()
     {
-        $query = Role::orderBy('name', 'asc');
+        $roles = $this->applyFilters(
+            Role::query(),
+            ['name', 'slug'],
+            ['name', 'slug', 'created_at'],
+            ['status' => StatusFilter::class],
+            'name'
+        )->get();
 
-        if (!empty($_GET['status'])) {
-            $isActive = ($_GET['status'] === 'active') ? 1 : 0;
-            $query->where('is_active', $isActive);
-        }
-
-        if (!empty($_GET['search'])) {
-            $search = trim($_GET['search']);
-            $query->where('name', 'LIKE', "%{$search}%");
-        }
-
-        $roles = $query->get();
-
-        $this->render(View::make('admin/roles/index', [
-            'title' => 'Роли и права',
+        $this->renderAdmin('roles/index', [
+            'title' => $this->indexTitle,
             'roles' => $roles,
-            'primaryButton' => [
-                'label' => 'Нова роля',
-                'url' => '/admin/users/roles/create',
-                'icon' => 'fa-plus'
-            ]
-        ], 'admin'));
+            'primaryButton' => $this->createButton('/admin/roles/create', $this->createTitle)
+        ]);
     }
 
     public function create()
