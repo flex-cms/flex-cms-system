@@ -7,7 +7,7 @@ use Flex\Core\Routing\View;
 $currentUser = Auth::user();
 $sidebarOpen = $currentUser->options['sidebar_open'] ?? $_SESSION['sidebar_open'] ?? true;
 $darkMode = ($currentUser->options['theme'] ?? null) === 'dark' ?? $_SESSION['dark_mode'] ?? false;
-$currentConfig = require dirname(__DIR__, 2) . '/Core/version.php';
+$currentConfig = require base_path('version.php');
 $currentVersion = $currentConfig['version'];
 ?>
 

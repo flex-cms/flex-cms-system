@@ -58,7 +58,7 @@ $routes = [
 
     // Updates
     ['GET', '/admin/update', [UpdateController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]],
-    ['POST', '/admin/update', [UpdateController::class, 'update'], [AuthMiddleware::class, AdminMiddleware::class]],
+    ['POST', '/admin/update/process', [UpdateController::class, 'process'], [AuthMiddleware::class, AdminMiddleware::class]],
 
     // Plugins
     ['GET', '/admin/plugins', [PluginController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]],

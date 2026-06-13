@@ -132,45 +132,37 @@ class Button
         }
 
         $classes = trim($baseClasses . $sizeClasses);
-
         if (!empty($this->addedClasses)) {
             $classes .= ' ' . $this->addedClasses;
         }
 
         if (!empty($this->watchConfig)) {
-            $defaultIcon = $this->icon;
-            $defaultText = $this->text;
             $var = $this->watchConfig['variable'];
             $actIcon = $this->watchConfig['activeIcon'];
             $actText = $this->watchConfig['activeText'];
-
-            if ($this->watchConfig['type'] === 'value') {
-                $cond = $this->watchConfig['condition'];
-                $jsCondition = "v === '{$cond}'";
-            } else {
-                $jsCondition = "v";
-            }
+            $jsCondition = ($this->watchConfig['type'] === 'value') ? "v === '{$this->watchConfig['condition']}'" : "v";
 
             $this->attributes .= ' x-init="$watch(\'' . $var . '\', v => {
                 let isCurrent = ' . $jsCondition . ';
-                $el.querySelector(\'i\').className = isCurrent ? \'' . $actIcon . ' mr-2\' : \'' . $defaultIcon . ' mr-2\';
-                $el.querySelector(\'span\').innerText = isCurrent ? \'' . $actText . '\' : \'' . $defaultText . '\';
+                let iconEl = $el.querySelector(\'i\');
+                if (iconEl) {
+                    iconEl.className = isCurrent ? \'' . $actIcon . ' mr-2\' : \'' . $this->icon . ' mr-2\';
+                }
+                $el.querySelector(\'span\').innerText = isCurrent ? \'' . $actText . '\' : \'' . $this->text . '\';
             })"';
         }
 
-        $iconHtml = '';
-        if ($this->icon) {
-            $iconHtml = '<i class="' . $this->icon . ' mr-2"></i>';
-        }
-
-        $inlineStyle = '';
-        if (!empty($this->fontSize)) {
-            $inlineStyle = ' style="font-size: ' . $this->fontSize . ';"';
-        }
+        $iconHtml = $this->icon ? '<i class="' . $this->icon . ' mr-2"></i>' : '';
+        $inlineStyle = $this->fontSize ? ' style="font-size: ' . $this->fontSize . ';"' : '';
 
         return '<button type="' . $this->type . '" class="' . trim($classes) . '"' . $this->attributes . $inlineStyle . '>
             ' . $iconHtml . '<span>' . $this->text . '</span>
         </button>';
+    }
+
+    public function loading(string $variable = 'isUpdating', string $loadingText = 'Зареждане...'): self
+    {
+        return $this->toggle($variable, 'fas fa-spinner fa-spin', $loadingText);
     }
 
     public function __toString(): string

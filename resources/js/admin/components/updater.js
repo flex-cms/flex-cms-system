@@ -1,29 +1,41 @@
-import axios from "axios";
+export default function updater() {
+    return {
+        isUpdating: false,
+        progress: 0,
+        message: "",
+        error: null,
 
-export default () => ({
-    updating: false,
-    message: "",
-    error: "",
+        async startUpdate() {
+            if (this.isUpdating) return;
 
-    startUpdate() {
-        this.updating = true;
-        this.error = "";
-        this.message = "Сваляне на архива от GitHub и обновяване...";
+            this.isUpdating = true;
+            this.message = "Изтегляне на актуализацията...";
+            this.progress = 10;
 
-        axios
-            .post("/admin/update")
-            .then((res) => {
-                this.updating = false;
-                if (res.data.success) {
-                    alert(res.data.message);
-                    window.location.reload();
+            try {
+                const response = await fetch("/admin/update/process", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    this.progress = 100;
+                    this.message = "Актуализацията е успешна! Презареждане...";
+                    setTimeout(() => location.reload(), 2000);
                 } else {
-                    this.error = res.data.message;
+                    throw new Error(
+                        data.message || "Възникна грешка при ъпдейта.",
+                    );
                 }
-            })
-            .catch(() => {
-                this.updating = false;
-                this.error = "Грешка при комуникация със сървъра.";
-            });
-    },
-});
+            } catch (err) {
+                this.error = err.message;
+                this.isUpdating = false;
+                this.message = "";
+            }
+        },
+    };
+}
