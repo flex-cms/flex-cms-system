@@ -84,20 +84,21 @@ trait Updatable
     protected function verifyIntegrity(string $filePath, string $expectedHash): bool
     {
         if (!file_exists($filePath)) {
-            error_log("Integrity check failed: File does not exist at {$filePath}");
             return false;
+        }
+
+        if (strpos($expectedHash, 'sha256:') === 0) {
+            $expectedHash = substr($expectedHash, 7);
         }
 
         $actualHash = hash_file('sha256', $filePath);
 
-        if (hash_equals($expectedHash, $actualHash)) {
+        if (hash_equals(strtolower($expectedHash), strtolower($actualHash))) {
             return true;
         }
 
         error_log("Integrity check failed! Expected: {$expectedHash}, Actual: {$actualHash}");
-
         @unlink($filePath);
-
         return false;
     }
 
