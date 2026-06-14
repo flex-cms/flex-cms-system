@@ -48,11 +48,13 @@ Form::section(function () use ($current) {
                     </ul>
 
                     <div class="pt-4">
-                        <?php echo Button::make('Инсталирай актуализацията')
-                            ->icon('fa fa-sync')
-                            ->loading('isUpdating', 'Актуализиране...')
-                            ->attr('@click="startUpdate()"');
-                        ?>
+                        <form action="/admin/update/process" method="POST" @submit="isUpdating = true">
+                            <?php echo Button::make('Инсталирай актуализацията')
+                                ->icon('fa fa-sync')
+                                ->loading('isUpdating', 'Актуализиране...')
+                                ->attr('@click="startUpdate()"');
+                            ?>
+                        </form>
                     </div>
                 </div>
                 <?php

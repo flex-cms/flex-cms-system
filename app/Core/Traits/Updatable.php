@@ -2,6 +2,11 @@
 
 namespace Flex\Core\Traits;
 
+use Flex\Core\Database;
+use Symfony\Component\Console\Input\ArrayInput;
+use Symfony\Component\Console\Output\BufferedOutput;
+use ZipArchive;
+
 trait Updatable
 {
     protected function fetchLatestVersionData()
@@ -119,17 +124,17 @@ trait Updatable
             throw new \Exception("Файлът съществува, но нямам права за четене: {$zipPath}");
         }
 
-        $zip = new \ZipArchive();
+        $zip = new ZipArchive();
 
-        $res = $zip->open($zipPath, \ZipArchive::CHECKCONS);
+        $res = $zip->open($zipPath, ZipArchive::CHECKCONS);
 
         if ($res !== true) {
 
             $errors = [
-                \ZipArchive::ER_NOZIP => 'Това не е валиден ZIP архив.',
-                \ZipArchive::ER_NOENT => 'Файлът не е намерен.',
-                \ZipArchive::ER_OPEN => 'Не може да се отвори файла.',
-                \ZipArchive::ER_READ => 'Грешка при четене на архива.'
+                ZipArchive::ER_NOZIP => 'Това не е валиден ZIP архив.',
+                ZipArchive::ER_NOENT => 'Файлът не е намерен.',
+                ZipArchive::ER_OPEN => 'Не може да се отвори файла.',
+                ZipArchive::ER_READ => 'Грешка при четене на архива.'
             ];
 
             $msg = $errors[$res] ?? "Неизвестна грешка ($res)";
@@ -148,25 +153,50 @@ trait Updatable
 
     protected function runPendingMigrations(): void
     {
-        $migrationsPath = base_path('database/migrations');
+        $phinx = new \Phinx\Console\PhinxApplication();
+        $command = $phinx->find('migrate');
 
-        $files = glob($migrationsPath . '/*.php');
-        sort($files);
+        $arguments = [
+            'command' => 'migrate',
+            '--configuration' => base_path('phinx.php'),
+            '--environment' => 'development',
+        ];
 
-        foreach ($files as $file) {
-            $migrationName = basename($file, '.php');
+        $input = new ArrayInput($arguments);
+        $output = new BufferedOutput();
 
-            if (!$this->isMigrationApplied($migrationName)) {
-                require_once $file;
-
-                $className = $this->getClassFromFileName($migrationName);
-                if (class_exists($className)) {
-                    $migration = new $className();
-                    $migration->up();
-
-                    $this->markMigrationAsApplied($migrationName);
-                }
-            }
+        try {
+            $command->run($input, $output);
+            error_log("DEBUG: Phinx Migrations executed: " . $output->fetch());
+        } catch (\Exception $e) {
+            error_log("DEBUG: Phinx Migration Error: " . $e->getMessage());
         }
+    }
+
+    protected function getClassFromFileName(string $fileName): string
+    {
+        $name = preg_replace('/^[\d_]+/', '', $fileName);
+        return str_replace(' ', '', ucwords(str_replace('_', ' ', $name)));
+    }
+
+    protected function isMigrationApplied(string $migrationName): bool
+    {
+        $stmt = Database::query(
+            "SELECT COUNT(*) FROM phinxlog WHERE migration_name = ?",
+            [$migrationName]
+        );
+
+        return (bool) $stmt->fetchColumn();
+    }
+
+    protected function markMigrationAsApplied(string $migrationName): void
+    {
+        $version = date('YmdHis');
+
+        Database::query(
+            "INSERT INTO phinxlog (version, migration_name, start_time, end_time, breakpoint) 
+         VALUES (?, ?, NOW(), NOW(), 0)",
+            [$version, $migrationName]
+        );
     }
 }
