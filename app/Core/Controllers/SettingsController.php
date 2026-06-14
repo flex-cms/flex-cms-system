@@ -2,7 +2,7 @@
 
 namespace Flex\Core\Controllers;
 
-use DateTimeZone;
+use Flex\Attributes\UseExceptions;
 use Flex\Core\Controllers\BaseController;
 use Flex\Core\Routing\View;
 use Flex\Models\Setting;
@@ -42,6 +42,7 @@ class SettingsController extends BaseController
         'Europe/Zurich' => 'Цюрих'
     ];
 
+    #[UseExceptions]
     public function show(string $group)
     {
         $definedGroups = $this->getDefinedGroups();
@@ -51,7 +52,7 @@ class SettingsController extends BaseController
             View::redirect('/admin/settings');
         }
 
-        $this->render(View::make('admin/settings/layout', [
+        $view = View::make('admin/settings/layout', [
             'title' => 'Настройки: ' . $definedGroups[$group],
             'currentGroup' => $group,
             'definedGroups' => $definedGroups,
@@ -59,9 +60,12 @@ class SettingsController extends BaseController
             'dateFormats' => $this->getDateFormats(),
             'languages' => $this->languages,
             'timezones' => $this->timezones
-        ], 'admin'));
+        ], 'admin');
+
+        render_view($view);
     }
 
+    #[UseExceptions]
     public function update(string $group)
     {
         $postedSettings = $_POST['settings'] ?? [];
@@ -84,7 +88,7 @@ class SettingsController extends BaseController
         View::redirect('/admin/settings/' . $group);
     }
 
-    public function getGroupIcon(string $group): string
+    public static function getGroupIcon(string $group): string
     {
         $icons = [
             'general' => 'fa-cog',
@@ -95,6 +99,7 @@ class SettingsController extends BaseController
         return $icons[$group] ?? 'fa-circle';
     }
 
+    #[UseExceptions]
     private function saveSetting(string $key, $value, string $group)
     {
         $setting = Setting::firstOrNew(['key' => $key]);

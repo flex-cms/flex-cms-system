@@ -2,6 +2,7 @@
 
 namespace Flex\Core\Controllers;
 
+use Flex\Attributes\UseExceptions;
 use Flex\Core\Filters\Shared\StatusFilter;
 use Flex\Core\Helpers\Str;
 use Flex\Core\Routing\View;
@@ -32,6 +33,7 @@ class RoleController extends BaseController
         $this->deleteErrorMessage       = 'Тази роля не съществува.';
     }
     
+    #[UseExceptions]
     public function index()
     {
         $roles = $this->applyFilters(
@@ -49,6 +51,7 @@ class RoleController extends BaseController
         ]);
     }
 
+    #[UseExceptions]
     public function create()
     {
         $permissions = Permission::all()->groupBy('module');
@@ -59,6 +62,7 @@ class RoleController extends BaseController
         ], 'admin'));
     }
 
+    #[UseExceptions]
     public function store()
     {
         $data = $this->getRoleDataFromRequest();
@@ -75,6 +79,7 @@ class RoleController extends BaseController
         View::redirect('/admin/users/roles');
     }
 
+    #[UseExceptions]
     public function edit($id)
     {
         $role = Role::findOrFail($id);
@@ -89,6 +94,7 @@ class RoleController extends BaseController
         ], 'admin'));
     }
 
+    #[UseExceptions]
     public function update($id)
     {
         $role = Role::findOrFail($id);
@@ -108,6 +114,7 @@ class RoleController extends BaseController
         View::redirect('/admin/users/roles/edit/' . $id);
     }
 
+    #[UseExceptions]
     public function toggle()
     {
         $result = $this->toggleStatus(Role::class, 'is_active');
@@ -121,6 +128,7 @@ class RoleController extends BaseController
         return $this->jsonResponse(true, "Ролята беше {$statusText} успешно!");
     }
 
+    #[UseExceptions]
     private function getRoleDataFromRequest(): array
     {
         $rawSchedule = $_POST['schedule'] ?? [];

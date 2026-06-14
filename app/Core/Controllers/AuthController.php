@@ -2,12 +2,14 @@
 
 namespace Flex\Core\Controllers;
 
+use Flex\Attributes\UseExceptions;
 use Flex\Core\Auth;
 use Flex\Core\Controllers\BaseController;
 use Flex\Core\Routing\View;
 
 class AuthController extends BaseController
 {
+    #[UseExceptions]
     public function showLogin(): void
     {
         if (Auth::check()) {
@@ -18,6 +20,7 @@ class AuthController extends BaseController
         $this->render(View::make('auth/login'));
     }
 
+    #[UseExceptions]
     public function login(): void
     {
         $username = $_POST['username'] ?? '';
@@ -36,12 +39,14 @@ class AuthController extends BaseController
         $this->render(View::make('auth/login', $data));
     }
 
+    #[UseExceptions]
     public function logout(): void
     {
         Auth::logout();
         View::redirect('/admin');
     }
 
+    #[UseExceptions]
     private function redirectByUserRole(): void
     {
         if (Auth::isAdmin()) {

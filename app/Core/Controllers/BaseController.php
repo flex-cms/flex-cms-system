@@ -30,33 +30,9 @@ abstract class BaseController
         throw new \Exception("Методът {$method} не съществува в " . get_class($this));
     }
 
-    public function render(View $view): void
+    protected function render(View $view, bool $return = false): ?string
     {
-        extract($view->data);
-
-        if ($view->source === 'theme') {
-            $fullViewPath = dirname(__DIR__, 3) . '/themes/' . ACTIVE_THEME . '/views/' . $view->path . '.php';
-            $layoutPath = dirname(__DIR__, 2) . "/views/layouts/{$view->layout}.php";
-        } else {
-            $fullViewPath = dirname(__DIR__, 2) . '/views/' . $view->path . '.php';
-            $layoutPath = dirname(__DIR__, 2) . "/views/layouts/{$view->layout}.php";
-        }
-
-        ob_start();
-        if (file_exists($fullViewPath)) {
-            include $fullViewPath;
-        } else {
-            die("View not found: " . htmlspecialchars($fullViewPath));
-        }
-        $content = ob_get_clean();
-
-        if (file_exists($layoutPath)) {
-            include $layoutPath;
-        } else {
-            echo $content;
-        }
-
-        exit;
+        return render_view($view, $return);
     }
 
     protected function json(array $data, int $status = 200): void

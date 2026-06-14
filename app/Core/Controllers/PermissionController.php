@@ -2,12 +2,14 @@
 
 namespace Flex\Core\Controllers;
 
+use Flex\Attributes\UseExceptions;
 use Flex\Core\Routing\View;
 use Flex\Models\Permission;
 use Flex\Models\Role;
 
 class PermissionController extends BaseController
 {
+    #[UseExceptions]
     public function index()
     {
         $query = Permission::orderBy('module', 'asc')->orderBy('name', 'asc');
@@ -37,6 +39,7 @@ class PermissionController extends BaseController
         ], 'admin'));
     }
 
+    #[UseExceptions]
     public function create()
     {
         $allRoles = Role::orderBy('name', 'asc')->get();
@@ -47,6 +50,7 @@ class PermissionController extends BaseController
         ], 'admin'));
     }
 
+    #[UseExceptions]
     public function store()
     {
         $data = $this->getPermissionData();
@@ -57,6 +61,7 @@ class PermissionController extends BaseController
         View::redirect('/admin/users/permissions');
     }
 
+    #[UseExceptions]
     public function edit($id)
     {
         $permission = Permission::findOrFail($id);
@@ -71,6 +76,7 @@ class PermissionController extends BaseController
         ], 'admin'));
     }
 
+    #[UseExceptions]
     public function update($id)
     {
         $permission = Permission::findOrFail($id);

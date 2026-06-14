@@ -2,6 +2,7 @@
 
 namespace Flex\Core\Controllers;
 
+use Flex\Attributes\UseExceptions;
 use Flex\Core\Events\EventManager;
 use Flex\Core\Plugins\PluginManager;
 use Flex\Core\Plugins\Traits\PluginDiscoveryTrait;
@@ -24,6 +25,7 @@ class PluginController extends BaseController
         $this->pluginManager = $pluginManager;
     }
 
+    #[UseExceptions]
     public function index()
     {
         $this->discoverAndSyncPlugins();
@@ -46,6 +48,7 @@ class PluginController extends BaseController
         ], 'admin'));
     }
 
+    #[UseExceptions]
     public function toggle()
     {
         $result = $this->toggleStatus(Plugin::class, 'is_active');
@@ -72,6 +75,7 @@ class PluginController extends BaseController
         return $this->jsonResponse(true, "Плъгинът беше {$statusText} успешно!");
     }
 
+    #[UseExceptions]
     public function delete()
     {
         $data = $this->getJsonInput();

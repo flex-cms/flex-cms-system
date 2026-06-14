@@ -1,5 +1,6 @@
 <?php
 
+use Flex\Core\Controllers\SettingsController;
 use Flex\Core\UI\Form;
 ?>
 
@@ -12,7 +13,7 @@ use Flex\Core\UI\Form;
                   : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 dark:text-slate-400 dark:hover:text-slate-200'
                   ?> flex items-center px-6 py-4 font-semibold border-b-2 transition-all duration-200">
 
-                <i class="fa-solid <?= $this->getGroupIcon($key) ?> mr-2"></i>
+                <i class="fa-solid <?= SettingsController::getGroupIcon($key) ?> mr-2"></i>
                 <?= $label ?>
             </a>
         <?php endforeach; ?>

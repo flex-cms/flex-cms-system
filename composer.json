@@ -12,6 +12,7 @@
         "illuminate/database": "^12.58",
         "robmorgan/phinx": "^0.16.11",
         "phpmailer/phpmailer": "^7.1",
-        "nesbot/carbon": "^3.11"
+        "nesbot/carbon": "^3.11",
+        "maennchen/zipstream-php": "^3.1"
     }
 }

@@ -2,11 +2,13 @@
 
 namespace Flex\Core\Controllers;
 
+use Flex\Attributes\UseExceptions;
 use Flex\Core\Controllers\BaseController;
 use Flex\Core\Routing\View;
 
 class FileStructureController extends BaseController
 {
+    #[UseExceptions]
     public function index()
     {
         $rootPath = dirname(__DIR__, 3);
@@ -32,6 +34,7 @@ class FileStructureController extends BaseController
         ], 'admin'));
     }
 
+    #[UseExceptions]
     private function buildTree(string $dir, array $exclude): array
     {
         $dir = rtrim($dir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;

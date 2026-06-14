@@ -2,6 +2,7 @@
 
 namespace Flex\Core\Controllers;
 
+use Flex\Attributes\UseExceptions;
 use Flex\Core\Traits\Updatable;
 use Flex\Core\Routing\View;
 
@@ -9,6 +10,7 @@ class UpdateController extends BaseController
 {
     use Updatable;
 
+    #[UseExceptions]
     public function index()
     {
         $latest = $this->fetchLatestVersionData();
@@ -27,6 +29,7 @@ class UpdateController extends BaseController
         ], 'admin'));
     }
 
+    #[UseExceptions]
     public function process()
     {
         $latest = $this->fetchLatestVersionData();

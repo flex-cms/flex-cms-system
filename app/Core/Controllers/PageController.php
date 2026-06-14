@@ -2,6 +2,7 @@
 
 namespace Flex\Core\Controllers;
 
+use Flex\Attributes\UseExceptions;
 use Flex\Core\Filters\Shared\StatusFilter;
 use Flex\Core\Helpers\SlugHelper;
 use Flex\Core\Traits\CrudHelper;
@@ -32,6 +33,7 @@ class PageController extends BaseController
         $this->deleteErrorMessage       = 'Тази страница не съществува.';
     }
 
+    #[UseExceptions]
     public function index()
     {
         $pages = $this->applyFilters(
@@ -49,6 +51,7 @@ class PageController extends BaseController
         ]);
     }
 
+    #[UseExceptions]
     public function create()
     {
         $this->renderAdmin('pages/form', [
@@ -58,6 +61,7 @@ class PageController extends BaseController
         ]);
     }
 
+    #[UseExceptions]
     public function edit($id)
     {
         $page = Page::findOrFail($id);
@@ -69,6 +73,7 @@ class PageController extends BaseController
         ]);
     }
 
+    #[UseExceptions]
     public function store()
     {
         $data = $this->prepareData($_POST);
@@ -77,6 +82,7 @@ class PageController extends BaseController
         View::redirect('/admin/pages/edit/' . $page->id);
     }
 
+    #[UseExceptions]
     public function update($id)
     {
         $page = Page::findOrFail($id);
@@ -87,11 +93,13 @@ class PageController extends BaseController
         View::redirect('/admin/pages/edit/' . $page->id);
     }
 
+    #[UseExceptions]
     public function delete()
     {
         return $this->deleteRecord(Page::class);
     }
 
+    #[UseExceptions]
     public function toggle()
     {
         $result = $this->toggleStatus(Page::class, 'is_active');
@@ -105,6 +113,7 @@ class PageController extends BaseController
         return $this->jsonResponse(true, "Страницата беше {$statusText} успешно!");
     }
 
+    #[UseExceptions]
     private function prepareData(array $post, $model = null): array
     {
         $post = $this->normalizeCheckboxes($post);

@@ -2,6 +2,7 @@
 
 namespace Flex\Core\Controllers;
 
+use Flex\Attributes\UseExceptions;
 use Flex\Core\Services\EmailService;
 use Flex\Core\Controllers\BaseController;
 use Flex\Core\Routing\View;
@@ -9,6 +10,7 @@ use Flex\Models\EmailTemplate;
 
 class EmailTemplateController extends BaseController
 {
+    #[UseExceptions]
     public function index()
     {
         $allowedSortFields = ['name', 'slug', 'category', 'created_at'];
@@ -45,6 +47,7 @@ class EmailTemplateController extends BaseController
         ], 'admin'));
     }
 
+    #[UseExceptions]
     public function create()
     {
         return $this->render(View::make('admin/email-templates/form', [
@@ -53,6 +56,7 @@ class EmailTemplateController extends BaseController
         ], 'admin'));
     }
 
+    #[UseExceptions]
     public function store()
     {
         $variables = $this->prepareVariables($_POST['body'] ?? '', $_POST['var_desc'] ?? []);
@@ -69,6 +73,7 @@ class EmailTemplateController extends BaseController
         View::redirect('/admin/email-templates');
     }
 
+    #[UseExceptions]
     public function edit($id)
     {
         $template = EmailTemplate::findOrFail($id);
@@ -79,6 +84,7 @@ class EmailTemplateController extends BaseController
         ], 'admin'));
     }
 
+    #[UseExceptions]
     public function update($id)
     {
         $template = EmailTemplate::findOrFail($id);
@@ -96,6 +102,7 @@ class EmailTemplateController extends BaseController
         View::redirect('/admin/email-templates/edit/' . $template->id);
     }
 
+    #[UseExceptions]
     public function destroy()
     {
         $data = json_decode(file_get_contents('php://input'), true);
@@ -111,6 +118,7 @@ class EmailTemplateController extends BaseController
         exit;
     }
 
+    #[UseExceptions]
     protected function prepareVariables($body, $inputDescriptions)
     {
         $foundVars = EmailService::extractVariables($body);

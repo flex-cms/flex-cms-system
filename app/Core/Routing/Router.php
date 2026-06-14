@@ -4,6 +4,8 @@ namespace Flex\Core\Routing;
 
 use Flex\Core\Events\EventManager;
 use Flex\Core\Plugins\PluginManager;
+use Flex\Models\Setting;
+use Throwable;
 
 class Router
 {
@@ -23,7 +25,7 @@ class Router
             'middlewares' => $middlewares
         ];
     }
-    
+
     public function setPluginManager(PluginManager $pluginManager): void
     {
         $this->pluginManager = $pluginManager;
@@ -80,7 +82,18 @@ class Router
                     if (class_exists($controllerClass)) {
                         $controller = new $controllerClass($this->events, $this->pluginManager);
                         if (method_exists($controller, $methodName)) {
-                            call_user_func_array([$controller, $methodName], $matches);
+                            $reflection = new \ReflectionMethod($controller, $methodName);
+                            $attributes = $reflection->getAttributes(\Flex\Attributes\UseExceptions::class);
+
+                            if (!empty($attributes)) {
+                                try {
+                                    call_user_func_array([$controller, $methodName], $matches);
+                                } catch (\Throwable $e) {
+                                    $this->handleGlobalException($e);
+                                }
+                            } else {
+                                call_user_func_array([$controller, $methodName], $matches);
+                            }
                             return;
                         }
                     }
@@ -90,5 +103,10 @@ class Router
 
         http_response_code(404);
         echo "404 - Page Not Found (Path: " . htmlspecialchars($path) . ")";
+    }
+
+    private function handleGlobalException(Throwable $e): void
+    {
+        handle_exception($e);
     }
 }

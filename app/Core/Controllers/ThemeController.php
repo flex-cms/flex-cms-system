@@ -2,6 +2,7 @@
 
 namespace Flex\Core\Controllers;
 
+use Flex\Attributes\UseExceptions;
 use Flex\Core\Services\Cache;
 use Flex\Models\Setting;
 use Flex\Models\Theme;
@@ -9,6 +10,7 @@ use Flex\Core\Routing\View;
 
 class ThemeController extends BaseController
 {
+    #[UseExceptions]
     public function index()
     {
         return $this->render(View::make('admin/themes/index', [
@@ -17,6 +19,7 @@ class ThemeController extends BaseController
         ], 'admin'));
     }
 
+    #[UseExceptions]
     public function activate()
     {
         $folder = $_POST['folder'] ?? null;

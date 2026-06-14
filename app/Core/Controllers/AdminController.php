@@ -2,6 +2,7 @@
 
 namespace Flex\Core\Controllers;
 
+use Flex\Attributes\UseExceptions;
 use Flex\Core\Auth;
 use Flex\Core\Controllers\BaseController;
 use Flex\Core\Routing\View;
@@ -9,11 +10,13 @@ use Flex\Models\User;
 
 class AdminController extends BaseController
 {
+    #[UseExceptions]
     public function index()
     {
         $this->render(View::make('admin/dashboard', [], 'admin'));
     }
 
+    #[UseExceptions]
     public function toggleTheme()
     {
         $data = json_decode(file_get_contents('php://input'), true);
@@ -25,6 +28,7 @@ class AdminController extends BaseController
         echo json_encode(['status' => 'success']);
     }
 
+    #[UseExceptions]
     public function toggleSidebar()
     {
         $data = json_decode(file_get_contents('php://input'), true);
@@ -36,6 +40,7 @@ class AdminController extends BaseController
         echo json_encode(['status' => 'success']);
     }
 
+    #[UseExceptions]
     public function saveUiState()
     {
         $data = json_decode(file_get_contents('php://input'), true);
@@ -58,6 +63,7 @@ class AdminController extends BaseController
         return json_encode(['status' => 'success']);
     }
 
+    #[UseExceptions]
     private function updateUserOptions(string $key, mixed $value): void
     {
         if (isset($_SESSION['user_id'])) {

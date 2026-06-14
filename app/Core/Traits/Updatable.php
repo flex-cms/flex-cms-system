@@ -116,6 +116,13 @@ trait Updatable
 
     protected function extractUpdate(string $zipPath, string $extractPath): bool
     {
+        if (!class_exists('ZipArchive')) {
+            throw new \Exception(
+                "Грешка: Разширението 'php-zip' не е инсталирано или не е активирано в php.ini. " .
+                "Моля, инсталирайте го на сървъра си, за да продължите с обновяването."
+            );
+        }
+
         if (!file_exists($zipPath)) {
             throw new \Exception("Файлът не съществува на: {$zipPath}");
         }

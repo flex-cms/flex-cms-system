@@ -2,7 +2,7 @@
 
 namespace Flex\Core\Controllers;
 
-use Flex\Core\Filters\Shared\StatusFilter;
+use Flex\Attributes\UseExceptions;
 use Flex\Core\Traits\CrudHelper;
 use Flex\Core\Traits\HandlesTableFilters;
 use Flex\Core\Traits\RequestHelper;
@@ -32,11 +32,11 @@ class UserController extends BaseController
         $this->deleteErrorMessage = 'Този потребител не съществува.';
     }
 
+    #[UseExceptions]
     public function index()
     {
         $query = User::with('roles');
 
-        // Ръчно прилагене на търсенето и филтрите (или чрез вградените методи)
         if (!empty($_GET['search'])) {
             $search = $_GET['search'];
             $query->where(function ($q) use ($search) {
@@ -86,6 +86,7 @@ class UserController extends BaseController
         ]);
     }
 
+    #[UseExceptions]
     public function create()
     {
         $roles = Role::orderBy('name', 'asc')->get();
@@ -99,6 +100,7 @@ class UserController extends BaseController
         ]);
     }
 
+    #[UseExceptions]
     public function edit($id)
     {
         $user = User::with('roles')->findOrFail($id);
@@ -114,6 +116,7 @@ class UserController extends BaseController
         ]);
     }
 
+    #[UseExceptions]
     public function store()
     {
         $data = $this->prepareData($_POST);
@@ -126,6 +129,7 @@ class UserController extends BaseController
         View::redirect('/admin/users/edit/' . $user->id);
     }
 
+    #[UseExceptions]
     public function update($id)
     {
         $user = User::findOrFail($id);
@@ -145,11 +149,13 @@ class UserController extends BaseController
         View::redirect('/admin/users/edit/' . $user->id);
     }
 
+    #[UseExceptions]
     public function delete()
     {
         return $this->deleteRecord(User::class);
     }
 
+    #[UseExceptions]
     public function toggle()
     {
         $result = $this->toggleStatus(User::class, 'is_active');
@@ -163,6 +169,7 @@ class UserController extends BaseController
         return $this->jsonResponse(true, "Потребителят беше {$statusText} успешно!");
     }
 
+    #[UseExceptions]
     private function prepareData(array $post, $model = null): array
     {
         $post = $this->normalizeCheckboxes($post);
