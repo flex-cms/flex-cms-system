@@ -50,6 +50,6 @@ class UpdateController extends BaseController
 
         @unlink($tempPath);
 
-        View::redirect('/admin/update', 200);
+        $this->jsonResponse(true, 'Системата беше актуализирана успешно!');
     }
 }
