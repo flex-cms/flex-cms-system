@@ -29,33 +29,27 @@ class UpdateController extends BaseController
 
     public function process()
     {
-        try {
-            $latest = $this->fetchLatestVersionData();
+        $latest = $this->fetchLatestVersionData();
 
-            $tempPath = base_path('storage/updates/tmp/update.zip');
-            $extractPath = base_path();
+        $tempPath = base_path('storage/updates/tmp/update.zip');
+        $extractPath = base_path();
 
-            if (!$this->downloadUpdate($latest['download_url'], $tempPath)) {
-                throw new \Exception("Грешка: Неуспешно изтегляне на файла.");
-            }
-
-            if (!$this->verifyIntegrity($tempPath, $latest['checksum'])) {
-                throw new \Exception("Грешка: Невалидна контролна сума на архива.");
-            }
-
-            if (!$this->extractUpdate($tempPath, $extractPath)) {
-                throw new \Exception("Грешка: Неуспешно разархивиране на файловете.");
-            }
-
-            $this->runPendingMigrations();
-
-            @unlink($tempPath);
-
-            return json_encode(['success' => true]);
-
-        } catch (\Exception $e) {
-            error_log("Update failed: " . $e->getMessage());
-            return json_encode(['success' => false, 'message' => $e->getMessage()]);
+        if (!$this->downloadUpdate($latest['download_url'], $tempPath)) {
+            throw new \Exception("Грешка: Неуспешно изтегляне на файла.");
         }
+
+        if (!$this->verifyIntegrity($tempPath, $latest['checksum'])) {
+            throw new \Exception("Грешка: Невалидна контролна сума на архива.");
+        }
+
+        if (!$this->extractUpdate($tempPath, $extractPath)) {
+            throw new \Exception("Грешка: Неуспешно разархивиране на файловете.");
+        }
+
+        $this->runPendingMigrations();
+
+        @unlink($tempPath);
+
+        View::redirect('/admin/update', 200);
     }
 }

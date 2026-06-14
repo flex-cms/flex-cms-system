@@ -48,33 +48,37 @@ trait Updatable
 
     protected function downloadUpdate(string $url, string $savePath): bool
     {
-        $directory = dirname($savePath);
-        if (!is_dir($directory)) {
-            mkdir($directory, 0755, true);
-        }
-
         $fileHandle = fopen($savePath, 'w+');
-        if (!$fileHandle) {
+        if (!$fileHandle)
             return false;
-        }
 
         $ch = curl_init($url);
+
+        $username = $_ENV['UPDATE_SERVER_USER'] ?? '';
+        $password = $_ENV['UPDATE_SERVER_PASS'] ?? '';
+
+        if (!empty($username) && !empty($password)) {
+            curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+            curl_setopt($ch, CURLOPT_USERPWD, $username . ":" . $password);
+        }
 
         curl_setopt($ch, CURLOPT_FILE, $fileHandle);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         curl_setopt($ch, CURLOPT_TIMEOUT, 300);
         curl_setopt($ch, CURLOPT_USERAGENT, 'FlexCore-Updater/1.0');
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Cache-Control: no-cache']);
         $success = curl_exec($ch);
-
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $error = curl_error($ch);
 
         curl_close($ch);
         fclose($fileHandle);
 
-        if (!$success) {
+        if (!$success || $httpCode !== 200) {
+            error_log("DEBUG: cURL failed. Code: $httpCode, Error: $error");
             @unlink($savePath);
-            error_log("Update download error: " . $error);
             return false;
         }
 
@@ -84,6 +88,7 @@ trait Updatable
     protected function verifyIntegrity(string $filePath, string $expectedHash): bool
     {
         if (!file_exists($filePath)) {
+            error_log("DEBUG: Файлът за проверка не съществува: {$filePath}");
             return false;
         }
 
@@ -93,28 +98,48 @@ trait Updatable
 
         $actualHash = hash_file('sha256', $filePath);
 
+        error_log("DEBUG: Очакван хеш: " . strtolower($expectedHash));
+        error_log("DEBUG: Реален хеш:  " . strtolower($actualHash));
+
         if (hash_equals(strtolower($expectedHash), strtolower($actualHash))) {
             return true;
         }
 
-        error_log("Integrity check failed! Expected: {$expectedHash}, Actual: {$actualHash}");
         @unlink($filePath);
         return false;
     }
 
     protected function extractUpdate(string $zipPath, string $extractPath): bool
     {
+        if (!file_exists($zipPath)) {
+            throw new \Exception("Файлът не съществува на: {$zipPath}");
+        }
+
+        if (!is_readable($zipPath)) {
+            throw new \Exception("Файлът съществува, но нямам права за четене: {$zipPath}");
+        }
+
         $zip = new \ZipArchive();
 
-        if ($zip->open($zipPath) !== true) {
-            error_log("Failed to open update archive: {$zipPath}");
-            return false;
+        $res = $zip->open($zipPath, \ZipArchive::CHECKCONS);
+
+        if ($res !== true) {
+
+            $errors = [
+                \ZipArchive::ER_NOZIP => 'Това не е валиден ZIP архив.',
+                \ZipArchive::ER_NOENT => 'Файлът не е намерен.',
+                \ZipArchive::ER_OPEN => 'Не може да се отвори файла.',
+                \ZipArchive::ER_READ => 'Грешка при четене на архива.'
+            ];
+
+            $msg = $errors[$res] ?? "Неизвестна грешка ($res)";
+            throw new \Exception("ZipArchive грешка: {$msg} (Път: {$zipPath})");
         }
 
         if (!$zip->extractTo($extractPath)) {
-            error_log("Failed to extract update files to: {$extractPath}");
+            $error = $zip->getStatusString();
             $zip->close();
-            return false;
+            throw new \Exception("Грешка при extractTo: {$error}");
         }
 
         $zip->close();
