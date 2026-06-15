@@ -1,47 +1,60 @@
 <?php
 
-use Flex\Models\Setting;
-
-session_start();
-
 require_once 'vendor/autoload.php';
-
 require_once 'functions.php';
 
 use Dotenv\Dotenv;
+use Flex\Core\Controllers\InstallController;
 use Flex\Core\Database;
 use Flex\Core\Events\EventManager;
 use Flex\Core\Plugins\PluginManager;
 use Flex\Core\Routing\Router;
+use Flex\Models\Setting;
 use Illuminate\Database\Capsule\Manager as Capsule;
+
+$isInstalled = file_exists(base_path('storage/installed.lock'));
+
+if (!$isInstalled) {
+    $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+    
+    if (!in_array($uri, ['/install', '/install/process-db', '/install/success'])) {
+        header("Location: /install");
+        exit;
+    }
+
+    $events = EventManager::getInstance();
+    $router = new Router($events);
+    
+    $router->get('/install', [InstallController::class, 'index']);
+    $router->post('/install/process-db', [InstallController::class, 'processDb']);
+    
+    $router->resolve();
+    exit;
+}
+
+session_start();
 
 $dotenv = Dotenv::createImmutable(__DIR__);
 $dotenv->load();
 
 $capsule = new Capsule;
-
 $capsule->addConnection([
-    'driver' => 'mysql',
-    'host' => $_ENV['DB_HOST'],
-    'database' => $_ENV['DB_NAME'],
-    'username' => $_ENV['DB_USER'],
-    'password' => $_ENV['DB_PASS'],
-    'charset' => $_ENV['DB_CHAR'],
+    'driver'    => 'mysql',
+    'host'      => $_ENV['DB_HOST'],
+    'database'  => $_ENV['DB_NAME'],
+    'username'  => $_ENV['DB_USER'],
+    'password'  => $_ENV['DB_PASS'],
+    'charset'   => $_ENV['DB_CHAR'],
     'collation' => 'utf8mb4_unicode_ci',
-    'prefix' => '',
+    'prefix'    => '',
 ]);
-
 $capsule->setAsGlobal();
 $capsule->bootEloquent();
 
-function db()
-{
-    return Database::getInstance();
-}
+function db() { return Database::getInstance(); }
 db();
 
 $debugMode = Setting::get('debug_mode', false);
-
 if ($debugMode) {
     error_reporting(E_ALL);
     ini_set('display_errors', '1');
@@ -53,32 +66,24 @@ if ($debugMode) {
 }
 
 $events = EventManager::getInstance();
-
 $router = new Router($events);
 
 try {
-    $activePlugins = Capsule::table('plugins')
-        ->where('is_active', 1)
-        ->pluck('slug')
-        ->toArray();
+    $activePlugins = Capsule::table('plugins')->where('is_active', 1)->pluck('slug')->toArray();
 } catch (\Exception $e) {
     $activePlugins = [];
 }
 
 $pluginManager = new PluginManager($events, $activePlugins);
-
 $router->setPluginManager($pluginManager);
-
 $pluginManager->loadPlugins($router);
 
 $activeTheme = Setting::get('active_theme', 'Modern');
-
 $themePath = __DIR__ . '/themes/' . $activeTheme;
 
 if (is_dir($themePath)) {
     define('ACTIVE_THEME', $activeTheme);
     $themeClass = "Themes\\" . $activeTheme . "\\ThemeServiceProvider";
-
     if (class_exists($themeClass)) {
         $themeClass::init();
     }
@@ -93,5 +98,4 @@ $timezone = Setting::get('timezone', 'Europe/Sofia');
 date_default_timezone_set($timezone);
 
 require_once __DIR__ . '/app/routes.php';
-
 $router->resolve();

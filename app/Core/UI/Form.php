@@ -200,8 +200,13 @@ class Form
         $action = $options['action'] ?? '';
         $method = $options['method'] ?? 'POST';
         $enctype = ($options['files'] ?? false) ? 'enctype="multipart/form-data"' : '';
-
-        echo "<form action='{$action}' method='{$method}' {$enctype} class='space-y-6'>";
+        
+        echo "<form action='{$action}' 
+                    method='{$method}' 
+                    {$enctype} 
+                    class='space-y-6' 
+                    x-data='{ isSubmitting: false }' 
+                    @submit='if (\$el.checkValidity()) isSubmitting = true;'>";
     }
 
     public static function close(): void
@@ -347,13 +352,24 @@ class Form
     {
         $class = $options['class'] ?? 'bg-indigo-600 hover:bg-indigo-700 text-white';
         $type = $options['type'] ?? 'submit';
+        
         ?>
         <button type="<?= $type ?>"
-            class="inline-flex items-center gap-2 px-6 py-2 rounded-md text-lg transition-all shadow-sm active:scale-95 <?= $class ?>">
-            <?php if ($icon): ?>
-                <i class="fa-solid <?= $icon ?> text-lg"></i>
-            <?php endif; ?>
-            <?= $label ?>
+            @click="$dispatch('form-submitting')" 
+            :disabled="isSubmitting"
+            class="inline-flex items-center gap-2 px-6 py-2 rounded-md text-lg transition-all shadow-sm active:scale-95 <?= $class ?> disabled:opacity-70 disabled:cursor-not-allowed">
+            
+            <span x-show="!isSubmitting">
+                <?php if ($icon): ?>
+                    <i class="fa-solid <?= $icon ?> text-lg"></i>
+                <?php endif; ?>
+            </span>
+            
+            <span x-show="isSubmitting" x-cloak>
+                <i class="fa-solid fa-spinner fa-spin text-lg"></i>
+            </span>
+
+            <span x-text="isSubmitting ? 'Моля, изчакайте...' : '<?= $label ?>'"></span>
         </button>
         <?php
     }

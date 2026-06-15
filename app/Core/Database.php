@@ -3,7 +3,6 @@
 namespace Flex\Core;
 
 use PDO;
-use PDOException;
 
 class Database
 {
@@ -28,11 +27,7 @@ class Database
                 PDO::ATTR_EMULATE_PREPARES => false,
             ];
 
-            try {
-                self::$instance = new PDO($dsn, $config['user'], $config['pass'], $options);
-            } catch (PDOException $e) {
-                die("Database Error: " . $e->getMessage());
-            }
+            self::$instance = new PDO($dsn, $config['user'], $config['pass'], $options);
         }
 
         return self::$instance;

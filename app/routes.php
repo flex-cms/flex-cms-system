@@ -16,6 +16,7 @@ use Flex\Core\Controllers\SettingsController;
 use Flex\Core\Controllers\PageController;
 use Flex\Core\Controllers\ThemeController;
 use Flex\Core\Controllers\EmailTemplateController;
+use Flex\Core\Controllers\InstallController;
 
 $routes = [
     ['GET', '/admin', [AuthController::class, 'showLogin']],
@@ -89,6 +90,9 @@ $routes = [
 
     // File Structure
     ['GET', '/admin/file-structure', [FileStructureController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]],
+
+    // Install
+    ['GET', '/install/success', [InstallController::class, 'success']],
 ];
 
 foreach ($routes as $route) {
