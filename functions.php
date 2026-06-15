@@ -34,7 +34,7 @@ if (!function_exists('render_view')) {
         } else {
             $fullViewPath = __DIR__ . '/app/views/' . $view->path . '.php';
         }
-        
+
         $layoutPath = __DIR__ . "/app/views/layouts/{$view->layout}.php";
 
         ob_start();
@@ -62,24 +62,63 @@ if (!function_exists('render_view')) {
     }
 }
 
+if (!function_exists('input')) {
+    function input(string $key, $default = null)
+    {
+        return $_POST[$key] ?? $_GET[$key] ?? $default;
+    }
+}
+
 if (!function_exists('handle_exception')) {
     function handle_exception(Throwable $e): void
     {
         error_log($e->getMessage());
 
         $debugMode = Setting::get('debug_mode', false);
-        
+
         $data = [
-            'message'   => $debugMode ? $e->getMessage() : 'Съжаляваме, възникна неочаквана грешка.',
+            'message' => $debugMode ? $e->getMessage() : 'Съжаляваме, възникна неочаквана грешка.',
             'debugMode' => $debugMode,
-            'file'      => $e->getFile(),
-            'line'      => $e->getLine(),
-            'trace'     => $e->getTraceAsString()
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+            'trace' => $e->getTraceAsString()
         ];
 
         $view = View::make('errors/500', $data, 'main', 'core');
-        
+
         echo render_view($view, true);
         exit;
+    }
+}
+
+if (!function_exists('theme_info')) {
+    function theme_info(?string $key = null, $default = null)
+    {
+        static $themeData = null;
+
+        if ($themeData === null) {
+            $path = themes_path(ACTIVE_THEME . '/theme.json');
+            if (file_exists($path)) {
+                $themeData = json_decode(file_get_contents($path), true);
+            } else {
+                $themeData = [];
+            }
+        }
+
+        if ($key === null) {
+            return $themeData;
+        }
+
+        $keys = explode('.', $key);
+        $data = $themeData;
+
+        foreach ($keys as $segment) {
+            if (!isset($data[$segment])) {
+                return $default;
+            }
+            $data = $data[$segment];
+        }
+
+        return $data;
     }
 }

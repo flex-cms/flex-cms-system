@@ -23,6 +23,14 @@ class View
         exit;
     }
 
+    public static function jsonResponse(array $data, int $statusCode = 200)
+    {
+        header('Content-Type: application/json');
+        http_response_code($statusCode);
+        echo json_encode($data);
+        exit;
+    }
+
     public static function component(string $componentName, array $data = [], string $folder = "components"): void
     {
         extract($data);
@@ -41,6 +49,16 @@ class View
                 echo "<!-- Component $componentName not found в $filePath -->";
             }
         }
+    }
+
+    public static function render(string $path, array $data = [], string $source = 'core', string $layout = 'main')
+    {
+        if ($source === 'theme') {
+            self::renderTheme($path, $data, $layout);
+        } else {
+            render_view(self::make($path, $data, $layout, $source));
+        }
+        exit;
     }
 
     public static function renderTheme(string $path, array $data = [], string $layout = 'main'): void

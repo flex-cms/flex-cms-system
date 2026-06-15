@@ -22,7 +22,7 @@ class Setting extends Model
     public static function getSetting(string $jsonKey, string $nestedKey, $default = null)
     {
         $data = self::get($jsonKey, []);
-        return $data[$nestedKey] ?? $default;
+        return data_get($data, $nestedKey, $default);
     }
 
     public static function get(string $key, $default = null)
@@ -43,10 +43,13 @@ class Setting extends Model
 
     private static function castValue($value, $type)
     {
+        if ($value === null)
+            return null;
+
         return match ($type) {
-            'boolean' => (bool) $value,
+            'boolean' => filter_var($value, FILTER_VALIDATE_BOOLEAN),
             'integer' => (int) $value,
-            'json' => json_decode($value, true),
+            'json' => is_string($value) ? json_decode($value, true) : $value,
             default => $value,
         };
     }

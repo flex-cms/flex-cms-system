@@ -48,6 +48,10 @@ $pluginManagerConfig = [
         );
     }, 'name')
 
+    ->column('Slug', function ($plugin) {
+        return $plugin->slug;
+    })
+
     ->column('Версия', function ($plugin) {
         $versionText = 'v' . ($plugin->version ?? '1.0.0');
         return Table::statusBadge(text: $versionText, type: 'code');

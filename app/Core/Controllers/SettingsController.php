@@ -52,17 +52,18 @@ class SettingsController extends BaseController
             View::redirect('/admin/settings');
         }
 
-        $view = View::make('admin/settings/layout', [
-            'title' => 'Настройки: ' . $definedGroups[$group],
+        $groupData = $definedGroups[$group];
+        $title = is_array($groupData) ? ($groupData['title'] ?? $group) : $groupData;
+
+        View::render('admin/settings/layout', [
+            'title' => 'Настройки: ' . $title,
             'currentGroup' => $group,
             'definedGroups' => $definedGroups,
             'group' => $group,
             'dateFormats' => $this->getDateFormats(),
             'languages' => $this->languages,
             'timezones' => $this->timezones
-        ], 'admin');
-
-        render_view($view);
+        ], 'core', 'admin');
     }
 
     #[UseExceptions]
@@ -90,13 +91,13 @@ class SettingsController extends BaseController
 
     public static function getGroupIcon(string $group): string
     {
-        $icons = [
-            'general' => 'fa-cog',
-            'mail' => 'fa-envelope',
-            'system' => 'fa-server',
-            'security' => 'fa-shield-alt'
-        ];
-        return $icons[$group] ?? 'fa-circle';
+        $groups = theme_info('settings_options.settings_page_groups', []);
+
+        if (isset($groups[$group]['icon'])) {
+            return $groups[$group]['icon'];
+        }
+
+        return 'fa-circle';
     }
 
     #[UseExceptions]
@@ -118,23 +119,13 @@ class SettingsController extends BaseController
 
     private function getDateFormats(): array
     {
-        return [
-            'd.m.Y' => 'Ден.Месец.Година (31.12.2025)',
-            'd/m/Y' => 'Ден/Месец/Година (31/12/2025)',
-            'Y-m-d' => 'Година-Месец-Ден (ISO 2025-12-31)',
-            'd M Y' => 'Ден Месец Година (31 Дек 2025)',
-            'm/d/Y' => 'Месец/Ден/Година (САЩ формат)',
-            'l, j F Y' => 'Ден от седмицата, Ден Месец Година (Сряда, 31 Декември 2025)'
-        ];
+        $formats = theme_info('settings_options.date_formats');
+        return $formats;
     }
 
     protected function getDefinedGroups(): array
     {
-        return [
-            'general' => 'Общи настройки',
-            'mail' => 'Имейл сървър',
-            'system' => 'Системни параметри',
-            'security' => 'Сигурност'
-        ];
+        $dynamicGroups = theme_info('settings_options.settings_page_groups', []);
+        return (array) $dynamicGroups;
     }
 }

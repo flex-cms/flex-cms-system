@@ -617,4 +617,46 @@ class Form
         </div>
         <?php
     }
+
+    public static function tabs(array $items, string $activeKey): void
+    {
+        ?>
+        <div class="border-b border-slate-200 dark:border-slate-700 mb-5">
+            <nav class="flex space-x-1" aria-label="Tabs">
+                <?php foreach ($items as $key => $item): ?>
+                    <?php
+                    $title = is_array($item) ? ($item['title'] ?? $key) : $item;
+                    $icon = is_array($item) ? ($item['icon'] ?? 'fa-circle') : null;
+                    $url = is_array($item) ? ($item['url'] ?? '#') : '#';
+                    $isActive = ($key === $activeKey);
+                    
+                    $activeClass = 'text-primary border-primary dark:text-white dark:border-white';
+                    $inactiveClass = 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 dark:text-slate-400 dark:hover:text-slate-200';
+                    ?>
+                    <a href="<?= $url ?>" 
+                    class="<?= $isActive ? $activeClass : $inactiveClass ?> flex items-center px-6 py-4 font-semibold border-b-2 transition-all duration-200">
+                        <?php if ($icon): ?>
+                            <i class="fa-solid <?= $icon ?> mr-2"></i>
+                        <?php endif; ?>
+                        <?= htmlspecialchars($title) ?>
+                    </a>
+                <?php endforeach; ?>
+            </nav>
+        </div>
+        <?php
+    }
+
+    public static function renderTabs(array $groups, string $currentGroup, string $urlPrefix): void
+    {
+        $tabs = [];
+        foreach ($groups as $key => $value) {
+            $tabs[$key] = [
+                'title' => is_array($value) ? ($value['title'] ?? $key) : $value,
+                'icon'  => \Flex\Core\Controllers\SettingsController::getGroupIcon($key),
+                'url'   => $urlPrefix . $key
+            ];
+        }
+
+        self::tabs($tabs, $currentGroup);
+    }
 }

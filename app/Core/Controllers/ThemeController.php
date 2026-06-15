@@ -11,12 +11,12 @@ use Flex\Core\Routing\View;
 class ThemeController extends BaseController
 {
     #[UseExceptions]
-    public function index()
+    public function index(): void
     {
-        return $this->render(View::make('admin/themes/index', [
+        View::render('admin/themes/index', [
             'title' => 'Инсталирани теми',
             'themes' => Theme::all()
-        ], 'admin'));
+        ], 'core', 'admin');
     }
 
     #[UseExceptions]
