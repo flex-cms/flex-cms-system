@@ -53,13 +53,15 @@ $currentVersion = $currentConfig['version'];
     </script>
 </head>
 
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+<body class="bg-gray-100 dark:bg-slate-900 dark:text-white min-h-screen">
 
-    <div class="max-w-xl w-full bg-white p-8 rounded-lg shadow-lg">
-        <h1 class="text-2xl font-bold mb-6 text-center">Flex CMS Инсталатор</h1>
+    <div class="flex items-center justify-center py-10 md:py-20">
+        <div class="max-w-4xl w-full bg-white dark:bg-slate-800 p-5 md:p-10 rounded-lg shadow-lg">
+            <h1 class="text-2xl font-bold mb-5 text-center">Flex CMS Инсталатор</h1>
 
-        <div class="content">
-            <?php echo $content; ?>
+            <div class="content">
+                <?php echo $content; ?>
+            </div>
         </div>
     </div>
 

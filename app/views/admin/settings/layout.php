@@ -9,7 +9,6 @@ use Flex\Core\UI\Form;
 <?php Form::create(['action' => "/admin/settings/{$currentGroup}/update", 'method' => 'POST']); ?>
     
     <?php View::component($currentGroup, [
-        'settings' => $settings,
         'group' => $currentGroup,
         'dateFormats' => $dateFormats,
         'languages' => $languages,

@@ -38,10 +38,6 @@ class Auth
 
     public static function login(User $user): void
     {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-
         $_SESSION['user_id'] = $user->id;
         $_SESSION['is_admin'] = $user->hasRole('admin');
         $_SESSION['permissions'] = $user->getPermissions();
@@ -53,10 +49,6 @@ class Auth
 
     public static function check(): bool
     {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-
         if (!isset($_COOKIE['remember_token']) || empty($_COOKIE['remember_token'])) {
             if (isset($_SESSION['user_id'])) {
                 self::logout();
@@ -98,10 +90,6 @@ class Auth
 
     public static function logout(): void
     {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-
         if (isset($_SESSION['user_id'])) {
             $user = User::find($_SESSION['user_id']);
             if ($user) {

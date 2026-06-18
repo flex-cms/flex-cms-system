@@ -17,10 +17,13 @@ class UserSeeder extends AbstractSeed
 
         $pdo = $this->getAdapter()->getConnection();
 
+        $email = $_ENV['ADMIN_EMAIL'] ?? 'admin@example.com';
+        $password = $_ENV['ADMIN_PASS'] ?? 'password';
+
         $adminData = [
             'username' => 'admin',
-            'email' => 'admin@flex-cms.com',
-            'password' => password_hash('admin123', PASSWORD_BCRYPT),
+            'email'    => $email,
+            'password' => password_hash($password, PASSWORD_BCRYPT),
             'is_active' => 1,
             'created_at' => $now,
             'updated_at' => $now,

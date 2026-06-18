@@ -5,18 +5,20 @@ namespace Flex\Core\Middlewares;
 use Flex\Core\Auth;
 use Flex\Core\Interfaces\MiddlewareInterface;
 use Flex\Core\Routing\View;
+use Flex\Models\Plugin;
 
 class AuthMiddleware implements MiddlewareInterface
 {
     public function handle(): void
     {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-
         if (!Auth::check()) {
             $_SESSION['redirect_url'] = $_SERVER['REQUEST_URI'];
-            View::redirect('/auth/login', 301);
+
+            if (Plugin::isActive('BasicAuthentication')) {
+                View::redirect('/auth/login', 401);
+            }
+
+            View::redirect('/admin', 401);
         }
     }
 }

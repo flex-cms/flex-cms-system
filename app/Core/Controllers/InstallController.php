@@ -4,6 +4,8 @@ namespace Flex\Core\Controllers;
 
 use Flex\Attributes\UseExceptions;
 use Flex\Core\Routing\View;
+use Illuminate\Database\Capsule\Manager as Capsule;
+use Illuminate\Database\Capsule\Manager;
 use PDO;
 
 class InstallController extends BaseController
@@ -27,35 +29,39 @@ class InstallController extends BaseController
         $db_user = $_POST['db_user'] ?? '';
         $db_pass = $_POST['db_pass'] ?? '';
 
-        try {
-            $pdo = new PDO("mysql:host=$db_host", $db_user, $db_pass);
-            $pdo->exec("CREATE DATABASE IF NOT EXISTS `$db_name`");
+        $pdo = new PDO("mysql:host=$db_host", $db_user, $db_pass);
+        $pdo->exec("CREATE DATABASE IF NOT EXISTS `$db_name`");
 
-            $dbSettings = [
-                'DB_HOST' => $db_host,
-                'DB_NAME' => $db_name,
-                'DB_USER' => $db_user,
-                'DB_PASS' => $db_pass,
-                'DB_CHAR' => 'utf8mb4'
-            ];
+        $dbSettings = [
+            'DB_HOST'       => $db_host,
+            'DB_NAME'       => $db_name,
+            'DB_USER'       => $db_user,
+            'DB_PASS'       => $db_pass,
+            'DB_CHAR'       => 'utf8mb4',
+            'ADMIN_EMAIL'   => $_POST['admin_email'],
+            'ADMIN_PASS'    => $_POST['admin_pass'],
+        ];
 
-            $this->updateEnvFile($dbSettings);
+        $this->updateEnvFile($dbSettings);
+        $this->runMigrations();
 
-            $this->runMigrations();
+        $capsule = new Manager;
+        $capsule->addConnection([
+            'driver' => 'mysql',
+            'host' => $db_host,
+            'database' => $db_name,
+            'username' => $db_user,
+            'password' => $db_pass,
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+        ]);
+        $capsule->setAsGlobal();
+        $capsule->bootEloquent();
 
-            session_start();
-            $_SESSION['install_success'] = [
-                'email' => 'admin@flex-cms.com',
-                'password' => 'admin123'
-            ];
+        $_SESSION['install_success'] = ['email' => $_POST['admin_email'], 'password' => $_POST['admin_pass']];
+        file_put_contents(base_path('storage/installed.lock'), date('Y-m-d H:i:s'));
 
-            file_put_contents(base_path('storage/installed.lock'), date('Y-m-d H:i:s'));
-
-            header("Location: /install/success");
-            exit;
-        } catch (\Exception $e) {
-            die("Грешка при инсталацията: " . $e->getMessage());
-        }
+        View::redirect('/install/success');
     }
 
     #[UseExceptions]
@@ -66,7 +72,6 @@ class InstallController extends BaseController
             exit;
         }
 
-        session_start();
         if (!isset($_SESSION['install_success'])) {
             header("Location: /admin");
             exit;

@@ -1,5 +1,7 @@
 <?php
 
+session_start();
+
 require_once 'vendor/autoload.php';
 require_once 'functions.php';
 
@@ -14,7 +16,31 @@ use Illuminate\Database\Capsule\Manager as Capsule;
 
 $isInstalled = file_exists(base_path('storage/installed.lock'));
 
+if ($isInstalled) {
+    $dotenv = Dotenv::createImmutable(__DIR__);
+    $dotenv->load();
+
+    $capsule = new Capsule;
+    $capsule->addConnection([
+        'driver'    => 'mysql',
+        'host'      => $_ENV['DB_HOST'],
+        'database'  => $_ENV['DB_NAME'],
+        'username'  => $_ENV['DB_USER'],
+        'password'  => $_ENV['DB_PASS'],
+        'charset'   => $_ENV['DB_CHAR'],
+        'collation' => 'utf8mb4_unicode_ci',
+        'prefix'    => '',
+    ]);
+    $capsule->setAsGlobal();
+    $capsule->bootEloquent();
+}
+
 if (!$isInstalled) {
+    error_reporting(E_ALL);
+    ini_set('display_errors', '1');
+    ini_set('display_startup_errors', '1');
+    ini_set('error_log', base_path('storage/logs/php_debug.log'));
+    
     $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
     
     if (!in_array($uri, ['/install', '/install/process-db', '/install/success'])) {
@@ -32,29 +58,15 @@ if (!$isInstalled) {
     exit;
 }
 
-session_start();
-
-$dotenv = Dotenv::createImmutable(__DIR__);
-$dotenv->load();
-
-$capsule = new Capsule;
-$capsule->addConnection([
-    'driver'    => 'mysql',
-    'host'      => $_ENV['DB_HOST'],
-    'database'  => $_ENV['DB_NAME'],
-    'username'  => $_ENV['DB_USER'],
-    'password'  => $_ENV['DB_PASS'],
-    'charset'   => $_ENV['DB_CHAR'],
-    'collation' => 'utf8mb4_unicode_ci',
-    'prefix'    => '',
-]);
-$capsule->setAsGlobal();
-$capsule->bootEloquent();
-
 function db() { return Database::getInstance(); }
 db();
 
-$debugMode = Setting::get('debug_mode', false);
+try {
+    $debugMode = Setting::get('debug_mode', false);
+} catch (\Exception $e) {
+    $debugMode = false;
+}
+
 if ($debugMode) {
     error_reporting(E_ALL);
     ini_set('display_errors', '1');

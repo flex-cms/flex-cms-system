@@ -1,17 +1,24 @@
 <?php
 
+declare(strict_types=1);
+
 use Phinx\Seed\AbstractSeed;
 
 class DatabaseSeeder extends AbstractSeed
 {
     public function run(): void
     {
-        $roleSeeder = new RoleAndPermissionSeeder();
-        $roleSeeder->setAdapter($this->getAdapter());
-        $roleSeeder->run();
+        $seeders = [
+            RoleAndPermissionSeeder::class,
+            UserSeeder::class,
+            EmailTemplateSeeder::class,
+            SettingSeeder::class,
+        ];
 
-        $userSeeder = new UserSeeder();
-        $userSeeder->setAdapter($this->getAdapter());
-        $userSeeder->run();
+        foreach ($seeders as $seederClass) {
+            $seeder = new $seederClass();
+            $seeder->setAdapter($this->getAdapter());
+            $seeder->run();
+        }
     }
 }
