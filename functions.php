@@ -25,39 +25,35 @@ if (!function_exists('plugins_path')) {
 }
 
 if (!function_exists('render_view')) {
-    function render_view(View $view, bool $returnOutput = false): ?string
-    {
-        extract($view->data);
+    function render_view(
+        string $path,
+        array $data = [],
+        string $viewSource = 'core',
+        string $layout = 'admin',
+        string $layoutSource = 'core'
+    ): void {
+        extract($data);
+        $root = __DIR__;
 
-        if ($view->source === 'theme') {
-            $fullViewPath = __DIR__ . '/themes/' . ACTIVE_THEME . '/views/' . $view->path . '.php';
-        } else {
-            $fullViewPath = __DIR__ . '/app/views/' . $view->path . '.php';
-        }
+        $viewDir = ($viewSource === 'theme') ? "/themes/" . ACTIVE_THEME . "/views/" : "/app/views/";
+        $layoutDir = ($layoutSource === 'theme') ? "/themes/" . ACTIVE_THEME . "/views/layouts/" : "/app/views/layouts/";
 
-        $layoutPath = __DIR__ . "/app/views/layouts/{$view->layout}.php";
+        $fullViewPath = $root . $viewDir . $path . '.php';
+        $layoutPath = $root . $layoutDir . $layout . '.php';
 
         ob_start();
         if (file_exists($fullViewPath)) {
             include $fullViewPath;
         } else {
-            throw new \Exception("View not found: " . htmlspecialchars($fullViewPath));
+            throw new \Exception("View not found: " . $fullViewPath);
         }
         $content = ob_get_clean();
 
         if (file_exists($layoutPath)) {
-            ob_start();
             include $layoutPath;
-            $finalOutput = ob_get_clean();
         } else {
-            $finalOutput = $content;
+            echo $content;
         }
-
-        if ($returnOutput) {
-            return $finalOutput;
-        }
-
-        echo $finalOutput;
         exit;
     }
 }
@@ -84,34 +80,30 @@ if (!function_exists('handle_exception')) {
             'trace' => $e->getTraceAsString()
         ];
 
-        $view = View::make('errors/500', $data, 'main', 'core');
-
-        echo render_view($view, true);
-        exit;
+        render_view('errors/500', $data, 'core', 'main');
     }
 }
 
-if (!function_exists('theme_info')) {
-    function theme_info(?string $key = null, $default = null)
+if (!function_exists('get_json_data')) {
+    function get_json_data(string $filePath, ?string $key = null, $default = null)
     {
-        static $themeData = null;
+        static $cache = [];
 
-        if ($themeData === null) {
-            $path = themes_path(ACTIVE_THEME . '/theme.json');
-            if (file_exists($path)) {
-                $themeData = json_decode(file_get_contents($path), true);
+        if (!isset($cache[$filePath])) {
+            if (file_exists($filePath)) {
+                $cache[$filePath] = json_decode(file_get_contents($filePath), true) ?? [];
             } else {
-                $themeData = [];
+                $cache[$filePath] = [];
             }
         }
 
+        $data = $cache[$filePath];
+
         if ($key === null) {
-            return $themeData;
+            return $data;
         }
 
         $keys = explode('.', $key);
-        $data = $themeData;
-
         foreach ($keys as $segment) {
             if (!isset($data[$segment])) {
                 return $default;
@@ -120,5 +112,21 @@ if (!function_exists('theme_info')) {
         }
 
         return $data;
+    }
+}
+
+if (!function_exists('theme_info')) {
+    function theme_info(?string $key = null, $default = null)
+    {
+        $path = themes_path(ACTIVE_THEME . '/theme.json');
+        return get_json_data($path, $key, $default);
+    }
+}
+
+if (!function_exists('core_info')) {
+    function core_info(?string $key = null, $default = null)
+    {
+        $path = base_path('core.json');
+        return get_json_data($path, $key, $default);
     }
 }

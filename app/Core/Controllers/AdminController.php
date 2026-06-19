@@ -13,7 +13,7 @@ class AdminController extends BaseController
     #[UseExceptions]
     public function index()
     {
-        $this->render(View::make('admin/dashboard', [], 'admin'));
+        render_view('admin/dashboard', [], 'core', 'admin');
     }
 
     #[UseExceptions]

@@ -13,10 +13,12 @@ class ThemeController extends BaseController
     #[UseExceptions]
     public function index(): void
     {
-        View::render('admin/themes/index', [
+        $data = [
             'title' => 'Инсталирани теми',
             'themes' => Theme::all()
-        ], 'core', 'admin');
+        ];
+
+        render_view('admin/themes/index', $data, 'core', 'admin', 'core');
     }
 
     #[UseExceptions]

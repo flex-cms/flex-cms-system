@@ -75,15 +75,14 @@ class UserController extends BaseController
             }
         }
 
-        $users = $query->get();
-        $roles = Role::orderBy('name', 'asc')->get();
-
-        $this->renderAdmin('users/index', [
+        $data = [
             'title' => $this->indexTitle,
-            'users' => $users,
-            'roles' => $roles,
+            'users' => $query->get(),
+            'roles' => Role::orderBy('name', 'asc')->get(),
             'primaryButton' => $this->createButton('/admin/users/create', $this->createBtn)
-        ]);
+        ];
+
+        render_view('admin/users/index', $data);
     }
 
     #[UseExceptions]
@@ -91,13 +90,15 @@ class UserController extends BaseController
     {
         $roles = Role::orderBy('name', 'asc')->get();
 
-        $this->renderAdmin('users/form', [
+        $data = [
             'title' => $this->createTitle,
             'user' => new User(),
             'allRoles' => $roles,
             'assignedRoleIds' => [],
             'primaryButton' => $this->createButton('/admin/users/create', $this->createBtn)
-        ]);
+        ];
+
+        render_view('admin/users/form', $data);
     }
 
     #[UseExceptions]
@@ -107,13 +108,15 @@ class UserController extends BaseController
         $roles = Role::orderBy('name', 'asc')->get();
         $assignedRoleIds = $user->roles->pluck('id')->toArray();
 
-        $this->renderAdmin('users/form', [
+        $data = [
             'title' => $this->editTitle,
             'user' => $user,
             'allRoles' => $roles,
             'assignedRoleIds' => $assignedRoleIds,
             'primaryButton' => $this->createButton('/admin/users/create', $this->createBtn)
-        ]);
+        ];
+
+        render_view('admin/users/form', $data);
     }
 
     #[UseExceptions]

@@ -17,7 +17,7 @@ class AuthController extends BaseController
             return;
         }
 
-        $this->render(View::make('auth/login'));
+        render_view('auth/login', [], 'core', 'main');
     }
 
     #[UseExceptions]
@@ -36,7 +36,7 @@ class AuthController extends BaseController
             'old' => ['username' => $username]
         ];
 
-        $this->render(View::make('auth/login', $data));
+        render_view('auth/login', $data);
     }
 
     #[UseExceptions]

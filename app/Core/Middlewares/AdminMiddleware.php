@@ -12,8 +12,7 @@ class AdminMiddleware implements MiddlewareInterface
     {
         if (!Auth::isAdmin()) {
             $_SESSION['redirect_url'] = $_SERVER['REQUEST_URI'];
-
-            View::redirect('/admin', 302);
+            View::redirect('/admin');
         }
     }
 }

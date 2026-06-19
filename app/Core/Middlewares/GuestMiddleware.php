@@ -11,7 +11,7 @@ class GuestMiddleware implements MiddlewareInterface
     public function handle(): void
     {
         if (Auth::check()) {
-            View::redirect('/admin', 302);
+            View::redirect('/admin');
         }
     }
 }

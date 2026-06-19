@@ -3,51 +3,65 @@
 namespace Flex\Core\Controllers;
 
 use Flex\Attributes\UseExceptions;
+use Flex\Core\Filters\Shared\StatusFilter;
 use Flex\Core\Routing\View;
+use Flex\Core\Traits\CrudHelper;
+use Flex\Core\Traits\HandlesTableFilters;
 use Flex\Models\Permission;
 use Flex\Models\Role;
 
 class PermissionController extends BaseController
 {
+    use CrudHelper, HandlesTableFilters;
+    
+    protected string $indexTitle;
+    protected string $createTitle;
+    protected string $editTitle;
+    protected string $createBtn;
+    protected string $deleteSuccessMessage;
+    protected string $deleteErrorMessage;
+
+    public function __construct()
+    {
+        $this->indexTitle = 'Управление на разрешения';
+        $this->createTitle = 'Създаване на ново разрешение';
+        $this->editTitle = 'Редактиране на разрешението';
+        $this->createBtn = 'Ново разрешение';
+        $this->deleteSuccessMessage = 'Изтрито успешно.';
+        $this->deleteErrorMessage = 'Това разрешение не съществува.';
+    }
+
     #[UseExceptions]
     public function index()
     {
-        $query = Permission::orderBy('module', 'asc')->orderBy('name', 'asc');
+        $permissions = $this->applyFilters(
+            Permission::query(),
+            ['name', 'slug'],
+            ['name', 'slug', 'created_at'],
+            ['status' => StatusFilter::class],
+            'name'
+        )->get();
 
-        if (!empty($_GET['module'])) {
-            $query->where('module', '=', $_GET['module']);
-        }
-
-        if (!empty($_GET['search'])) {
-            $search = trim($_GET['search']);
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'LIKE', "%{$search}%")
-                    ->orWhere('description', 'LIKE', "%{$search}%");
-            });
-        }
-
-        $permissions = $query->get();
-
-        $this->render(View::make('admin/permissions/index', [
-            'title' => 'Разрешения',
+        $data = [
+            'title' => $this->indexTitle,
             'permissions' => $permissions,
-            'primaryButton' => [
-                'label' => 'Ново разрешение',
-                'url' => '/admin/users/permissions/create',
-                'icon' => 'fa-plus'
-            ]
-        ], 'admin'));
+            'primaryButton' => $this->createButton('/admin/users/permissions/create', $this->createTitle)
+        ];
+
+        render_view('admin/permissions/index', $data);
     }
 
     #[UseExceptions]
     public function create()
     {
         $allRoles = Role::orderBy('name', 'asc')->get();
-        $this->render(View::make('admin/permissions/form', [
+        $data = [
             'title' => 'Създаване на ново разрешение',
             'allRoles' => $allRoles,
             'assignedRoleIds' => []
-        ], 'admin'));
+        ];
+
+        render_view('admin/permissions/form', $data);
     }
 
     #[UseExceptions]
@@ -68,12 +82,14 @@ class PermissionController extends BaseController
         $allRoles = Role::orderBy('name', 'asc')->get();
         $assignedRoleIds = $permission->roles()->pluck('roles.id')->toArray();
 
-        $this->render(View::make('admin/permissions/form', [
+        $data = [
             'title'=> 'Редактиране на разрешение',
             'permission' => $permission,
             'allRoles' => $allRoles,
             'assignedRoleIds' => $assignedRoleIds
-        ], 'admin'));
+        ];
+        
+        render_view('admin/permissions/form', $data);
     }
 
     #[UseExceptions]

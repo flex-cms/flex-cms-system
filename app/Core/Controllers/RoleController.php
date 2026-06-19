@@ -13,8 +13,7 @@ use Flex\Models\Permission;
 
 class RoleController extends BaseController
 {
-    use CrudHelper;
-    use HandlesTableFilters;
+    use CrudHelper, HandlesTableFilters;
 
     protected string $indexTitle;
     protected string $createTitle;
@@ -44,11 +43,13 @@ class RoleController extends BaseController
             'name'
         )->get();
 
-        $this->renderAdmin('roles/index', [
+        $data = [
             'title' => $this->indexTitle,
             'roles' => $roles,
-            'primaryButton' => $this->createButton('/admin/roles/create', $this->createTitle)
-        ]);
+            'primaryButton' => $this->createButton('/admin/users/roles/create', $this->createTitle)
+        ];
+
+        render_view('admin/roles/index', $data);
     }
 
     #[UseExceptions]
@@ -56,10 +57,13 @@ class RoleController extends BaseController
     {
         $permissions = Permission::all()->groupBy('module');
 
-        $this->render(View::make('admin/roles/form', [
+        $data = [
             'title' => 'Нова роля',
-            'permissions' => $permissions
-        ], 'admin'));
+            'permissions' => $permissions,
+            'primaryButton' => $this->createButton('/admin/users/roles/create', $this->createBtn)
+        ];
+
+        render_view('admin/roles/form', $data);
     }
 
     #[UseExceptions]
@@ -86,12 +90,15 @@ class RoleController extends BaseController
         $permissions = Permission::all()->groupBy('module');
         $assignedPermissions = $role->permissions->pluck('id')->toArray();
 
-        $this->render(View::make('admin/roles/form', [
+        $data = [
             'title' => 'Редактиране на роля: ' . $role->name,
             'role' => $role,
             'permissions' => $permissions,
-            'assignedPermissions' => $assignedPermissions
-        ], 'admin'));
+            'assignedPermissions' => $assignedPermissions,
+            'primaryButton' => $this->createButton('/admin/roles/create', $this->createBtn)
+        ];
+
+        render_view('admin/roles/form', $data);
     }
 
     #[UseExceptions]

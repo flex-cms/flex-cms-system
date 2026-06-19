@@ -15,10 +15,10 @@ class AuthMiddleware implements MiddlewareInterface
             $_SESSION['redirect_url'] = $_SERVER['REQUEST_URI'];
 
             if (Plugin::isActive('BasicAuthentication')) {
-                View::redirect('/auth/login', 401);
+                View::redirect('/auth/login');
             }
 
-            View::redirect('/admin', 401);
+            View::redirect('/admin');
         }
     }
 }

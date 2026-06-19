@@ -25,12 +25,12 @@ class PageController extends BaseController
 
     public function __construct()
     {
-        $this->indexTitle               = 'Управление на страници';
-        $this->createTitle              = 'Нова страница';
-        $this->editTitle                = 'Редактиране на страница';
-        $this->createBtn                = 'Нова страница';
-        $this->deleteSuccessMessage     = 'Изтрито успешно.';
-        $this->deleteErrorMessage       = 'Тази страница не съществува.';
+        $this->indexTitle = 'Управление на страници';
+        $this->createTitle = 'Нова страница';
+        $this->editTitle = 'Редактиране на страница';
+        $this->createBtn = 'Нова страница';
+        $this->deleteSuccessMessage = 'Изтрито успешно.';
+        $this->deleteErrorMessage = 'Тази страница не съществува.';
     }
 
     #[UseExceptions]
@@ -44,21 +44,25 @@ class PageController extends BaseController
             'name'
         )->get();
 
-        $this->renderAdmin('pages/index', [
+        $data = [
             'title' => $this->indexTitle,
             'pages' => $pages,
             'primaryButton' => $this->createButton('/admin/pages/create', $this->createTitle)
-        ]);
+        ];
+
+        render_view('admin/pages/index', $data);
     }
 
     #[UseExceptions]
     public function create()
     {
-        $this->renderAdmin('pages/form', [
+        $data = [
             'title' => $this->createTitle,
             'page' => new Page(),
             'primaryButton' => $this->createButton('/admin/pages/create', $this->createTitle)
-        ]);
+        ];
+
+        render_view('admin/pages/form', $data);
     }
 
     #[UseExceptions]
@@ -66,11 +70,13 @@ class PageController extends BaseController
     {
         $page = Page::findOrFail($id);
 
-        $this->renderAdmin('pages/form', [
+        $data = [
             'title' => $this->editTitle,
             'page' => $page,
             'primaryButton' => $this->createButton('/admin/pages/create', $this->createTitle)
-        ]);
+        ];
+
+        render_view('admin/pages/form', $data);
     }
 
     #[UseExceptions]
@@ -78,7 +84,7 @@ class PageController extends BaseController
     {
         $data = $this->prepareData($_POST);
         $page = Page::create($data);
-        
+
         View::redirect('/admin/pages/edit/' . $page->id);
     }
 
@@ -109,7 +115,7 @@ class PageController extends BaseController
         }
 
         $statusText = $result['new_status'] ? 'активирана' : 'деактивирана';
-        
+
         return $this->jsonResponse(true, "Страницата беше {$statusText} успешно!");
     }
 

@@ -4,7 +4,6 @@ namespace Flex\Core\Controllers;
 
 use Flex\Attributes\UseExceptions;
 use Flex\Core\Controllers\BaseController;
-use Flex\Core\Routing\View;
 
 class FileStructureController extends BaseController
 {
@@ -28,10 +27,12 @@ class FileStructureController extends BaseController
 
         $fileTree = $this->buildTree($rootPath, $exclude);
 
-        return $this->render(View::make('admin/file-structure/index', [
+        $data = [
             'title' => 'Структура на файловете',
-            'fileTree' => $fileTree
-        ], 'admin'));
+            'fileTree' => $fileTree,
+        ];
+
+        render_view('admin/file-structure/index', $data);
     }
 
     #[UseExceptions]

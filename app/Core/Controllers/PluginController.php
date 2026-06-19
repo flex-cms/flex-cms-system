@@ -10,7 +10,6 @@ use Flex\Core\Plugins\Traits\PluginUpdatable;
 use Flex\Core\Traits\CrudHelper;
 use Flex\Core\Traits\HandlesTableFilters;
 use Flex\Models\Plugin;
-use Flex\Core\Routing\View;
 
 class PluginController extends BaseController
 {
@@ -42,10 +41,12 @@ class PluginController extends BaseController
 
         $plugins = $query->get();
 
-        return $this->render(View::make('admin/plugins/index', [
+        $data = [
             'title' => 'Управление на Плъгини',
-            'plugins' => $plugins
-        ], 'admin'));
+            'plugins' => $plugins,
+        ];
+
+        render_view('admin/plugins/index', $data);
     }
 
     #[UseExceptions]

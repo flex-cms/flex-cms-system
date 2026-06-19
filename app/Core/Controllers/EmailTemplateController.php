@@ -33,27 +33,28 @@ class EmailTemplateController extends BaseController
 
         $categories = EmailTemplate::distinct()->pluck('category')->toArray();
 
-        return $this->render(View::make('admin/email-templates/index', [
+        $data = [
             'title' => 'Имейл шаблони',
-            'primaryButton' => [
-                'label' => 'Нов шаблон',
-                'url' => '/admin/email-templates/create',
-                'icon' => 'fa-plus'
-            ],
+            'primaryButton' => $this->createButton('/admin/email-templates/create', 'Нов шаблон'),
             'templates' => $query->get(),
             'categories' => $categories,
             'currentSort' => $sort,
-            'currentDir' => $direction
-        ], 'admin'));
+            'currentDir' => $direction,
+        ];
+
+        render_view('admin/email-templates/index', $data);
     }
 
     #[UseExceptions]
     public function create()
     {
-        return $this->render(View::make('admin/email-templates/form', [
+        $data = [
             'title' => 'Създаване на нов шаблон',
-            'template' => null
-        ], 'admin'));
+            'template' => null,
+            'primaryButton' => $this->createButton('/admin/email-templates/create', 'Нов шаблон')
+        ];
+
+        render_view('admin/email-templates/form', $data);
     }
 
     #[UseExceptions]
@@ -78,10 +79,13 @@ class EmailTemplateController extends BaseController
     {
         $template = EmailTemplate::findOrFail($id);
 
-        return $this->render(View::make('admin/email-templates/form', [
+        $data = [
             'title' => 'Редактиране на шаблон: ' . $template->name,
-            'template' => $template
-        ], 'admin'));
+            'template' => $template,
+            'primaryButton' => $this->createButton('/admin/email-templates/create', 'Нов шаблон')
+        ];
+
+        render_view('admin/email-templates/form', $data);
     }
 
     #[UseExceptions]

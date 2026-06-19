@@ -4,7 +4,6 @@ namespace Flex\Core\Controllers;
 
 use Flex\Attributes\UseExceptions;
 use Flex\Core\Routing\View;
-use Illuminate\Database\Capsule\Manager as Capsule;
 use Illuminate\Database\Capsule\Manager;
 use PDO;
 
@@ -18,7 +17,11 @@ class InstallController extends BaseController
             exit;
         }
 
-        render_view(View::make('install/create', ['title' => 'Инсталация - Стъпка 1'], 'install'));
+        $data = [
+            'title' => 'Създаване на базата данни'
+        ];
+
+        render_view('install/create', $data);
     }
 
     #[UseExceptions]
@@ -80,11 +83,13 @@ class InstallController extends BaseController
         $data = $_SESSION['install_success'];
         unset($_SESSION['install_success']);
 
-        render_view(View::make('install/success', [
+        $data = [
             'title' => 'Инсталацията е успешна',
             'admin_email' => $data['email'],
             'admin_password' => $data['password']
-        ], 'install'));
+        ];
+        
+        render_view('install/success', $data);
     }
 
     #[UseExceptions]

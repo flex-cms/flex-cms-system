@@ -16,17 +16,20 @@ class UpdateController extends BaseController
         $latest = $this->fetchLatestVersionData();
 
         if (!$latest) {
-            return $this->render(View::make('admin/update/index', ['error' => 'Неуспешна връзка със сървъра.']));
+            $_SESSION['flush_error'] = 'Неуспешна връзка със сървъра.';
+            render_view('admin/update/index');
         }
 
         $needsUpdate = $this->checkVersionComparison($latest['latest_version']);
 
-        return $this->render(View::make('admin/update/index', [
+        $data = [
             'title' => 'Версия на системата',
             'latest' => $latest,
             'current' => $this->getVersionData(),
-            'needsUpdate' => $needsUpdate
-        ], 'admin'));
+            'needsUpdate' => $needsUpdate,
+        ];
+
+        render_view('admin/update/index', $data);
     }
 
     #[UseExceptions]
