@@ -45,13 +45,20 @@ $routes = [
     ['GET', '/admin/users/roles/edit/{id}', [RoleController::class, 'edit'], [AuthMiddleware::class, AdminMiddleware::class]],
     ['POST', '/admin/users/roles/edit/{id}', [RoleController::class, 'update'], [AuthMiddleware::class, AdminMiddleware::class]],
     ['POST', '/admin/users/roles/toggle', [RoleController::class, 'toggle'], [AuthMiddleware::class, AdminMiddleware::class]],
+    ['POST', '/admin/users/roles/delete', [RoleController::class, 'delete'], [AuthMiddleware::class, AdminMiddleware::class]],
+    ['POST', '/admin/users/roles/force-delete', [RoleController::class, 'forceDelete'], [AuthMiddleware::class, AdminMiddleware::class]],
+    ['POST', '/admin/users/roles/restore', [RoleController::class, 'restore'], [AuthMiddleware::class, AdminMiddleware::class]],
 
     // Permissions
     ['GET', '/admin/users/permissions', [PermissionController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]],
     ['GET', '/admin/users/permissions/create', [PermissionController::class, 'create'], [AuthMiddleware::class, AdminMiddleware::class]],
-    ['POST', '/admin/users/permissions/create', [PermissionController::class, 'store'], [AuthMiddleware::class, AdminMiddleware::class]],
+    ['POST', '/admin/users/permissions/store', [PermissionController::class, 'store'], [AuthMiddleware::class, AdminMiddleware::class]],
     ['GET', '/admin/users/permissions/edit/{id}', [PermissionController::class, 'edit'], [AuthMiddleware::class, AdminMiddleware::class]],
     ['POST', '/admin/users/permissions/update/{id}', [PermissionController::class, 'update'], [AuthMiddleware::class, AdminMiddleware::class]],
+    ['POST', '/admin/users/permissions/delete', [PermissionController::class, 'delete'], [AuthMiddleware::class, AdminMiddleware::class]],
+    ['POST', '/admin/users/permissions/force-delete', [PermissionController::class, 'forceDelete'], [AuthMiddleware::class, AdminMiddleware::class]],
+    ['POST', '/admin/users/permissions/restore', [PermissionController::class, 'restore'], [AuthMiddleware::class, AdminMiddleware::class]],
+    ['POST', '/admin/users/permissions/toggle', [PermissionController::class, 'toggle'], [AuthMiddleware::class, AdminMiddleware::class]],
 
     // Settings
     ['GET', '/admin/settings/{group}', [SettingsController::class, 'show'], [AuthMiddleware::class, AdminMiddleware::class]],

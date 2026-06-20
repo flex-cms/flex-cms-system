@@ -315,7 +315,9 @@ class Form
         $id = $options['id'] ?? 'toggle-' . bin2hex(random_bytes(4));
         $description = $options['description'] ?? null;
         $checked = $value ? 'checked' : '';
-
+        
+        $isInputArray = str_ends_with($name, ']');
+        
         $attributes = '';
         if (isset($options['attr']) && is_array($options['attr'])) {
             foreach ($options['attr'] as $attr => $val) {
@@ -326,27 +328,20 @@ class Form
         ?>
         <div class="flex items-center gap-4">
             <label for="<?= $id ?>" class="relative inline-flex items-center cursor-pointer shrink-0 mt-0.5">
-                <input type="hidden" name="<?= $name ?>" value="0">
+                <?php if (!$isInputArray): ?>
+                    <input type="hidden" name="<?= $name ?>" value="0">
+                <?php endif; ?>
                 
-                <input type="checkbox" name="<?= $name ?>" id="<?= $id ?>" value="1" class="sr-only peer" <?= $checked ?>
-                    <?= $attributes ?>>
+                <input type="checkbox" name="<?= $name ?>" id="<?= $id ?>" value="1" class="sr-only peer" <?= $checked ?> <?= $attributes ?>>
 
-                <div class="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer 
-                            peer-checked:after:translate-x-full peer-checked:after:border-white 
-                            after:content-[''] after:absolute after:top-0.5 after:left-0.5 
-                            after:bg-white after:border-slate-300 after:border after:rounded-full 
-                            after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 shadow-inner">
+                <div class="w-11 h-6 bg-slate-200 dark:bg-slate-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-indigo-600 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all shadow-inner">
                 </div>
             </label>
 
             <div class="flex flex-col select-none cursor-pointer" onclick="document.getElementById('<?= $id ?>').click()">
-                <span class="font-semibold text-slate-800 dark:text-slate-200 leading-tight">
-                    <?= $label ?>
-                </span>
+                <span class="font-semibold text-slate-800 dark:text-slate-200 leading-tight"><?= $label ?></span>
                 <?php if ($description): ?>
-                    <span class="text-sm text-slate-500 dark:text-slate-400 mt-1 leading-relaxed max-w-sm">
-                        <?= $description ?>
-                    </span>
+                    <span class="text-sm text-slate-500 dark:text-slate-400 mt-1"><?= $description ?></span>
                 <?php endif; ?>
             </div>
         </div>

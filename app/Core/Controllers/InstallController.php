@@ -21,7 +21,7 @@ class InstallController extends BaseController
             'title' => 'Създаване на базата данни'
         ];
 
-        render_view('install/create', $data);
+        render_view('install/create', $data, 'core', 'install');
     }
 
     #[UseExceptions]
@@ -89,7 +89,7 @@ class InstallController extends BaseController
             'admin_password' => $data['password']
         ];
         
-        render_view('install/success', $data);
+        render_view('install/success', $data, 'core', 'install');
     }
 
     #[UseExceptions]

@@ -8,21 +8,25 @@ $permission = $permission ?? null;
 $assignedRoleIds = $assignedRoleIds ?? [];
 $allRoles = $allRoles ?? [];
 
+$isEdit = isset($permission->id);
+$action = $isEdit ? '/admin/users/permissions/update/' . $permission->id : '/admin/users/permissions/store';
+
 Page::header(
-    title: $permission ? 'Редактиране на разрешение' : 'Създаване на ново разрешение',
+    title: $isEdit ? 'Редактиране на разрешение' : 'Създаване на ново разрешение',
     backUrl: '/admin/users/permissions',
     subtitle: 'Дефинирайте техническите детайли и логическото групиране на това разрешение'
 );
 ?>
 
-<form action="<?= $permission ? '/admin/users/permissions/update/' . $permission->id : '/admin/users/permissions/store' ?>" method="POST" class="max-w-3xl">
+<?php Form::create(['action' => $action, 'method' => 'POST', 'class' => 'max-w-5xl']) ?>
 
-    <?php Form::section(function () use ($permission) { ?>
+    <?php Form::heading('Основна информация'); ?>
 
-        <div class="space-y-5">
+    <?php Form::section(title: 'Основни данни за разрешението', slot: function () use ($permission) { ?>
+        <?php Form::row(function () use ($permission) { ?>
             <?php Form::input('name', 'Име на разрешението', [
                 'value' => $permission?->name,
-                'placeholder' => 'напр. edit_users',
+                'placeholder' => 'напр. Редактиране на потребители',
                 'required' => true
             ]); ?>
 
@@ -31,43 +35,42 @@ Page::header(
                 'placeholder' => 'напр. edit_users',
                 'required' => true
             ]); ?>
+        <?php }); ?>
 
-            <?php if ($permission): ?>
-                <?php
-                echo Alert::make(
-                    'Внимание: Промяната на „Slug“-а на разрешението може да счупи логическите проверки в кода (напр. $user->can(\'...\')). Бъдете внимателни!'
-                )->warning()->render();
-                ?>
-            <?php endif; ?>
+        <?php if ($permission): ?>
+            <div class="mt-4">
+                <?php echo Alert::make('Внимание: Промяната на „Slug“-а може да счупи логическите проверки в кода (напр. $user->can(\'...\')). Бъдете внимателни!')->warning()->render(); ?>
+            </div>
+        <?php endif; ?>
 
+        <?php Form::row(function () use ($permission) { ?>
             <?php Form::input('module', 'Модул (група)', [
                 'value' => $permission?->module,
                 'placeholder' => 'напр. Users',
                 'required' => true
             ]); ?>
+        <?php }); ?>
 
-            <?php Form::textarea('description', 'Описание', [
-                'value' => $permission?->description,
-                'placeholder' => 'Опишете какво позволява това разрешение...',
-                'rows' => 4
-            ]); ?>
-        </div>
+        <?php Form::textarea('description', 'Описание', [
+            'value' => $permission?->description,
+            'placeholder' => 'Опишете какво позволява това разрешение...',
+            'rows' => 4
+        ]); ?>
+    <?php }); ?>
 
-    <?php }, 'Основни данни'); ?>
-
-    <?php Form::section(function () use ($allRoles, $assignedRoleIds) { ?>
+    <?php Form::section(title: 'Роли с достъп до това разрешение', slot: function () use ($allRoles, $assignedRoleIds) { ?>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <?php foreach ($allRoles as $role): ?>
                 <div class="p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg">
                     <?php Form::toggle('roles[' . $role->id . ']', $role->name, [
                         'value' => in_array($role->id, $assignedRoleIds ?? []),
-                        'description' => "Дай права за '{$role->name}'"
+                        'description' => "Дай права за роля: " . ($role->description ?? $role->name)
                     ]); ?>
                 </div>
             <?php endforeach; ?>
         </div>
-    <?php }, 'Роли с достъп до това разрешение'); ?>
+    <?php }); ?>
 
-    <?php Form::submit($permission ? 'Запазване на промените' : 'Създаване на разрешение', 'fa-save'); ?>
+    <?php Form::submit($isEdit ? 'Запазване на промените' : 'Създаване на разрешение', 'fa-save'); ?>
 
-</form>
+<?php Form::close(); ?>

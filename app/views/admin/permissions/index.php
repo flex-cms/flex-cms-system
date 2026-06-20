@@ -2,25 +2,39 @@
 
 use Flex\Core\UI\Form;
 use Flex\Core\UI\Table;
+use Flex\Models\Permission;
 
 $permissions = $permissions ?? [];
 
-$modules = \Flex\Models\Permission::select('module')->distinct()->pluck('module')->toArray();
+$initialStatuses = [];
+foreach ($permissions as $permission) {
+    if (isset($permission->id)) {
+        $initialStatuses[$permission->id] = (bool) $permission->is_active;
+    }
+}
+
+$modules = Permission::select('module')->distinct()->pluck('module')->toArray();
 $moduleOptions = ['' => 'Всички модули'] + array_combine($modules, $modules);
+$statusOptions = ['' => 'Всички статуси', 'active' => 'Активни', 'inactive' => 'Неактивни', 'deleted' => 'В кошчето'];
 
 $tableManagerConfig = [
+    'toggleUrl' => '/admin/users/permissions/toggle',
+    'initialStatuses' => $initialStatuses,
     'deleteUrl' => '/admin/users/permissions/delete',
+    'restoreUrl' => '/admin/users/permissions/restore',
+    'forceDeleteUrl' => '/admin/users/permissions/force-delete',
     'confirmDeleteMessage' => 'Сигурни ли сте, че искате да изтриете това разрешение?',
+    'confirmRestoreMessage' => 'Сигурни ли сте, че искате да възстановите това разрешение?',
+    'confirmForceDeleteMessage' => 'ВНИМАНИЕ: Това действие е перманентно! Сигурни ли сте?',
 ];
 ?>
 
 <div x-data='tableManager(<?= json_encode($tableManagerConfig, JSON_UNESCAPED_UNICODE) ?>)'>
-    <?php Table::header(slot: function () use ($moduleOptions) { ?>
+    <?php Table::header(slot: function () use ($moduleOptions, $statusOptions) { ?>
         <?php Table::search('Търсене на разрешение...'); ?>
 
-        <?php 
-        Form::customSelect('module', '', $moduleOptions, $_GET['module'] ?? ''); 
-        ?>
+        <?php Form::customSelect('module', '', $moduleOptions, $_GET['module'] ?? ''); ?>
+        <?php Form::customSelect('status', '', $statusOptions, $_GET['status'] ?? ''); ?>
 
         <?php Table::submit('Приложи'); ?>
         <?php Table::reset('/admin/users/permissions'); ?>
@@ -43,26 +57,50 @@ $tableManagerConfig = [
         return Table::textCell($p->description ?? null);
     })
 
+    ->column('Статус', function ($role) {
+        return Table::statusBadge('Активно|Неактивно', 'success', $role->id ?? null);
+    }, 'is_active')
+
     ->column('Действия', function ($p) {
-        if (!isset($p->id)) {
-            return '';
-        }
+        if (!isset($p->id)) return '';
 
         return Table::actionsMenu(slot: function ($item) {
+            $isDeleted = !empty($item->deleted_at);
             ?>
-            <?= Table::actionLink(
-                "/admin/users/permissions/edit/{$item->id}",
-                'Редактирай',
-                'fa-solid fa-pen-to-square'
-            ) ?>
+            
+            <?php if (!$isDeleted): ?>
+                <?= Table::actionLink(
+                    "/admin/users/permissions/edit/{$item->id}",
+                    'Редактиране',
+                    'fa-solid fa-pen-to-square'
+                ) ?>
 
-            <?= Table::actionButton(
-                click: "deleteItem({$item->id})",
-                label: 'Изтрий',
-                icon: 'fa-solid fa-trash-can',
-                type: 'delete',
-                extraAttributes: ":disabled=\"typeof loading !== 'undefined' && loading[{$item->id}]\""
-            ) ?>
+                <?= Table::statusToggle($item->id, 'Деактивирай', 'Активирай') ?>
+
+                <?= Table::actionButton(
+                    click: "deleteItem({$item->id})",
+                    label: 'Изтриване',
+                    icon: 'fa-solid fa-trash-can',
+                    type: 'delete',
+                    extraAttributes: ":disabled=\"typeof loading !== 'undefined' && loading[{$item->id}]\""
+                ) ?>
+            <?php else: ?>
+                <?= Table::actionButton(
+                    click: "restoreItem({$item->id})",
+                    label: 'Възстановяване',
+                    icon: 'fa-solid fa-trash-arrow-up',
+                    extraAttributes: ":disabled=\"typeof loading !== 'undefined' && loading[{$item->id}]\""
+                ) ?>
+                
+                <?= Table::actionButton(
+                    click: "forceDeleteItem({$item->id})",
+                    label: 'Изтриване завинаги',
+                    icon: 'fa-solid fa-skull',
+                    type: 'delete',
+                    extraAttributes: ":disabled=\"typeof loading !== 'undefined' && loading[{$item->id}]\""
+                ) ?>
+            <?php endif; ?>
+            
             <?php
         }, item: $p);
     }, null, 'right')

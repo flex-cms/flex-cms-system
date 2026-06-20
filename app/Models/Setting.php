@@ -19,12 +19,6 @@ class Setting extends Model
         'options' => AsArrayObject::class,
     ];
 
-    public static function getSetting(string $jsonKey, string $nestedKey, $default = null)
-    {
-        $data = self::get($jsonKey, []);
-        return data_get($data, $nestedKey, $default);
-    }
-
     public static function get(string $key, $default = null)
     {
         $setting = self::where('key', $key)->first();

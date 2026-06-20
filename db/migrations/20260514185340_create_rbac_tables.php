@@ -27,6 +27,7 @@ class CreateRbacTables extends AbstractMigration
             ->addColumn('slug', 'string', ['limit' => 50])
             ->addColumn('module', 'string', ['limit' => 50])
             ->addColumn('description', 'text', ['null' => true])
+            ->addColumn('is_active', 'boolean', ['default' => true, 'null' => false])
             ->addColumn('created_at', 'timestamp', ['default' => 'CURRENT_TIMESTAMP'])
             ->addColumn('updated_at', 'timestamp', ['null' => true, 'update' => 'CURRENT_TIMESTAMP'])
             ->addColumn('deleted_at', 'timestamp', ['null' => true])

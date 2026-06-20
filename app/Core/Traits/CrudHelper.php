@@ -2,8 +2,6 @@
 
 namespace Flex\Core\Traits;
 
-use Illuminate\Database\Eloquent\Model;
-
 trait CrudHelper
 {
     public function buildUpdateData(array $post, $model = null, array $rules = ['name', 'slug', 'is_active', 'created_at' => 'default_date']): array
@@ -112,6 +110,44 @@ trait CrudHelper
                 'message' => 'Възникна грешка при записа.',
                 'code' => 500
             ];
+        }
+    }
+
+    public function restoreRecord(string $modelClass)
+    {
+        $data = $this->getJsonInput();
+        $id = $data['id'] ?? null;
+
+        if (!is_numeric($id)) {
+            return $this->jsonResponse(false, 'Невалидно ID за възстановяване.');
+        }
+
+        try {
+            $record = $modelClass::onlyTrashed()->findOrFail($id);
+            $record->restore();
+
+            return $this->jsonResponse(true, 'Записът е възстановен успешно.');
+        } catch (\Exception $e) {
+            return $this->jsonResponse(false, 'Грешка при възстановяване: ' . $e->getMessage());
+        }
+    }
+
+    public function forceDeleteRecord(string $modelClass)
+    {
+        $data = $this->getJsonInput();
+        $id = $data['id'] ?? null;
+
+        if (!is_numeric($id)) {
+            return $this->jsonResponse(false, 'Невалидно ID за перманентно изтриване.');
+        }
+
+        try {
+            $record = $modelClass::withTrashed()->findOrFail($id);
+            $record->forceDelete();
+
+            return $this->jsonResponse(true, 'Записът е изтрит перманентно.');
+        } catch (\Exception $e) {
+            return $this->jsonResponse(false, 'Грешка при перманентно изтриване: ' . $e->getMessage());
         }
     }
 
