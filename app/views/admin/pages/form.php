@@ -13,8 +13,8 @@ $action = $isEdit ? "/admin/pages/update/{$page->id}" : "/admin/pages/store";
 <?php Form::heading('Основна информация'); ?>
 
 <?php Form::section(title: 'Основни данни', slot: function () use ($page) { ?>
-    <?php Form::row(function () use ($page) { ?>
 
+    <div class="grid md:grid-cols-2 2xl:grid-cols-3 gap-5">
         <?php Form::file('featured_image', 'Предно изображение', [
             'current_image' => $page->options['featured_image'] ?? null,
             'title' => 'Desktop',
@@ -32,8 +32,7 @@ $action = $isEdit ? "/admin/pages/update/{$page->id}" : "/admin/pages/store";
             'title' => 'Mobile',
             'description' => '400x800px'
         ]); ?>
-
-    <?php }, 3); ?>
+    </div>
 
     <?php Form::row(function () use ($page) { ?>
 
@@ -50,7 +49,7 @@ $action = $isEdit ? "/admin/pages/update/{$page->id}" : "/admin/pages/store";
             'value' => $page->slug ?? ''
         ]); ?>
 
-    <?php }); ?>
+    <?php }, 1, 2, 3); ?>
 
     <?php Form::textarea('excerpt', 'Резюме', [
         'value' => $page->options['excerpt'] ?? '',
@@ -59,19 +58,37 @@ $action = $isEdit ? "/admin/pages/update/{$page->id}" : "/admin/pages/store";
 
 <?php }); ?>
 
-<?php Form::section(title: 'Настройки на страницата', slot: function () use ($page) { ?>
-    <?php
+<?php Form::section(title: 'Настройки на страницата', slot: function () use ($page, $pages) { ?>
+
+    <?php Form::row(function () use ($page, $pages) {
+
         $templates = [
             '' => 'Без шаблон',
         ] + PageTemplateDiscovery::getTemplates(ACTIVE_THEME);
-        
+
         Form::customSelect(
-            'page_template', 
-            'Шаблон на страницата', 
-            $templates, 
+            'page_template',
+            'Шаблон на страницата',
+            $templates,
             $page->options['page_template'] ?? 'default'
         );
-    ?>
+
+        $pageOptions = ['' => 'Няма (главна страница)'];
+        foreach ($pages as $p) {
+            $pageOptions[$p->id] = $p->display_name;
+        }
+        Form::customSelect(
+            'parent_id',
+            'Родителска страница',
+            $pageOptions,
+            $page->parent_id ?? ''
+        );
+
+        Form::date('created_at', 'Дата на публикуване', [
+            'value' => date('Y-m-d H:i', strtotime($page->created_at ?? 'now'))
+        ]);
+
+    }, 1, 2, 3); ?>
 
     <?php Form::row(function () use ($page) { ?>
 
@@ -80,14 +97,17 @@ $action = $isEdit ? "/admin/pages/update/{$page->id}" : "/admin/pages/store";
             'description' => 'Ако е изключено, страницата няма да бъде достъпна за потребителите.'
         ]); ?>
 
-        <?php Form::date('created_at', 'Дата на публикуване', [
-            'value' => date('Y-m-d H:i', strtotime($page->created_at ?? 'now'))
+        <?php Form::toggle('use_full_slug', 'Използване на пълния път (full_slug)', [
+            'value' => ($page->options['slug_display_mode'] ?? 'full') === 'full',
+            'description' => 'Ако е включено, ще се генерира пълен път (напр. /parent/child). Ако е изключено - само slug (напр. /child).'
         ]); ?>
 
-    <?php }); ?>
+    <?php }, 1, 2, 3); ?>
+
 <?php }); ?>
 
-<?php if (!empty($page->options['page_template'])) View::renderPageTemplate($page); ?>
+<?php if (!empty($page->options['page_template']))
+    View::renderPageTemplate($page); ?>
 
 <?php Form::submit(!$isEdit ? 'Създаване' : 'Запазване', 'fa-save') ?>
 

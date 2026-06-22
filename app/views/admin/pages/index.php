@@ -19,40 +19,41 @@ $tableManagerConfig = [
     'initialStatuses' => $initialStatuses,
     'confirmDeleteMessage' => 'Сигурни ли сте, че искате да изтриете тази страница?',
 ];
+$statusOptions = [
+    '' => 'По подразбиране',
+    'active' => 'Активни',
+    'inactive' => 'Неактивни',
+    'deleted' => 'В кошчето'
+];
 ?>
 
 <div x-data='tableManager(<?= json_encode($tableManagerConfig, JSON_UNESCAPED_UNICODE) ?>)'>
-    <?php Table::header(slot: function () { ?>
+    <?php Table::header(slot: function () use ($statusOptions) { ?>
         <?php Table::search('Търсене на страница...'); ?>
 
-        <?php $statusOptions = [
-            '' => 'По подразбиране',
-            'active' => 'Активни',
-            'inactive' => 'Неактивни',
-            'deleted' => 'В кошчето'
-        ];
-
-        Form::customSelect('status', '', $statusOptions, $_GET['status'] ?? ''); ?>
+        <?php Form::customSelect('status', '', $statusOptions, $_GET['status'] ?? ''); ?>
 
         <?php Table::submit('Приложи'); ?>
         <?php Table::reset('/admin/pages'); ?>
     <?php }); ?>
 
     <?php Table::create($pages)
-        ->column('Име на страница', fn($page) => $page->name, 'name', 'left', fn($page) => '/admin/pages/edit/' . $page->id)
-        ->column('Slug', fn($page) => Table::statusBadge('/' . $page->slug, 'code'), 'slug', 'left', fn($page) => '/' . $page->slug, '__blank')
+        ->column('Страница', function ($page) {
+            return $page->display_name . ' <br /> ' . '<span class="text-xs dark:text-white text-black">' . $page->full_slug . '</span>';
+        }, 'name', 'left', fn($page) => '/admin/pages/edit/' . $page->id, '_self', true)
+
         ->column('Създадена', fn($page) => DateHelper::format($page->created_at, true), 'created_at')
 
         ->column('Статус', function ($page) {
-        return Table::statusBadge('Активирана|Деактивирана', 'success', $page->id ?? null);
-    }, 'is_active')
+            return Table::statusBadge('Активирана|Деактивирана', 'success', $page->id ?? null);
+        }, 'is_active')
 
         ->column('Действия', function ($page) {
-        if (!isset($page->id))
-            return '';
+            if (!isset($page->id))
+                return '';
 
-        return Table::actionsMenu(slot: function ($p) {
-            ?>
+            return Table::actionsMenu(slot: function ($p) {
+                ?>
             <?= Table::actionLink(
                 "/admin/pages/edit/{$p->id}",
                 'Редактирай',
@@ -69,8 +70,8 @@ $tableManagerConfig = [
                 extraAttributes: ":disabled=\"loading[{$p->id}]\""
             ) ?>
             <?php
-        }, item: $page);
+                }, item: $page);
 
-    }, null, 'right')
+            }, null, 'right')
         ->render('mt-5'); ?>
 </div>

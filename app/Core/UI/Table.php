@@ -49,14 +49,15 @@ class Table
         ?string $sortKey = null, 
         string $align = 'left', 
         ?callable $linkUrl = null,
-        string $target = '_self'
+        string $target = '_self',
+        bool $isBlockElement = false,
     ): self {
         $validAlignments = ['left', 'center', 'right'];
         if (!in_array($align, $validAlignments, true)) {
             $align = 'left';
         }
 
-        $wrappedRenderer = function ($row) use ($renderer, $linkUrl, $target) {
+        $wrappedRenderer = function ($row) use ($renderer, $linkUrl, $target, $isBlockElement) {
             $value = $renderer($row);
 
             if ($linkUrl) {
@@ -64,7 +65,7 @@ class Table
                 
                 ob_start();
                 ?>
-                <a href="<?= htmlspecialchars($url) ?>" target="<?= htmlspecialchars($target) ?>" class="text-primary hover:underline">
+                <a href="<?= htmlspecialchars($url) ?>" target="<?= htmlspecialchars($target) ?>" class="text-primary hover:underline <?= $isBlockElement ? 'block' : 'inline' ?>">
                     <?= $value ?>
                 </a>
                 <?php

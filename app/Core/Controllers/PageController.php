@@ -46,7 +46,7 @@ class PageController extends BaseController
 
         $data = [
             'title' => $this->indexTitle,
-            'pages' => $pages,
+            'pages' => Page::getFlattenedTree($pages),
             'primaryButton' => $this->createButton('/admin/pages/create', $this->createTitle)
         ];
 
@@ -59,6 +59,7 @@ class PageController extends BaseController
         $data = [
             'title' => $this->createTitle,
             'page' => new Page(),
+            'pages' => Page::getFlattenedTree(Page::all()),
             'primaryButton' => $this->createButton('/admin/pages/create', $this->createTitle)
         ];
 
@@ -70,9 +71,12 @@ class PageController extends BaseController
     {
         $page = Page::findOrFail($id);
 
+        $allPages = Page::where('id', '!=', $id)->get();
+
         $data = [
             'title' => $this->editTitle,
             'page' => $page,
+            'pages' => Page::getFlattenedTree($allPages),
             'primaryButton' => $this->createButton('/admin/pages/create', $this->createTitle)
         ];
 
@@ -92,9 +96,17 @@ class PageController extends BaseController
     public function update($id)
     {
         $page = Page::findOrFail($id);
-        $data = $this->prepareData($_POST, $page);
 
+        $oldFullSlug = $page->full_slug;
+
+        $data = $this->prepareData($_POST, $page);
         $page->update($data);
+
+        $page->refresh();
+        
+        if ($oldFullSlug !== $page->full_slug) {
+            $this->syncChildrenPaths($page);
+        }
 
         View::redirect('/admin/pages/edit/' . $page->id);
     }
@@ -124,16 +136,51 @@ class PageController extends BaseController
     {
         $post = $this->normalizeCheckboxes($post);
 
-        $data = $this->buildUpdateData($post, $model, ['name', 'slug', 'is_active', 'created_at' => 'default_date']);
+        $data = $this->buildUpdateData($post, $model, [
+            'name',
+            'slug',
+            'is_active',
+            'parent_id',
+            'created_at' => 'default_date'
+        ]);
 
         if (empty($data['slug'])) {
             $data['slug'] = SlugHelper::generate($data['name']);
         }
+
+        if (isset($data['parent_id']) && $data['parent_id'] === '') {
+            $data['parent_id'] = null;
+        }
+
+        if ($model && isset($data['parent_id']) && $data['parent_id'] == $model->id) {
+            $data['parent_id'] = null;
+        }
+
+        $data['full_slug'] = $this->calculateFullSlug($data['slug'], $data['parent_id'] ?? null);
 
         $currentOptions = $model ? $model->options->getArrayCopy() : [];
         $data['options'] = $this->mergeOptions($post, $currentOptions);
         $data['options'] = $this->handleFileUploads($data['options'], 'pages');
 
         return $data;
+    }
+
+    private function calculateFullSlug($slug, $parentId)
+    {
+        if (!$parentId)
+            return $slug;
+
+        $parent = Page::find($parentId);
+        return $parent ? ($parent->full_slug . '/' . $slug) : $slug;
+    }
+
+    private function syncChildrenPaths($page)
+    {
+        foreach ($page->children as $child) {
+            $child->full_slug = $page->full_slug . '/' . $child->slug;
+            $child->save();
+
+            $this->syncChildrenPaths($child);
+        }
     }
 }

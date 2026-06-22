@@ -415,9 +415,13 @@ class Form
         <?php
     }
 
-    public static function row(callable $slot, int $cols = 2): void
+    public static function row(callable $slot, int $cols = 1, ?int $md = null, ?int $lg = null): void
     {
-        echo "<div style='grid-template-columns: repeat($cols, minmax(0, 1fr));' class='grid gap-5'>";
+        $gridClass = "grid-cols-{$cols}";
+        $gridClass .= $md ? " md:grid-cols-{$md}" : "";
+        $gridClass .= $lg ? " lg:grid-cols-{$lg}" : "";
+
+        echo "<div class='grid gap-5 {$gridClass}'>";
         $slot();
         echo "</div>";
     }
