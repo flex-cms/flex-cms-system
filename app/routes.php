@@ -77,6 +77,7 @@ $routes = [
     // Themes
     ['GET', '/admin/themes/all', [ThemeController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]],
     ['POST', '/admin/themes/activate', [ThemeController::class, 'activate'], [AuthMiddleware::class, AdminMiddleware::class]],
+    ['POST', '/admin/themes/deactivate', [ThemeController::class, 'deactivate'], [AuthMiddleware::class, AdminMiddleware::class]],
 
     // Pages
     ['GET', '/admin/pages', [PageController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]],

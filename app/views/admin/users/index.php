@@ -3,6 +3,12 @@
 use Flex\Core\UI\Form;
 use Flex\Core\UI\Table;
 
+$statusOptions = [
+    '' => 'Всички статуси',
+    'active' => 'Активни',
+    'inactive' => 'Неактивни',
+    'deleted' => 'В кошчето'
+];
 $users = $users ?? [];
 $roles = $roles ?? [];
 
@@ -22,27 +28,17 @@ $tableManagerConfig = [
 ?>
 
 <div x-data='tableManager(<?= json_encode($tableManagerConfig, JSON_UNESCAPED_UNICODE) ?>)'>
-    <?php Table::header(slot: function () use ($roles) { ?>
+    <?php Table::header(slot: function () use ($roles, $statusOptions) { ?>
         <?php Table::search('Търсене на потребител...'); ?>
 
-        <?php 
-        $roleOptions = ['' => 'Всички роли'];
+        <?php $roleOptions = ['' => 'Всички роли'];
         if (!empty($roles)) {
             foreach ($roles as $role) {
                 $roleOptions[$role->slug] = $role->name;
             }
         }
-        Form::customSelect('role', '', $roleOptions, $_GET['role'] ?? ''); 
-        ?>
-
-        <?php 
-        $statusOptions = [
-            '' => 'Всички статуси',
-            'active' => 'Активни',
-            'inactive' => 'Неактивни'
-        ];
-        Form::customSelect('status', '', $statusOptions, $_GET['status'] ?? ''); 
-        ?>
+        Form::customSelect('role', '', $roleOptions, $_GET['role'] ?? ''); ?>
+        <?php Form::customSelect('status', '', $statusOptions, $_GET['status'] ?? ''); ?>
 
         <?php Table::submit('Приложи'); ?>
         <?php Table::reset('/admin/users/index'); ?>

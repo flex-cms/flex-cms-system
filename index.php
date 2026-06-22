@@ -90,7 +90,7 @@ $pluginManager = new PluginManager($events, $activePlugins);
 $router->setPluginManager($pluginManager);
 $pluginManager->loadPlugins($router);
 
-$activeTheme = Setting::get('active_theme', 'Modern');
+$activeTheme = Setting::get('active_theme', null);
 $themePath = __DIR__ . '/themes/' . $activeTheme;
 
 if (is_dir($themePath)) {
@@ -100,7 +100,7 @@ if (is_dir($themePath)) {
         $themeClass::init();
     }
 } else {
-    define('ACTIVE_THEME', 'Modern');
+    define('ACTIVE_THEME', null);
 }
 
 $content = "Здравей, това е съдържанието на сайта.";

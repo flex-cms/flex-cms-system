@@ -2,7 +2,6 @@
 
 namespace Flex\Core\Traits;
 
-use Flex\Core\Database;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\BufferedOutput;
 use ZipArchive;
@@ -178,32 +177,5 @@ trait Updatable
         } catch (\Exception $e) {
             error_log("DEBUG: Phinx Migration Error: " . $e->getMessage());
         }
-    }
-
-    protected function getClassFromFileName(string $fileName): string
-    {
-        $name = preg_replace('/^[\d_]+/', '', $fileName);
-        return str_replace(' ', '', ucwords(str_replace('_', ' ', $name)));
-    }
-
-    protected function isMigrationApplied(string $migrationName): bool
-    {
-        $stmt = Database::query(
-            "SELECT COUNT(*) FROM phinxlog WHERE migration_name = ?",
-            [$migrationName]
-        );
-
-        return (bool) $stmt->fetchColumn();
-    }
-
-    protected function markMigrationAsApplied(string $migrationName): void
-    {
-        $version = date('YmdHis');
-
-        Database::query(
-            "INSERT INTO phinxlog (version, migration_name, start_time, end_time, breakpoint) 
-         VALUES (?, ?, NOW(), NOW(), 0)",
-            [$version, $migrationName]
-        );
     }
 }

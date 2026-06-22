@@ -37,6 +37,10 @@ class UpdateController extends BaseController
     {
         $latest = $this->fetchLatestVersionData();
 
+        if (version_compare(PHP_VERSION, $latest['min_php_version'], '<')) {
+            throw new \Exception("Твърде стара версия на PHP!");
+        }
+
         $tempPath = base_path('storage/updates/tmp/update.zip');
         $extractPath = base_path();
 

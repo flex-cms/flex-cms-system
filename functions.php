@@ -130,3 +130,11 @@ if (!function_exists('core_info')) {
         return get_json_data($path, $key, $default);
     }
 }
+
+if (!function_exists('ddj')) {
+    function ddj($data) {
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        exit;
+    }
+}

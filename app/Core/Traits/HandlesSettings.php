@@ -19,7 +19,7 @@ trait HandlesSettings
         $data = [
             'title' => 'Настройки: ' . $title,
             'currentGroup' => $group,
-            'definedGroups' => $definedGroups,
+            'definedGroups' => $definedGroups ?? [],
             'group' => $group,
         ];
 
@@ -57,7 +57,7 @@ trait HandlesSettings
 
     public static function getGroupIcon(string $group): string
     {
-        $groups = theme_info('settings_options.settings_page_groups', []);
+        $groups = core_info('settings_options.settings_page_groups', []);
 
         if (isset($groups[$group]['icon'])) {
             return $groups[$group]['icon'];

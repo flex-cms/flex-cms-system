@@ -25,7 +25,7 @@ class SettingsController extends BaseController
     #[UseExceptions]
     public function show(string $group)
     {
-        $groups = theme_info('settings_options.settings_page_groups', []);
+        $groups = core_info('settings_options.settings_page_groups', []);
 
         $data = $this->getSettingsData($group, (array) $groups, [
             'languages' => core_info('languages'),

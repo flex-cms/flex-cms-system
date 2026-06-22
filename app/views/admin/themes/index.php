@@ -1,5 +1,7 @@
 <?php
 
+use Flex\Core\UI\Components\Button;
+use Flex\Core\UI\Form;
 use Flex\Core\UI\Table;
 ?>
 
@@ -33,22 +35,33 @@ use Flex\Core\UI\Table;
                         <?= $theme->description ?? 'Няма описание.' ?>
                     </p>
 
-                    <div
-                        class="border-t border-slate-100 dark:border-slate-700 pt-4 flex justify-between items-center text-sm">
-                        <span class="text-slate-400">v
-                            <?= $theme->version ?>
-                        </span>
+                    <div class="border-t border-slate-100 dark:border-slate-700 pt-4 flex justify-between items-center text-sm">
+                        <span class="text-slate-400">v <?= $theme->version ?></span>
 
                         <?php if (!$theme->is_active): ?>
-                            <form action="/admin/themes/activate" method="POST">
-                                <input type="hidden" name="folder" value="<?= $theme->folder ?>">
-                                <button type="submit"
-                                    class="px-3 py-1.5 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition">
-                                    Активирай
-                                </button>
-                            </form>
+                            <?php 
+                                Form::create(['action' => '/admin/themes/activate', 'method' => 'POST']);
+                                echo '<input type="hidden" name="folder" value="' . $theme->folder . '">';
+                                echo Button::make('Активирай')
+                                    ->variant('primary')
+                                    ->size('md')
+                                    ->icon('fas fa-check')
+                                    ->render();
+                                Form::close();
+                            ?>
                         <?php else: ?>
-                            <div class="flex justify-end">
+                            <div class="flex justify-end gap-2">
+                                <?php 
+                                    Form::create(['action' => '/admin/themes/deactivate', 'method' => 'POST']);
+                                    echo '<input type="hidden" name="folder" value="' . $theme->folder . '">';
+                                    echo Button::make('Изключи')
+                                        ->variant('secondary')
+                                        ->size('md')
+                                        ->icon('fas fa-power-off')
+                                        ->render();
+                                    Form::close();
+                                ?>
+
                                 <?= Table::actionLink("/admin/themes/theme-settings", 'Настройки', 'fas fa-cog') ?>
                             </div>
                         <?php endif; ?>

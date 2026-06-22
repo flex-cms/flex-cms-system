@@ -2,6 +2,12 @@
 
 use Flex\Core\Routing\View;
 use Flex\Core\UI\Form;
+
+$definedGroups = $definedGroups ?? [];
+$currentGroup = $currentGroup ?? '';
+$languages = $languages ?? [];
+$timezones = $timezones ?? [];
+$dateFormats = $dateFormats ?? [];
 ?>
 
 <?php Form::renderTabs($definedGroups, $currentGroup, '/admin/settings/'); ?>
