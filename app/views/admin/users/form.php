@@ -16,7 +16,9 @@ $action = $isEdit ? '/admin/users/update/' . $user->id : '/admin/users/create';
     <?php Form::heading('Основна информация'); ?>
 
     <?php Form::section(title: 'Основни данни за потребителя', slot: function () use ($user) { ?>
+
         <?php Form::row(function () use ($user) { ?>
+        
             <?php Form::input('fullname', 'Пълно име', [
                 'value' => $user?->fullname,
                 'placeholder' => 'Иван Иванов',
@@ -30,18 +32,18 @@ $action = $isEdit ? '/admin/users/update/' . $user->id : '/admin/users/create';
                 'readonly' => true,
                 'type' => 'email'
             ]); ?>
-        <?php }); ?>
-    <?php }); ?>
 
-    <?php Form::section(title: 'Сигурност', slot: function () use ($user) { ?>
-        <?php View::component('password-strength', ['user' => $user], 'admin/users/components'); ?>
-    <?php }); ?>
+        <?php }, ['md' => 2]); ?>
 
-    <?php Form::section(title: 'Статус на потребителя', slot: function () use ($user) { ?>
         <?php Form::toggle('is_active', 'Активен потребител', [
             'value' => $user?->is_active ?? true,
             'description' => 'Ако деактивирате потребителя, той няма да има достъп до системата.'
         ]); ?>
+
+    <?php }); ?>
+
+    <?php Form::section(title: 'Сигурност', slot: function () use ($user) { ?>
+        <?php View::component('password-strength', ['user' => $user], 'admin/users/components'); ?>
     <?php }); ?>
 
     <?php Form::section(title: 'Роли на потребителя', slot: function () use ($allRoles, $assignedRoleIds) { ?>

@@ -15,9 +15,13 @@ foreach ($pages as $page) {
 
 $tableManagerConfig = [
     'toggleUrl' => '/admin/pages/toggle',
-    'deleteUrl' => '/admin/pages/delete',
     'initialStatuses' => $initialStatuses,
+    'deleteUrl' => '/admin/pages/delete',
+    'restoreUrl' => '/admin/pages/restore',
+    'forceDeleteUrl' => '/admin/pages/force-delete',
     'confirmDeleteMessage' => 'Сигурни ли сте, че искате да изтриете тази страница?',
+    'confirmRestoreMessage' => 'Сигурни ли сте, че искате да възстановите тази страница?',
+    'confirmForceDeleteMessage' => 'ВНИМАНИЕ: Това действие е перманентно! Сигурни ли сте?',
 ];
 $statusOptions = [
     '' => 'По подразбиране',
@@ -48,30 +52,48 @@ $statusOptions = [
             return Table::statusBadge('Активирана|Деактивирана', 'success', $page->id ?? null);
         }, 'is_active')
 
-        ->column('Действия', function ($page) {
-            if (!isset($page->id))
-                return '';
+        ->column('Действия', function ($p) {
+            if (!isset($p->id)) return '';
 
-            return Table::actionsMenu(slot: function ($p) {
+            return Table::actionsMenu(slot: function ($t) {
+                $isDeleted = !empty($t->deleted_at);
                 ?>
-            <?= Table::actionLink(
-                "/admin/pages/edit/{$p->id}",
-                'Редактирай',
-                'fa-solid fa-pen-to-square'
-            ) ?>
+                
+                <?php if (!$isDeleted): ?>
+                    <?= Table::actionLink(
+                        "/admin/pages/edit/{$t->id}",
+                        'Редактиране',
+                        'fa-solid fa-pen-to-square'
+                    ) ?>
 
-            <?= Table::statusToggle($p->id) ?>
+                    <?= Table::statusToggle($t->id, 'Деактивиране', 'Активиране') ?>
 
-            <?= Table::actionButton(
-                click: "deleteItem({$p->id})",
-                label: 'Изтриване',
-                icon: 'fa-solid fa-trash-can',
-                type: 'delete',
-                extraAttributes: ":disabled=\"loading[{$p->id}]\""
-            ) ?>
-            <?php
-                }, item: $page);
-
-            }, null, 'right')
-        ->render('mt-5'); ?>
+                    <?= Table::actionButton(
+                        click: "deleteItem({$t->id})",
+                        label: 'Изтриване',
+                        icon: 'fa-solid fa-trash-can',
+                        type: 'delete',
+                        extraAttributes: ":disabled=\"typeof loading !== 'undefined' && loading[{$t->id}]\""
+                    ) ?>
+                <?php else: ?>
+                    <?= Table::actionButton(
+                        click: "restoreItem({$t->id})",
+                        label: 'Възстановяване',
+                        icon: 'fa-solid fa-trash-arrow-up',
+                        extraAttributes: ":disabled=\"typeof loading !== 'undefined' && loading[{$t->id}]\""
+                    ) ?>
+                    
+                    <?= Table::actionButton(
+                        click: "forceDeleteItem({$t->id})",
+                        label: 'Изтриване завинаги',
+                        icon: 'fa-solid fa-skull',
+                        type: 'delete',
+                        extraAttributes: ":disabled=\"typeof loading !== 'undefined' && loading[{$t->id}]\""
+                    ) ?>
+                <?php endif; ?>
+                
+                <?php
+            }, item: $p);
+        }, null, 'right')
+    ->render('mt-5'); ?>
 </div>

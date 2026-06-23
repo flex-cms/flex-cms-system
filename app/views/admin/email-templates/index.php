@@ -81,7 +81,7 @@ $tableManagerConfig = [
                     'fa-solid fa-pen-to-square'
                 ) ?>
 
-                <?= Table::statusToggle($t->id, 'Деактивирай', 'Активирай') ?>
+                <?= Table::statusToggle($t->id, 'Деактивиране', 'Активиране') ?>
 
                 <?= Table::actionButton(
                     click: "deleteItem({$t->id})",

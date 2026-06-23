@@ -132,6 +132,12 @@ class PageController extends BaseController
     }
 
     #[UseExceptions]
+    public function restore()
+    {
+        return $this->restoreRecord(Page::class);
+    }
+
+    #[UseExceptions]
     private function prepareData(array $post, $model = null): array
     {
         $post = $this->normalizeCheckboxes($post);
