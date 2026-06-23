@@ -48,10 +48,14 @@
             "l, j F Y": "Ден от седмицата, Ден Месец Година (Сряда, 31 Декември 2025)"
         },
         "settings_page_groups": {
-            "general": { "title": "Общи настройки", "icon": "fa-cog" },
-            "mail": { "title": "Имейл сървър", "icon": "fa-envelope" },
-            "system": { "title": "Системни параметри", "icon": "fa-server" },
-            "security": { "title": "Сигурност", "icon": "fa-shield-alt" }
+            "general": {
+                "label": "Общи настройки",
+                "url": "/admin/settings/general"
+            },
+            "mail": {
+                "label": "Имейл сървър",
+                "url": "/admin/settings/mail"
+            }
         }
     }
 }

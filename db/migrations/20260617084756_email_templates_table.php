@@ -25,6 +25,8 @@ final class EmailTemplatesTable extends AbstractMigration
               ->addColumn('variables', 'json', ['null' => true])
               ->addColumn('created_at', 'timestamp', ['null' => true, 'default' => null])
               ->addColumn('updated_at', 'timestamp', ['null' => true, 'default' => null])
+              ->addColumn('deleted_at', 'timestamp', ['null' => true])
+              ->addColumn('is_active', 'boolean', ['default' => true, 'null' => false])
               ->addIndex(['slug'], ['unique' => true, 'name' => 'email_templates_slug_unique'])
               ->create();
     }

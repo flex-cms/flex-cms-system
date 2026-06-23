@@ -94,7 +94,9 @@ $routes = [
     ['POST', '/admin/email-templates/store', [EmailTemplateController::class, 'store'], [AuthMiddleware::class, AdminMiddleware::class]],
     ['GET', '/admin/email-templates/edit/{id}', [EmailTemplateController::class, 'edit'], [AuthMiddleware::class, AdminMiddleware::class]],
     ['POST', '/admin/email-templates/update/{id}', [EmailTemplateController::class, 'update'], [AuthMiddleware::class, AdminMiddleware::class]],
-    ['POST', '/admin/email-templates/delete', [EmailTemplateController::class, 'destroy'], [AuthMiddleware::class, AdminMiddleware::class]],
+    ['POST', '/admin/email-templates/delete', [EmailTemplateController::class, 'delete'], [AuthMiddleware::class, AdminMiddleware::class]],
+    ['POST', '/admin/email-templates/toggle', [EmailTemplateController::class, 'toggle'], [AuthMiddleware::class, AdminMiddleware::class]],
+    ['POST', '/admin/email-templates/restore', [EmailTemplateController::class, 'restore'], [AuthMiddleware::class, AdminMiddleware::class]],
 
     // File Structure
     ['GET', '/admin/file-structure', [FileStructureController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]],

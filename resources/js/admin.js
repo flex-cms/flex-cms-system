@@ -32,6 +32,7 @@ import codeEditor from "./admin/components/code-editor.js";
 import selectComponent from './admin/components/select.js';
 import initDatepicker from './admin/components/datepicker';
 import passwordStrength from './admin/components/password-strength.js';
+import customSelectWithInput from './admin/components/custom-select-with-input.js';
 
 window.Alpine = Alpine;
 Alpine.plugin(collapse);
@@ -47,5 +48,6 @@ Alpine.data('codeEditor', codeEditor);
 Alpine.data('tomSelect', selectComponent);
 Alpine.data('datepicker', initDatepicker);
 Alpine.data('passwordStrength', passwordStrength);
+Alpine.data('customSelectWithInput', customSelectWithInput);
 
 Alpine.start();

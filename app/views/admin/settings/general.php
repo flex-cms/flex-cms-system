@@ -12,29 +12,30 @@ $dateFormats = $dateFormats ?? [];
 ?>
 
 <?php Form::section(function () use ($currentUrl) { ?>
-    <?php Form::row(function () {
+    <?php Form::row(function () use ($currentUrl) {
+
         Form::input('settings[site_name]', 'Име на сайта', [
             'value' => Setting::get('site_name', 'Flex CMS'),
             'required' => true
         ]);
+
         Form::input('settings[admin_email]', 'Административен имейл', [
             'value' => Setting::get('admin_email', ''),
             'type' => 'email',
             'required' => true
         ]);
-    }, 2); ?>
 
-    <div class="space-y-5">
-        <?php Form::input('settings[site_url]', 'URL адрес', [
+        Form::input('settings[site_url]', 'URL адрес', [
             'value' => Setting::get('site_url', $currentUrl),
             'placeholder' => 'https://example.com'
-        ]); ?>
+        ]);
 
-        <?php Form::textarea('settings[site_description]', 'Кратко описание (Meta Description)', [
-            'value' => Setting::get('site_description', ''),
-            'rows' => 5
-        ]); ?>
-    </div>
+    }, ['md' => 2, 'lg' => 3]); ?>
+
+    <?php Form::textarea('settings[site_description]', 'Кратко описание (Meta Description)', [
+        'value' => Setting::get('site_description', ''),
+        'rows' => 5
+    ]); ?>
 <?php }, 'Основни настройки'); ?>
 
 <?php Form::section(function () use ($timezones, $dateFormats) { ?>
@@ -51,7 +52,7 @@ $dateFormats = $dateFormats ?? [];
             $dateFormats,
             Setting::get('date_format', 'd.m.Y')
         );
-    }, 2); ?>
+    }, ['md' => 2]); ?>
 
     <div class="mt-2 p-3 bg-slate-50 dark:bg-slate-900/30 rounded border border-slate-200 dark:border-slate-700 text-sm">
         <span class="text-slate-500 dark:text-slate-400">Текущо системно време: </span>

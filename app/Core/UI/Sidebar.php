@@ -89,14 +89,22 @@ Sidebar::register('admin_main', [
         'url' => '/admin/settings',
         'icon' => 'fa-cogs',
         'label' => 'Настройки',
-        'children' => [
-            ['url' => '/admin/settings/general', 'label' => 'Общи'],
-            ['url' => '/admin/settings/mail', 'label' => 'Поща'],
-            ['url' => '/admin/settings/system', 'label' => 'Системни'],
-            ['url' => '/admin/settings/security', 'label' => 'Сигурност'],
-        ]
     ],
     ['url' => '/admin/update', 'icon' => 'fa-arrow-rotate-right', 'label' => 'Обновяване'],
 ]);
 
-Sidebar::register('shop_admin');
+$groups = core_info('settings_options.settings_page_groups');
+
+foreach ($groups as $key => $group) {
+    $childLink = [
+        'label' => $group['label'],
+        'url'   => "/admin/settings/{$key}",
+        'icon'  => $group['icon'] ?? null
+    ];
+
+    Sidebar::addChildLink(
+        'admin_main',
+        '/admin/settings',
+        $childLink
+    );
+}

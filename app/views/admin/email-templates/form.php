@@ -6,7 +6,9 @@ use Flex\Core\UI\Table;
 $template = $template ?? null;
 $savedVariables = [];
 
-// Безопасно извличане на променливите
+$isEdit = isset($template->id);
+$action = $isEdit ? '/admin/email-templates/update/' . $template->id : '/admin/email-templates/store';
+
 if ($template && !empty($template->variables)) {
     $data = is_string($template->variables) ? json_decode($template->variables, true) : $template->variables;
     $savedVariables = is_array($data) ? $data : [];
@@ -19,18 +21,28 @@ Page::header(
 );
 ?>
 
-<form action="<?= $template ? '/admin/email-templates/update/' . $template->id : '/admin/email-templates/store' ?>"
-    method="POST" class="max-w-5xl space-y-6">
+<?php Form::create(['action' => $action, 'method' => 'POST', 'files' => true]) ?>
 
-    <?php Form::section(function () use ($template) { ?>
+    <?php Form::section(function () use ($template, $categoryOptions) { ?>
+        
         <?php Form::row(function () use ($template) { ?>
             <?php Form::input('name', 'Име на шаблона', ['value' => $template?->name, 'required' => true]); ?>
             <?php Form::input('slug', 'Slug (Идентификатор)', ['value' => $template?->slug, 'required' => true]); ?>
-        <?php }); ?>
-        <?php Form::row(function () use ($template) { ?>
-            <?php Form::input('category', 'Категория', ['value' => $template?->category]); ?>
             <?php Form::input('subject', 'Тема на имейла', ['value' => $template?->subject, 'required' => true]); ?>
-        <?php }); ?>
+        <?php }, ['md' => 2, 'lg' => 3]); ?>
+            
+        <?php
+        $currentValue = $template?->category ?? '';
+
+        Form::row(function () use ($categoryOptions, $currentValue) { ?>
+            <?php Form::customSelectWithInput(
+                'category',
+                'Категория',
+                $categoryOptions,
+                $currentValue,
+            ); ?>
+        <?php }, ['md' => 2, 'lg' => 3]); ?>
+
     <?php }, 'Основни параметри'); ?>
 
     <?php Form::section(function () use ($template) { ?>
@@ -96,4 +108,4 @@ Page::header(
         <?php Form::submit($template ? 'Запазване' : 'Създаване', 'fa-save'); ?>
     </div>
 
-</form>
+<?php Form::close() ?>

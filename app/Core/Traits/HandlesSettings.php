@@ -14,10 +14,10 @@ trait HandlesSettings
         }
 
         $groupData = $definedGroups[$group];
-        $title = is_array($groupData) ? ($groupData['title'] ?? $group) : $groupData;
+        $label = is_array($groupData) ? ($groupData['label'] ?? $group) : $groupData;
 
         $data = [
-            'title' => 'Настройки: ' . $title,
+            'title' => 'Настройки: ' . $label,
             'currentGroup' => $group,
             'definedGroups' => $definedGroups ?? [],
             'group' => $group,
@@ -55,7 +55,7 @@ trait HandlesSettings
         $setting->save();
     }
 
-    public static function getGroupIcon(string $group): string
+    public static function getGroupIcon(string $group): string|null
     {
         $groups = core_info('settings_options.settings_page_groups', []);
 
@@ -63,6 +63,6 @@ trait HandlesSettings
             return $groups[$group]['icon'];
         }
 
-        return 'fa-circle';
+        return null;
     }
 }

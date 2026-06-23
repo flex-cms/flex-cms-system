@@ -3,43 +3,36 @@
 namespace Flex\Core\Controllers;
 
 use Flex\Attributes\UseExceptions;
+use Flex\Core\Filters\Shared\StatusFilter;
 use Flex\Core\Services\EmailService;
 use Flex\Core\Controllers\BaseController;
 use Flex\Core\Routing\View;
+use Flex\Core\Traits\CrudHelper;
+use Flex\Core\Traits\HandlesTableFilters;
 use Flex\Models\EmailTemplate;
 
 class EmailTemplateController extends BaseController
 {
+    use HandlesTableFilters, CrudHelper;
+
     #[UseExceptions]
     public function index()
     {
-        $allowedSortFields = ['name', 'slug', 'category', 'created_at'];
-        $sort = in_array($_GET['sort'] ?? '', $allowedSortFields) ? $_GET['sort'] : 'name';
-        $direction = (isset($_GET['direction']) && $_GET['direction'] === 'desc') ? 'desc' : 'asc';
-
-        $query = EmailTemplate::orderBy($sort, $direction);
-
-        if (!empty($_GET['category'])) {
-            $query->where('category', $_GET['category']);
-        }
-
-        if (!empty($_GET['search'])) {
-            $search = trim($_GET['search']);
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'LIKE', "%{$search}%")
-                    ->orWhere('subject', 'LIKE', "%{$search}%");
-            });
-        }
-
-        $categories = EmailTemplate::distinct()->pluck('category')->toArray();
+        $query = $this->applyFilters(
+            EmailTemplate::query(),
+            ['name', 'subject'],
+            ['name', 'slug', 'category', 'created_at'],
+            ['status' => StatusFilter::class],
+            'name'
+        );
 
         $data = [
             'title' => 'Имейл шаблони',
             'primaryButton' => $this->createButton('/admin/email-templates/create', 'Нов шаблон'),
             'templates' => $query->get(),
-            'categories' => $categories,
-            'currentSort' => $sort,
-            'currentDir' => $direction,
+            'categories' => EmailTemplate::distinct()->pluck('category')->toArray(),
+            'currentSort' => $_GET['sort'] ?? 'name',
+            'currentDir' => $_GET['direction'] ?? 'asc',
         ];
 
         render_view('admin/email-templates/index', $data);
@@ -48,8 +41,17 @@ class EmailTemplateController extends BaseController
     #[UseExceptions]
     public function create()
     {
+        $categories = EmailTemplate::whereNotNull('category')
+            ->where('category', '!=', '')
+            ->distinct()
+            ->pluck('category')
+            ->toArray();
+
+        $categoryOptions = array_combine($categories, $categories);
+
         $data = [
             'title' => 'Създаване на нов шаблон',
+            'categoryOptions' => $categoryOptions,
             'template' => null,
             'primaryButton' => $this->createButton('/admin/email-templates/create', 'Нов шаблон')
         ];
@@ -79,8 +81,17 @@ class EmailTemplateController extends BaseController
     {
         $template = EmailTemplate::findOrFail($id);
 
+        $categories = EmailTemplate::whereNotNull('category')
+            ->where('category', '!=', '')
+            ->distinct()
+            ->pluck('category')
+            ->toArray();
+
+        $categoryOptions = array_combine($categories, $categories);
+
         $data = [
             'title' => 'Редактиране на шаблон: ' . $template->name,
+            'categoryOptions' => $categoryOptions,
             'template' => $template,
             'primaryButton' => $this->createButton('/admin/email-templates/create', 'Нов шаблон')
         ];
@@ -107,19 +118,29 @@ class EmailTemplateController extends BaseController
     }
 
     #[UseExceptions]
-    public function destroy()
+    public function delete()
     {
-        $data = json_decode(file_get_contents('php://input'), true);
-        $id = $data['id'] ?? null;
+        return $this->deleteRecord(EmailTemplate::class);
+    }
 
-        if (!$id)
-            return;
+    #[UseExceptions]
+    public function restore()
+    {
+        return $this->restoreRecord(EmailTemplate::class);
+    }
 
-        $template = EmailTemplate::findOrFail($id);
-        $template->delete();
+    #[UseExceptions]
+    public function toggle()
+    {
+        $result = $this->toggleStatus(EmailTemplate::class, 'is_active');
 
-        echo json_encode(['success' => true]);
-        exit;
+        if (!$result['success']) {
+            return $this->jsonResponse(false, $result['message']);
+        }
+
+        $statusText = $result['new_status'] ? 'активиран' : 'деактивиран';
+
+        return $this->jsonResponse(true, "Имейл шаблонът беше {$statusText} успешно!");
     }
 
     #[UseExceptions]
