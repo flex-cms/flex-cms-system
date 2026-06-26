@@ -19,6 +19,7 @@
         "alpinejs": "^3.14.0",
         "axios": "^1.16.1",
         "flatpickr": "^4.6.13",
+        "sweetalert2": "^11.26.25",
         "tailwindcss": "^4.0.0",
         "tom-select": "^2.6.1"
     },

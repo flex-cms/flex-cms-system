@@ -2,6 +2,8 @@
 
 namespace Flex\Core\Traits;
 
+use InvalidArgumentException;
+
 trait CrudHelper
 {
     public function buildUpdateData(array $post, $model = null, array $rules = ['name', 'slug', 'is_active', 'created_at' => 'default_date']): array
@@ -30,14 +32,6 @@ trait CrudHelper
         return $data;
     }
 
-    public function buildOptions(array $post, array $exclude = []): array
-    {
-        $defaults = ['submit', '_token', '_method', 'files'];
-        $excluded = array_merge($exclude, $defaults);
-
-        return array_diff_key($post, array_flip($excluded));
-    }
-
     public function mergeOptions(array $post, array $currentOptions, array $exclude = []): array
     {
         $defaults = ['submit', '_token', '_method', 'files', 'name', 'slug', 'created_at', 'is_active', 'options'];
@@ -59,17 +53,12 @@ trait CrudHelper
         $force = (bool) ($data['force'] ?? false);
 
         if (!is_numeric($id)) {
-            return $this->jsonResponse(false, $this->deleteErrorMessage ?? 'Невалидно ID.');
+            throw new InvalidArgumentException('Невалидно ID за преместване в кошчето.');
         }
 
-        try {
-            $record = $modelClass::findOrFail($id);
-            $force ? $record->forceDelete() : $record->delete();
+        $record = $modelClass::findOrFail($id);
 
-            return $this->jsonResponse(true, $this->deleteSuccessMessage ?? 'Изтрито успешно.');
-        } catch (\Exception $e) {
-            return $this->jsonResponse(false, 'Грешка: ' . $e->getMessage());
-        }
+        return $force ? $record->forceDelete() : $record->delete();
     }
 
     public function toggleStatus(string $modelClass, string $statusField = 'is_active'): array
@@ -94,41 +83,35 @@ trait CrudHelper
             ];
         }
 
-        try {
-            $item->{$statusField} = !((bool) $item->{$statusField});
-            $item->save();
+        $item->{$statusField} = !((bool) $item->{$statusField});
+        $item->save();
 
-            return [
-                'success' => true,
-                'message' => 'Статусът беше променен успешно.',
-                'new_status' => (bool) $item->{$statusField},
-                'item' => $item
-            ];
-        } catch (\Exception $e) {
-            return [
-                'success' => false,
-                'message' => 'Възникна грешка при записа.',
-                'code' => 500
-            ];
-        }
+        return [
+            'success' => true,
+            'message' => 'Статусът беше променен успешно.',
+            'new_status' => (bool) $item->{$statusField},
+            'item' => $item
+        ];
     }
 
-    public function restoreRecord(string $modelClass)
+    public function restoreRecord(string $modelClass): void
     {
         $data = $this->getJsonInput();
         $id = $data['id'] ?? null;
 
         if (!is_numeric($id)) {
-            return $this->jsonResponse(false, 'Невалидно ID за възстановяване.');
+            throw new InvalidArgumentException('Невалидно ID за възстановяване.');
         }
 
-        try {
-            $record = $modelClass::onlyTrashed()->findOrFail($id);
-            $record->restore();
+        $record = $modelClass::onlyTrashed()->findOrFail($id);
+        $record->restore();
 
-            return $this->jsonResponse(true, 'Записът е възстановен успешно.');
-        } catch (\Exception $e) {
-            return $this->jsonResponse(false, 'Грешка при възстановяване: ' . $e->getMessage());
+        if (isset($record->is_active)) {
+            $record->is_active = 0;
+            $record->save();
+        } elseif (isset($record->status)) {
+            $record->status = 0;
+            $record->save();
         }
     }
 
@@ -138,17 +121,11 @@ trait CrudHelper
         $id = $data['id'] ?? null;
 
         if (!is_numeric($id)) {
-            return $this->jsonResponse(false, 'Невалидно ID за перманентно изтриване.');
+            throw new InvalidArgumentException('Невалидно ID за перманентно изтриване.');
         }
 
-        try {
-            $record = $modelClass::withTrashed()->findOrFail($id);
-            $record->forceDelete();
-
-            return $this->jsonResponse(true, 'Записът е изтрит перманентно.');
-        } catch (\Exception $e) {
-            return $this->jsonResponse(false, 'Грешка при перманентно изтриване: ' . $e->getMessage());
-        }
+        $record = $modelClass::withTrashed()->findOrFail($id);
+        $record->forceDelete();
     }
 
     protected function getJsonInput(): ?array

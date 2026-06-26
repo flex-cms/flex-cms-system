@@ -1,6 +1,5 @@
 <?php
 
-use Flex\Core\Routing\View;
 use Flex\Models\Setting;
 
 if (!function_exists('base_path')) {
@@ -14,6 +13,13 @@ if (!function_exists('themes_path')) {
     function themes_path(string $path = ''): string
     {
         return __DIR__ . '/themes/' . $path;
+    }
+}
+
+if (!function_exists('current_theme')) {
+    function current_theme(string $path = ''): string
+    {
+        return __DIR__ . '/themes/' . ACTIVE_THEME . '/' . $path;
     }
 }
 
@@ -65,12 +71,43 @@ if (!function_exists('input')) {
     }
 }
 
+if (!function_exists('is_api_request')) {
+    function is_api_request(): bool
+    {
+        $acceptHeader = $_SERVER['HTTP_ACCEPT'] ?? '';
+        $uri = $_SERVER['REQUEST_URI'] ?? '';
+
+        return str_contains($acceptHeader, 'application/json') || str_starts_with($uri, '/api/');
+    }
+}
+
 if (!function_exists('handle_exception')) {
     function handle_exception(Throwable $e): void
     {
         error_log($e->getMessage());
 
         $debugMode = Setting::get('debug_mode', false);
+
+        if (is_api_request()) {
+            header('Content-Type: application/json');
+            http_response_code(500);
+
+            $response = [
+                'status' => 'error',
+                'message' => $debugMode ? $e->getMessage() : 'Възникна вътрешна грешка в сървъра.'
+            ];
+
+            if ($debugMode) {
+                $response['debug'] = [
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine(),
+                    'trace' => $e->getTrace()
+                ];
+            }
+
+            echo json_encode($response);
+            exit;
+        }
 
         $data = [
             'message' => $debugMode ? $e->getMessage() : 'Съжаляваме, възникна неочаквана грешка.',
@@ -81,6 +118,7 @@ if (!function_exists('handle_exception')) {
         ];
 
         render_view('errors/500', $data, 'core', 'main');
+        exit;
     }
 }
 
@@ -132,7 +170,8 @@ if (!function_exists('core_info')) {
 }
 
 if (!function_exists('ddj')) {
-    function ddj($data) {
+    function ddj($data)
+    {
         header('Content-Type: application/json; charset=utf-8');
         echo json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         exit;

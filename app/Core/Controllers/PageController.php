@@ -16,12 +16,12 @@ use Flex\Core\Controllers\BaseController;
 class PageController extends BaseController
 {
     use HandlesMedia, HandlesTableFilters, RequestHelper, CrudHelper;
+
     protected string $indexTitle;
     protected string $createTitle;
     protected string $editTitle;
     protected string $createBtn;
-    protected string $deleteSuccessMessage;
-    protected string $deleteErrorMessage;
+    protected array $messages = [];
 
     public function __construct()
     {
@@ -29,8 +29,20 @@ class PageController extends BaseController
         $this->createTitle = 'Нова страница';
         $this->editTitle = 'Редактиране на страница';
         $this->createBtn = 'Нова страница';
-        $this->deleteSuccessMessage = 'Изтрито успешно.';
-        $this->deleteErrorMessage = 'Тази страница не съществува.';
+
+        $this->initMessages();
+    }
+
+    private function initMessages(): void
+    {
+        $this->messages = [
+            'delete_success' => 'Страницата беше успешно преместена в кошчето.',
+            'force_delete_success' => 'Страницата беше успешно премахната завинаги.',
+            'restore_success' => 'Страницата беше успешно възстановена от кошчето. По подразбиране тя автоматично е деактивирана.',
+            'toggle_active' => 'Страницата беше активирана успешно!',
+            'toggle_inactive' => 'Страницата беше деактивирана успешно!',
+            'error_generic' => 'Възникна неочаквана грешка.'
+        ];
     }
 
     #[UseExceptions]
@@ -103,7 +115,7 @@ class PageController extends BaseController
         $page->update($data);
 
         $page->refresh();
-        
+
         if ($oldFullSlug !== $page->full_slug) {
             $this->syncChildrenPaths($page);
         }
@@ -114,7 +126,15 @@ class PageController extends BaseController
     #[UseExceptions]
     public function delete()
     {
-        return $this->deleteRecord(Page::class);
+        $this->deleteRecord(Page::class);
+        return $this->jsonResponse(true, $this->messages['delete_success']);
+    }
+
+    #[UseExceptions]
+    public function forceDelete()
+    {
+        $this->forceDeleteRecord(Page::class);
+        return $this->jsonResponse(true, $this->messages['force_delete_success']);
     }
 
     #[UseExceptions]
@@ -126,15 +146,15 @@ class PageController extends BaseController
             return $this->jsonResponse(false, $result['message']);
         }
 
-        $statusText = $result['new_status'] ? 'активирана' : 'деактивирана';
-
-        return $this->jsonResponse(true, "Страницата беше {$statusText} успешно!");
+        $msgKey = $result['new_status'] ? 'toggle_active' : 'toggle_inactive';
+        return $this->jsonResponse(true, $this->messages[$msgKey]);
     }
 
     #[UseExceptions]
     public function restore()
     {
-        return $this->restoreRecord(Page::class);
+        $this->restoreRecord(Page::class);
+        return $this->jsonResponse(true, $this->messages['restore_success']);
     }
 
     #[UseExceptions]

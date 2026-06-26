@@ -1,3 +1,5 @@
+import "./admin/helpers.js";
+
 import "@fortawesome/fontawesome-free/css/all.min.css";
 
 import 'ace-builds/src-noconflict/ace.js';
