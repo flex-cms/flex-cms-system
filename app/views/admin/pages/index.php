@@ -13,6 +13,9 @@ foreach ($pages as $page) {
     }
 }
 
+$reorderConfig = [
+    'url' => '/admin/pages/reorder'
+];
 $tableManagerConfig = [
     'toggleUrl' => '/admin/pages/toggle',
     'initialStatuses' => $initialStatuses,
@@ -31,7 +34,10 @@ $statusOptions = [
 ];
 ?>
 
-<div x-data='tableManager(<?= json_encode($tableManagerConfig, JSON_UNESCAPED_UNICODE) ?>)'>
+<div
+    x-data='tableManager(<?= json_encode($tableManagerConfig, JSON_UNESCAPED_UNICODE) ?>)'
+    x-data-sortable='<?= json_encode($reorderConfig) ?>'
+>
     <?php Table::header(slot: function () use ($statusOptions) { ?>
         <?php Table::search('Търсене на страница...'); ?>
 
@@ -42,11 +48,34 @@ $statusOptions = [
     <?php }); ?>
 
     <?php Table::create($pages)
+        ->sortable('/admin/pages/reorder')
         ->column('Страница', function ($page) {
-            return $page->display_name . ' <br /> ' . '<span class="text-xs dark:text-white text-black">' . $page->full_slug . '</span>';
+            $indent = $page->level * 20;
+            return '
+                <div style="margin-left:' . $indent . 'px">
+                    <div>
+                        ' . $page->name . '
+                    </div>
+                    <div class="text-xs dark:text-slate-200 text-black">
+                        ' . $page->full_slug . '
+                    </div>
+                </div>
+            ';
         }, 'name', 'left', fn($page) => '/admin/pages/edit/' . $page->id, '_self', true)
 
-        ->column('Създадена', fn($page) => DateHelper::format($page->created_at, true), 'created_at')
+        ->column(
+            'Създадена',
+            fn($page) => sprintf(
+                '<span
+                    x-data="relativeTime(\'%s\')"
+                    x-text="text"
+                    title="%s"
+                ></span>',
+                DateHelper::iso($page->created_at),
+                e(DateHelper::format($page->created_at, true))
+            ),
+            'created_at'
+        )
 
         ->column('Статус', function ($page) {
             return Table::statusBadge('Активирана|Деактивирана', 'success', $page->id ?? null);

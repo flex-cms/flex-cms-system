@@ -17,8 +17,8 @@ class Page extends Model
         'slug',
         'full_slug',
         'parent_id',
+        'position',
         'is_active',
-        'created_at',
         'options'
     ];
 
@@ -26,6 +26,7 @@ class Page extends Model
         'options' => AsArrayObject::class,
         'is_active' => 'boolean',
         'parent_id' => 'integer',
+        'position' => 'integer',
     ];
 
     public function parent(): BelongsTo
@@ -35,12 +36,18 @@ class Page extends Model
 
     public function children(): HasMany
     {
-        return $this->hasMany(Page::class, 'parent_id');
+        return $this->hasMany(Page::class, 'parent_id')
+        ->orderBy('position');
     }
 
     public function hasImage(): bool
     {
-        return isset($this->options['featured_image']);
+        return !empty($this->options['featured_image']);
+    }
+
+    public function scopeOrdered($query)
+    {
+        return $query->orderBy('position');
     }
 
     public static function getFlattenedTree(iterable $pages, ?int $parentId = null, int $level = 0): array

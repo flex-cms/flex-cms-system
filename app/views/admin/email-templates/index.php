@@ -1,5 +1,6 @@
 <?php
 
+use Flex\Core\Helpers\DateHelper;
 use Flex\Core\UI\Form;
 use Flex\Core\UI\Table;
 
@@ -62,6 +63,20 @@ $tableManagerConfig = [
     ->column('Категория', function ($t) {
         return Table::textCell($t->category ?? '---');
     }, 'category')
+
+    ->column(
+        'Създаден',
+        fn($page) => sprintf(
+            '<span
+                x-data="relativeTime(\'%s\')"
+                x-text="text"
+                title="%s"
+            ></span>',
+            DateHelper::iso($page->created_at),
+            e(DateHelper::format($page->created_at, true))
+        ),
+        'created_at'
+    )
 
     ->column('Статус', function ($t) {
         return Table::statusBadge('Активен|Неактивен', 'success', $t->id ?? null);

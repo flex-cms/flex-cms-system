@@ -34,7 +34,7 @@ trait CrudHelper
 
     public function mergeOptions(array $post, array $currentOptions, array $exclude = []): array
     {
-        $defaults = ['submit', '_token', '_method', 'files', 'name', 'slug', 'created_at', 'is_active', 'options'];
+        $defaults = ['submit', '_token', '_method', 'files', 'name', 'slug', 'created_at', 'is_active', 'position', 'options'];
         $excluded = array_merge($exclude, $defaults);
 
         $rawOptions = array_diff_key($post, array_flip($excluded));

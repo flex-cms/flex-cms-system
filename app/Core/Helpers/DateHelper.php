@@ -11,9 +11,9 @@ class DateHelper
     {
         $timezone = Setting::get('timezone', 'Europe/Sofia');
         $lang = Setting::get('site_default_lang', 'bg');
-        
+
         $format = Setting::get('date_format', 'd.m.Y');
-        
+
         if ($includeTime) {
             $format .= ' : H:i';
         }
@@ -23,5 +23,14 @@ class DateHelper
         $carbonDate->locale($lang);
 
         return $carbonDate->translatedFormat($format);
+    }
+
+    public static function iso($date = null)
+    {
+        $timezone = Setting::get('timezone', 'Europe/Sofia');
+
+        return Carbon::parse($date)
+            ->setTimezone($timezone)
+            ->toIso8601String();
     }
 }

@@ -13,6 +13,7 @@ class CreatePagesTable extends AbstractMigration
             ->addColumn('slug', 'string', ['limit' => 255])
             ->addColumn('full_slug', 'string', ['limit' => 255, 'null' => true])
             ->addColumn('parent_id', 'integer', ['null' => true, 'default' => null])
+            ->addColumn('position', 'integer', ['default' => 0])
             ->addColumn('options', 'json', ['null' => true])
             ->addColumn('created_at', 'timestamp', ['default' => 'CURRENT_TIMESTAMP'])
             ->addColumn('updated_at', 'timestamp', ['null' => true, 'update' => 'CURRENT_TIMESTAMP'])

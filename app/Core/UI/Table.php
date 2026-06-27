@@ -6,10 +6,22 @@ class Table
 {
     protected iterable $items;
     protected array $columns = [];
+    protected bool $sortable = false;
+    protected ?string $sortableUrl = null;
+    protected mixed $sortableRenderer = null;
 
     public function __construct(iterable $items)
     {
         $this->items = $items;
+    }
+
+    public function sortable(string $url, ?callable $renderer = null): self
+    {
+        $this->sortable = true;
+        $this->sortableUrl = $url;
+        $this->sortableRenderer = $renderer;
+
+        return $this;
     }
 
     public static function create(iterable $items): self
@@ -117,6 +129,9 @@ class Table
                 <table class="w-full border-collapse">
                     <thead>
                         <tr class="bg-slate-50 dark:bg-slate-700/50">
+                            <?php if ($this->sortable): ?>
+                                <th class="px-4 py-2 w-10"></th>
+                            <?php endif; ?>
                             <?php foreach ($this->columns as $col): ?>
                                 <?php 
                                 $align = $col['align'] ?? 'left';
@@ -143,10 +158,26 @@ class Table
                             <?php endforeach; ?>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+                    <tbody
+                        class="divide-y divide-slate-200 dark:divide-slate-700"
+                        <?= $this->sortable ? 'x-data="sortable(\'' . $this->sortableUrl . '\')"' : '' ?>
+                    >
                         <?php if (count($this->items) > 0): ?>
                             <?php foreach ($this->items as $item): ?>
-                                <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+                                <tr
+                                    <?= $this->sortable ? 'draggable="true"' : '' ?>
+                                    data-id="<?= $item->id ?>"
+                                    class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors"
+                                >
+                                    <?php if ($this->sortable): ?>
+                                        <td class="px-4 py-2 text-center">
+                                            <?php if ($this->sortableRenderer): ?>
+                                                <?= ($this->sortableRenderer)($item) ?>
+                                            <?php else: ?>
+                                                <i class="fa-solid fa-grip-vertical drag-handle cursor-move text-slate-400 hover:text-primary"></i>
+                                            <?php endif; ?>
+                                        </td>
+                                    <?php endif; ?>
                                     <?php foreach ($this->columns as $col): ?>
                                         <?php $align = $col['align'] ?? 'left'; ?>
                                         <td class="px-4 py-2 text-slate-600 dark:text-slate-300 text-<?= $align ?>">

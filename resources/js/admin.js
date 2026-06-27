@@ -1,5 +1,12 @@
 import "./admin/helpers.js";
 
+import dayjs from 'dayjs'
+import relativeTime from 'dayjs/plugin/relativeTime'
+import 'dayjs/locale/bg'
+
+dayjs.extend(relativeTime)
+dayjs.locale('bg')
+
 import "@fortawesome/fontawesome-free/css/all.min.css";
 
 import 'ace-builds/src-noconflict/ace.js';
@@ -23,6 +30,7 @@ import "../css/app.css";
 import Alpine from "alpinejs";
 import collapse from '@alpinejs/collapse';
 
+import relativeTimeComponent from './admin/components/relative-time.js';
 import sidebar from "./admin/components/sidebar.js";
 import uiSection from "./admin/components/ui-section.js";
 import alertComponent from './admin/components/alert.js';
@@ -35,10 +43,12 @@ import selectComponent from './admin/components/select.js';
 import initDatepicker from './admin/components/datepicker';
 import passwordStrength from './admin/components/password-strength.js';
 import customSelectWithInput from './admin/components/custom-select-with-input.js';
+import sortable from './admin/components/sortable.js';
 
 window.Alpine = Alpine;
 Alpine.plugin(collapse);
 
+Alpine.data('relativeTime', relativeTimeComponent);
 Alpine.data("sidebar", sidebar);
 Alpine.data("uiSection", uiSection);
 Alpine.data('alertComponent', alertComponent);
@@ -51,5 +61,6 @@ Alpine.data('tomSelect', selectComponent);
 Alpine.data('datepicker', initDatepicker);
 Alpine.data('passwordStrength', passwordStrength);
 Alpine.data('customSelectWithInput', customSelectWithInput);
+Alpine.data('sortable', sortable);
 
 Alpine.start();

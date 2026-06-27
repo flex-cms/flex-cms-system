@@ -1,5 +1,6 @@
 <?php
 
+use Flex\Core\Helpers\DateHelper;
 use Flex\Core\UI\Form;
 use Flex\Core\UI\Table;
 
@@ -60,6 +61,20 @@ $pluginManagerConfig = [
     ->column('Описание', function ($plugin) {
         return Table::textCell($plugin->description ?? null);
     })
+
+    ->column(
+        'Инсталирано',
+        fn($page) => sprintf(
+            '<span
+                x-data="relativeTime(\'%s\')"
+                x-text="text"
+                title="%s"
+            ></span>',
+            DateHelper::iso($page->created_at),
+            e(DateHelper::format($page->created_at, true))
+        ),
+        'created_at'
+    )
 
     ->column('Автор', function ($plugin) {
         if (empty($plugin->author)) {

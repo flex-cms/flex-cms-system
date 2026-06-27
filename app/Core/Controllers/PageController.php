@@ -49,7 +49,8 @@ class PageController extends BaseController
     public function index()
     {
         $pages = $this->applyFilters(
-            Page::query(),
+            Page::query()
+                ->orderBy('position'),
             ['name', 'slug'],
             ['name', 'slug', 'created_at'],
             ['status' => StatusFilter::class],
@@ -158,6 +159,58 @@ class PageController extends BaseController
     }
 
     #[UseExceptions]
+    public function updatePosition()
+    {
+        $data = $this->getJsonInput();
+
+        $id = $data['id'] ?? null;
+        $position = $data['position'] ?? null;
+
+        if (!is_numeric($id) || !is_numeric($position)) {
+            return $this->jsonResponse(false, 'Невалидни данни.');
+        }
+
+        $page = Page::findOrFail($id);
+
+        $page->position = (int) $position;
+        $page->save();
+
+        return $this->jsonResponse(true, 'Позицията беше променена успешно.');
+    }
+
+    #[UseExceptions]
+    public function reorder()
+    {
+        $data = $this->getJsonInput();
+
+        if (!isset($data['items']) || !is_array($data['items'])) {
+            return $this->jsonResponse(false, 'Невалидни данни.');
+        }
+
+        foreach ($data['items'] as $item) {
+
+            if (
+                !isset($item['id'], $item['position']) ||
+                !is_numeric($item['id']) ||
+                !is_numeric($item['position'])
+            ) {
+                continue;
+            }
+
+            $page = Page::find($item['id']);
+
+            if (!$page) {
+                continue;
+            }
+
+            $page->position = (int) $item['position'];
+            $page->save();
+        }
+
+        return $this->jsonResponse(true, 'Редът беше запазен успешно.');
+    }
+
+    #[UseExceptions]
     private function prepareData(array $post, $model = null): array
     {
         $post = $this->normalizeCheckboxes($post);
@@ -167,6 +220,7 @@ class PageController extends BaseController
             'slug',
             'is_active',
             'parent_id',
+            'position',
             'created_at' => 'default_date'
         ]);
 

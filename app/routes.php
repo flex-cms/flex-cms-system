@@ -89,7 +89,9 @@ $routes = [
     ['POST', '/admin/pages/toggle', [PageController::class, 'toggle'], [AuthMiddleware::class, AdminMiddleware::class]],
     ['POST', '/admin/pages/restore', [PageController::class, 'restore'], [AuthMiddleware::class, AdminMiddleware::class]],
     ['POST', '/admin/pages/force-delete', [PageController::class, 'forceDelete'], [AuthMiddleware::class, AdminMiddleware::class]],
-
+    ['POST', '/admin/pages/update-position', [PageController::class, 'updatePosition'], [AuthMiddleware::class, AdminMiddleware::class]],
+    ['POST', '/admin/pages/reorder', [PageController::class, 'reorder'], [AuthMiddleware::class, AdminMiddleware::class]],
+    
     // Email Templates
     ['GET', '/admin/email-templates', [EmailTemplateController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]],
     ['GET', '/admin/email-templates/create', [EmailTemplateController::class, 'create'], [AuthMiddleware::class, AdminMiddleware::class]],
