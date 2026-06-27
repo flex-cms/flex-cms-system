@@ -104,7 +104,7 @@ $action = $isEdit ? "/admin/pages/update/{$page->id}" : "/admin/pages/store";
             ]); ?>
 
             <?php Form::toggle('use_full_slug', 'Използване на пълния път (full_slug)', [
-                'value' => ($page->options['slug_display_mode'] ?? 'full') === 'full',
+                'value' => ($page->options['use_full_slug'] ?? true),
                 'description' => 'Ако е включено, ще се генерира пълен път (напр. /parent/child). Ако е изключено - само slug (напр. /child).'
             ]); ?>
 
