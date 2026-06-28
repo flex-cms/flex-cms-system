@@ -4,6 +4,7 @@ namespace Flex\Core\Controllers;
 
 use Flex\Attributes\UseExceptions;
 use Flex\Core\Filters\Shared\StatusFilter;
+use Flex\Core\Helpers\Flash;
 use Flex\Core\Helpers\SlugHelper;
 use Flex\Core\Traits\CrudHelper;
 use Flex\Core\Traits\HandlesMedia;
@@ -102,6 +103,8 @@ class PageController extends BaseController
         $data = $this->prepareData($_POST);
         $page = Page::create($data);
 
+        Flash::success('Страницата беше създадена успешно!');
+
         View::redirect('/admin/pages/edit/' . $page->id);
     }
 
@@ -120,6 +123,8 @@ class PageController extends BaseController
         if ($oldFullSlug !== $page->full_slug) {
             $this->syncChildrenPaths($page);
         }
+
+        Flash::success('Страницата беше обновена успешно!');
 
         View::redirect('/admin/pages/edit/' . $page->id);
     }

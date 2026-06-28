@@ -177,3 +177,15 @@ if (!function_exists('ddj')) {
         exit;
     }
 }
+
+if (!function_exists('base_url')) {
+    function base_url(string $path = ''): string
+    {
+        $protocol = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? "https" : "http";
+        $host = $_SERVER['HTTP_HOST'];
+        
+        $baseUrl = $protocol . "://" . $host;
+        
+        return $baseUrl . '/' . ltrim($path, '/');
+    }
+}

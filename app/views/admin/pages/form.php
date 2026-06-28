@@ -3,9 +3,16 @@
 use Flex\Core\PageTemplates\PageTemplateDiscovery;
 use Flex\Core\Routing\View;
 use Flex\Core\UI\Form;
+use Flex\Core\UI\Page;
 
 $isEdit = isset($page->id);
 $action = $isEdit ? "/admin/pages/update/{$page->id}" : "/admin/pages/store";
+
+Page::header(
+    title: $page ? 'Редактиране на страница' : 'Създаване на страница',
+    backUrl: '/admin/pages',
+    subtitle: $page ? 'Променете параметрите и настройките на страницата' : 'Създайте нова страница на сайта си'
+);
 ?>
 
 <?php Form::create(['action' => $action, 'method' => 'POST', 'files' => true]) ?>

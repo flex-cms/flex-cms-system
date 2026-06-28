@@ -4,6 +4,7 @@ namespace Flex\Core\Controllers;
 
 use Flex\Attributes\UseExceptions;
 use Flex\Core\Traits\CrudHelper;
+use Flex\Core\Traits\HandlesMedia;
 use Flex\Core\Traits\HandlesTableFilters;
 use Flex\Core\Traits\RequestHelper;
 use Flex\Models\User;
@@ -13,7 +14,7 @@ use Flex\Core\Controllers\BaseController;
 
 class UserController extends BaseController
 {
-    use HandlesTableFilters, RequestHelper, CrudHelper;
+    use HandlesMedia, HandlesTableFilters, RequestHelper, CrudHelper;
 
     protected string $indexTitle;
     protected string $createTitle;
@@ -136,18 +137,13 @@ class UserController extends BaseController
     public function update($id)
     {
         $user = User::findOrFail($id);
-        $data = $this->prepareData($_POST, $user);
 
+        $data = $this->prepareData($_POST, $user);
         $user->update($data);
 
-        if (isset($_POST['roles']) && is_array($_POST['roles'])) {
-            $activeRoles = array_keys(array_filter($_POST['roles'], function ($val) {
-                return (string) $val === '1' || $val === 'on' || $val === true;
-            }));
-            $user->roles()->sync($activeRoles);
-        } else {
-            $user->roles()->sync([]);
-        }
+        $this->syncUserRoles($user, $_POST);
+
+        $user->refresh();
 
         View::redirect('/admin/users/edit/' . $user->id);
     }
@@ -172,15 +168,37 @@ class UserController extends BaseController
         return $this->jsonResponse(true, "Потребителят беше {$statusText} успешно!");
     }
 
-    #[UseExceptions]
     private function prepareData(array $post, $model = null): array
     {
         $post = $this->normalizeCheckboxes($post);
 
-        if (empty($post['password']) || empty($post['password_confirmation'])) {
-            unset($post['password']);
+        $data = $this->buildUpdateData($post, $model, [
+            'fullname',
+            'email',
+            'is_active',
+            'created_at' => 'default_date'
+        ]);
+
+        if (!empty($post['password'])) {
+            $data['password'] = $post['password'];
         }
 
-        return $this->buildUpdateData($post, $model, ['fullname', 'email', 'password', 'is_active']);
+        $currentOptions = $model ? $model->options->getArrayCopy() : [];
+        $data['options'] = $this->mergeOptions($post, $currentOptions);
+        $data['options'] = $this->handleFileUploads($data['options'], 'users');
+
+        return $data;
+    }
+
+    private function syncUserRoles($user, array $post): void
+    {
+        if (isset($post['roles']) && is_array($post['roles'])) {
+            $activeRoles = array_keys(array_filter($post['roles'], function ($val) {
+                return (string) $val === '1' || $val === 'on' || $val === true;
+            }));
+            $user->roles()->sync($activeRoles);
+        } else {
+            $user->roles()->sync([]);
+        }
     }
 }

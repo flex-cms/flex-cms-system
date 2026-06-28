@@ -6,9 +6,19 @@ use Flex\Core\Services\MediaManager;
 
 trait HandlesMedia
 {
+    protected ?MediaManager $mediaManager = null;
+
+    protected function getMediaManager(): MediaManager
+    {
+        if ($this->mediaManager === null) {
+            $this->mediaManager = new MediaManager();
+        }
+        return $this->mediaManager;
+    }
+    
     public function handleFileUploads(array $currentOptions, string $folder = 'uploads'): array
     {
-        $manager = new MediaManager();
+        $manager = $this->getMediaManager();
         $options = $currentOptions;
 
         if (!empty($_FILES)) {

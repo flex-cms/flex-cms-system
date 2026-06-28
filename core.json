@@ -55,6 +55,10 @@
             "mail": {
                 "label": "Имейл сървър",
                 "url": "/admin/settings/mail"
+            },
+            "media": {
+                "label": "Файлове",
+                "url": "/admin/settings/media"
             }
         }
     }

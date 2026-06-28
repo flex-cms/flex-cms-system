@@ -12,9 +12,9 @@ $isEdit = isset($permission->id);
 $action = $isEdit ? '/admin/users/permissions/update/' . $permission->id : '/admin/users/permissions/store';
 
 Page::header(
-    title: $isEdit ? 'Редактиране на разрешение' : 'Създаване на ново разрешение',
+    title: $permission ? 'Редактиране на разрешение' : 'Създаване на ново разрешение',
     backUrl: '/admin/users/permissions',
-    subtitle: 'Дефинирайте техническите детайли и логическото групиране на това разрешение'
+    subtitle: $permission ? 'Променете параметрите и настройките на разрешението' : 'Създайте ново разрешение за потребителите на сайта си'
 );
 ?>
 

@@ -2,6 +2,7 @@
 
 use Flex\Core\Routing\View;
 use Flex\Core\UI\Form;
+use Flex\Core\UI\Page;
 
 $user = $user ?? null;
 $allRoles = $allRoles ?? [];
@@ -9,11 +10,15 @@ $assignedRoleIds = $assignedRoleIds ?? [];
 
 $isEdit = isset($user->id);
 $action = $isEdit ? '/admin/users/update/' . $user->id : '/admin/users/create';
+
+Page::header(
+    title: $user ? 'Редактиране на потребителя' : 'Създаване на нов потребител',
+    backUrl: '/admin/users/index',
+    subtitle: $user ? 'Променете данните и настройките на потребителя' : 'Създайте нов потребител на сайта си'
+);
 ?>
 
-<?php Form::create(['action' => $action, 'method' => 'POST', 'class' => 'max-w-5xl']) ?>
-
-    <?php Form::heading('Основна информация'); ?>
+<?php Form::create(['action' => $action, 'method' => 'POST', 'class' => 'max-w-5xl', 'files' => true]) ?>
 
     <?php Form::section(title: 'Основни данни за потребителя', slot: function () use ($user) { ?>
 
@@ -38,6 +43,12 @@ $action = $isEdit ? '/admin/users/update/' . $user->id : '/admin/users/create';
         <?php Form::toggle('is_active', 'Активен потребител', [
             'value' => $user?->is_active ?? true,
             'description' => 'Ако деактивирате потребителя, той няма да има достъп до системата.'
+        ]); ?>
+
+        <?php Form::image('featured_image', 'Изображение на профила', [
+            'current_image' => $user->options['featured_image'] ?? null,
+            'title' => 'Изображение на профила',
+            'description' => '400x400px'
         ]); ?>
 
     <?php }); ?>

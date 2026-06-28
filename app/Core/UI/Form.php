@@ -101,7 +101,7 @@ class Form
                 <input type="file" name="<?= $inputName ?>" id="<?= $id ?>" class="hidden"
                     @change="previewUrl = URL.createObjectURL($event.target.files[0])">
 
-                <div @click="document.getElementById('<?= $id ?>').click()"
+                <div title="<?= $attrs['title'] ?? '' ?>" @click="document.getElementById('<?= $id ?>').click()"
                     class="w-40 h-40 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-800 flex items-center justify-center cursor-pointer hover:ring-2 hover:ring-indigo-500 transition-all overflow-hidden relative shadow-sm">
 
                     <img x-show="previewUrl" :src="previewUrl" class="w-full h-full object-cover" x-cloak>

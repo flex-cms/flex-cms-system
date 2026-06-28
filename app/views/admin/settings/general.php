@@ -4,7 +4,7 @@ use Flex\Core\Helpers\DateHelper;
 use Flex\Core\UI\Form;
 use Flex\Models\Setting;
 
-$currentUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://" . $_SERVER['HTTP_HOST'];
+$currentUrl = base_url();
 
 $languages = $languages ?? [];
 $timezones = $timezones ?? [];

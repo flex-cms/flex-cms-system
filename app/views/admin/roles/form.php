@@ -11,9 +11,9 @@ $isEdit = isset($role->id);
 $action = $isEdit ? '/admin/users/roles/edit/' . $role->id : '/admin/users/roles/create';
 
 Page::header(
-    title: $isEdit ? 'Редактиране на роля' : 'Създаване на нова роля',
+    title: $role ? 'Редактиране на роля' : 'Създаване на нова роля',
     backUrl: '/admin/users/roles',
-    subtitle: 'Дефинирайте името и специфичните разрешения за достъп'
+    subtitle: $role ? 'Променете параметрите и настройките на ролята' : 'Създайте нова роля за потребителите на сайта си'
 );
 ?>
 
