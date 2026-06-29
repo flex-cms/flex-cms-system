@@ -5,63 +5,57 @@ namespace Flex\Core\Controllers;
 use Exception;
 use Flex\Attributes\UseExceptions;
 use Flex\Core\Filters\Shared\StatusFilter;
+use Flex\Core\Helpers\Flash;
 use Flex\Core\Helpers\Str;
 use Flex\Core\Routing\View;
 use Flex\Core\Traits\CrudHelper;
 use Flex\Core\Traits\HandlesTableFilters;
-use Flex\Models\Role;
+use Flex\Core\Traits\RequestHelper;
 use Flex\Models\Permission;
+use Flex\Models\Role;
 
 class RoleController extends BaseController
 {
-    use CrudHelper, HandlesTableFilters;
+    use CrudHelper, HandlesTableFilters, RequestHelper;
 
-    protected string $indexTitle;
-    protected string $createTitle;
-    protected string $editTitle;
-    protected string $createBtn;
-    protected string $deleteSuccessMessage;
-    protected string $deleteErrorMessage;
-    protected string $trashedEditErrorMessage;
-    protected string $restoreSuccessMessage;
-    protected string $restoreErrorMessage;
-    protected string $forceDeleteSuccessMessage;
-    protected string $forceDeleteErrorMessage;
+    protected string $indexTitle = 'Управление на роли';
+    protected string $createTitle = 'Нова роля';
+    protected string $editTitle = 'Редактиране на роля';
+    protected array $messages = [];
 
     public function __construct()
     {
-        $this->indexTitle = 'Управление на роли';
-        $this->createTitle = 'Нова роля';
-        $this->editTitle = 'Редактиране на роля';
-        $this->createBtn = 'Нова роля';
-        $this->deleteSuccessMessage = 'Изтрито успешно.';
-        $this->deleteErrorMessage = 'Тази роля не съществува.';
-        $this->trashedEditErrorMessage = 'Не може да редактирате изтрита роля.';
-        $this->restoreSuccessMessage = 'Ролята е възстановена успешно.';
-        $this->restoreErrorMessage = 'Грешка при възстановяване на ролята.';
-        $this->forceDeleteSuccessMessage = 'Ролята е изтрита перманентно.';
-        $this->forceDeleteErrorMessage = 'Грешка при перманентното изтриване.';
+        $this->initMessages();
+    }
+
+    private function initMessages(): void
+    {
+        $this->messages = [
+            'delete_success' => 'Ролята беше успешно преместена в кошчето.',
+            'restore_success' => 'Ролята е възстановена успешно.',
+            'force_delete_success' => 'Ролята е изтрита перманентно.',
+            'toggle_active' => 'Ролята беше активирана успешно!',
+            'toggle_inactive' => 'Ролята беше деактивирана успешно!',
+            'not_found' => 'Тази роля не съществува.',
+            'trashed_edit' => 'Не може да редактирате изтрита роля.'
+        ];
     }
 
     #[UseExceptions]
     public function index()
     {
-        $query = Role::query()->withTrashed();
-
         $roles = $this->applyFilters(
-            $query,
+            Role::query()->withTrashed(),
             ['name', 'slug'],
             ['name', 'slug', 'created_at'],
-            [
-                'status' => StatusFilter::class,
-            ],
+            ['status' => StatusFilter::class],
             'name'
         )->get();
 
         $data = [
             'title' => $this->indexTitle,
             'roles' => $roles,
-            'primaryButton' => $this->createButton('/admin/users/roles/create', $this->createTitle)
+            'primaryButton' => $this->createButton('/admin/users/roles/create', 'Нова роля')
         ];
 
         render_view('admin/roles/index', $data);
@@ -70,12 +64,11 @@ class RoleController extends BaseController
     #[UseExceptions]
     public function create()
     {
-        $roles = Role::all()->groupBy('module');
-
         $data = [
             'title' => $this->createTitle,
-            'roles' => $roles,
-            'primaryButton' => $this->createButton('/admin/users/roles/create', $this->createBtn)
+            'roles' => Role::all()->groupBy('module'),
+            'role' => new Role(),
+            'primaryButton' => $this->createButton('/admin/users/roles/create', 'Нова роля')
         ];
 
         render_view('admin/roles/form', $data);
@@ -84,17 +77,13 @@ class RoleController extends BaseController
     #[UseExceptions]
     public function store()
     {
-        $data = $this->getRoleDataFromRequest();
+        $data = $this->prepareData($_POST);
         $role = Role::create($data);
 
-        if ($data['is_default'] === true) {
-            Role::where('id', '>', 0)->update(['is_default' => false]);
-        }
+        $this->handleDefaultRole($role, $data);
+        $role->permissions()->sync($_POST['permissions'] ?? []);
 
-        if ($role) {
-            $role->permissions()->sync($_POST['permissions'] ?? []);
-        }
-
+        Flash::success('Ролята беше създадена успешно!');
         View::redirect('/admin/users/roles');
     }
 
@@ -102,15 +91,13 @@ class RoleController extends BaseController
     public function edit($id)
     {
         $role = Role::findOrFail($id);
-        $permissions = Permission::all()->groupBy('module');
-        $assignedPermissions = $role->permissions->pluck('id')->toArray();
 
         $data = [
             'title' => $this->editTitle,
             'role' => $role,
-            'permissions' => $permissions,
-            'assignedPermissions' => $assignedPermissions,
-            'primaryButton' => $this->createButton('/admin/roles/create', $this->createBtn)
+            'permissions' => Permission::all()->groupBy('module'),
+            'assignedPermissions' => $role->permissions->pluck('id')->toArray(),
+            'primaryButton' => $this->createButton('/admin/users/roles/create', 'Нова роля')
         ];
 
         render_view('admin/roles/form', $data);
@@ -120,71 +107,86 @@ class RoleController extends BaseController
     public function update($id)
     {
         $role = Role::withTrashed()->find($id);
+        if (!$role)
+            throw new Exception($this->messages['not_found']);
+        if ($role->trashed())
+            throw new Exception($this->messages['trashed_edit']);
 
-        if (!$role) {
-            throw new Exception($this->deleteErrorMessage);
-        }
+        $data = $this->prepareData($_POST, $role);
 
-        if ($role->trashed()) {
-            throw new Exception($this->trashedEditErrorMessage);
-        }
-
-        $data = $this->getRoleDataFromRequest();
-
-        if ($data['is_default'] === true) {
-            Role::where('id', '!=', $id)->update(['is_default' => false]);
-        }
-
-        $permissions = $_POST['permissions'] ?? [];
-        if (is_array($permissions)) {
-            $permissions = array_keys($permissions);
-        }
-
+        $this->handleDefaultRole($role, $data);
         $role->update($data);
+
+        $permissions = is_array($_POST['permissions'] ?? null) ? array_keys($_POST['permissions']) : ($_POST['permissions'] ?? []);
         $role->permissions()->sync($permissions);
 
+        Flash::success('Ролята беше обновена успешно!');
         View::redirect('/admin/users/roles/edit/' . $id);
+    }
+
+    #[UseExceptions]
+    public function delete()
+    {
+        $this->deleteRecord(Role::class);
+        return $this->jsonResponse(true, $this->messages['delete_success']);
+    }
+
+    #[UseExceptions]
+    public function restore()
+    {
+        $this->restoreRecord(Role::class);
+        return $this->jsonResponse(true, $this->messages['restore_success']);
+    }
+
+    #[UseExceptions]
+    public function forceDelete()
+    {
+        $this->forceDeleteRecord(Role::class);
+        return $this->jsonResponse(true, $this->messages['force_delete_success']);
     }
 
     #[UseExceptions]
     public function toggle()
     {
         $result = $this->toggleStatus(Role::class, 'is_active');
+        $msgKey = $result['new_status'] ? 'toggle_active' : 'toggle_inactive';
+        return $this->jsonResponse($result['success'], $this->messages[$msgKey]);
+    }
 
-        if (!$result['success']) {
-            return $this->jsonResponse(false, $result['message']);
+    private function prepareData(array $post, $model = null): array
+    {
+        $post = $this->normalizeCheckboxes($post);
+
+        // Ръчна обработка на специфичните полета
+        $post['slug'] = !empty($post['slug']) ? Str::slug($post['slug']) : Str::slug($post['name'] ?? '');
+        $post['priority'] = (int) ($post['priority'] ?? 0);
+        $post['options'] = ['schedule' => $this->parseSchedule($post)];
+
+        return $this->buildUpdateData($post, $model, [
+            'name',
+            'slug',
+            'description',
+            'priority',
+            'is_active',
+            'is_default',
+            'color',
+            'options'
+        ]);
+    }
+
+    private function handleDefaultRole($role, array $data): void
+    {
+        if (!empty($data['is_default'])) {
+            Role::where('id', '!=', $role->id)->update(['is_default' => false]);
         }
-
-        $statusText = $result['new_status'] ? 'активирана' : 'деактивирана';
-
-        return $this->jsonResponse(true, "Ролята беше {$statusText} успешно!");
     }
 
-    #[UseExceptions]
-    public function delete()
+    private function parseSchedule(array $post): array
     {
-        return $this->deleteRecord(Role::class);
-    }
-
-    #[UseExceptions]
-    public function restore()
-    {
-        return $this->restoreRecord(Role::class);
-    }
-
-    #[UseExceptions]
-    public function forceDelete()
-    {
-        return $this->forceDeleteRecord(Role::class);
-    }
-
-    #[UseExceptions]
-    private function getRoleDataFromRequest(): array
-    {
-        $rawSchedule = $_POST['schedule'] ?? [];
+        $rawSchedule = $post['schedule'] ?? [];
         $filteredSchedule = [];
 
-        if (isset($_POST['has_time_limit'])) {
+        if (isset($post['has_time_limit'])) {
             foreach ($rawSchedule as $dayNum => $data) {
                 if (isset($data['active'])) {
                     $filteredSchedule[$dayNum] = [
@@ -194,22 +196,6 @@ class RoleController extends BaseController
                 }
             }
         }
-
-        $slug = !empty($_POST['slug'])
-            ? Str::slug($_POST['slug'])
-            : Str::slug($_POST['name'] ?? '');
-
-        return [
-            'name' => $_POST['name'] ?? '',
-            'slug' => $slug,
-            'description' => $_POST['description'] ?? '',
-            'priority' => (int) ($_POST['priority'] ?? 0),
-            'is_active' => !empty($_POST['is_active']), 
-            'is_default' => !empty($_POST['is_default']),
-            'color' => $_POST['color'] ?? '#6366f1',
-            'options' => [
-                'schedule' => $filteredSchedule
-            ]
-        ];
+        return $filteredSchedule;
     }
 }

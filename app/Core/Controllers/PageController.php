@@ -42,7 +42,9 @@ class PageController extends BaseController
             'restore_success' => 'Страницата беше успешно възстановена от кошчето. По подразбиране тя автоматично е деактивирана.',
             'toggle_active' => 'Страницата беше активирана успешно!',
             'toggle_inactive' => 'Страницата беше деактивирана успешно!',
-            'error_generic' => 'Възникна неочаквана грешка.'
+            'error_generic' => 'Възникна неочаквана грешка.',
+            'create_success' => 'Страницата беше създадена успешно!',
+            'update_success' => 'Страницата беше обновена успешно!'
         ];
     }
 
@@ -103,8 +105,7 @@ class PageController extends BaseController
         $data = $this->prepareData($_POST);
         $page = Page::create($data);
 
-        Flash::success('Страницата беше създадена успешно!');
-
+        Flash::success($this->messages['create_success']);
         View::redirect('/admin/pages/edit/' . $page->id);
     }
 
@@ -124,8 +125,7 @@ class PageController extends BaseController
             $this->syncChildrenPaths($page);
         }
 
-        Flash::success('Страницата беше обновена успешно!');
-
+        Flash::success($this->messages['update_success']);
         View::redirect('/admin/pages/edit/' . $page->id);
     }
 

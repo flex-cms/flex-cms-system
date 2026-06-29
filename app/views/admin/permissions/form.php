@@ -20,8 +20,6 @@ Page::header(
 
 <?php Form::create(['action' => $action, 'method' => 'POST', 'class' => 'max-w-5xl']) ?>
 
-    <?php Form::heading('Основна информация'); ?>
-
     <?php Form::section(title: 'Основни данни за разрешението', slot: function () use ($permission) { ?>
 
         <?php Form::row(function () use ($permission) { ?>
@@ -56,6 +54,11 @@ Page::header(
             'value' => $permission?->description,
             'placeholder' => 'Опишете какво позволява това разрешение...',
             'rows' => 4
+        ]); ?>
+
+        <?php Form::toggle('is_active', 'Активно разрешение', [
+            'value' => $permission?->is_active ?? true,
+            'description' => 'Ако деактивирате разрешението, то няма да се прилага при проверката за предоставяне на достъп.'
         ]); ?>
     <?php }); ?>
 

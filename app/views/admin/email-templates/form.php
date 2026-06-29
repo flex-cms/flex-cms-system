@@ -41,6 +41,14 @@ Page::header(
                 $categoryOptions,
                 $currentValue,
             ); ?>
+        <?php }, ['md' => 2, 'lg' => 3]);
+
+        Form::row(function () use ($template) { ?>
+            <?php Form::toggle('is_active', 'Активен имейл шаблон', [
+                'value' => $template?->is_active ?? true,
+                'description' => 'Ако деактивирате имейл шаблонът, той няма да се прилага при изпращане на съответното имейл съобщение.'
+            ]); ?>
+
         <?php }, ['md' => 2, 'lg' => 3]); ?>
 
     <?php }, 'Основни параметри'); ?>

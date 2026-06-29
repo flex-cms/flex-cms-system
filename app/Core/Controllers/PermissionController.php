@@ -5,41 +5,41 @@ namespace Flex\Core\Controllers;
 use Exception;
 use Flex\Attributes\UseExceptions;
 use Flex\Core\Filters\Shared\StatusFilter;
+use Flex\Core\Helpers\Flash;
 use Flex\Core\Routing\View;
 use Flex\Core\Traits\CrudHelper;
 use Flex\Core\Traits\HandlesTableFilters;
+use Flex\Core\Traits\RequestHelper;
 use Flex\Models\Permission;
 use Flex\Models\Role;
 
 class PermissionController extends BaseController
 {
-    use CrudHelper, HandlesTableFilters;
+    use CrudHelper, HandlesTableFilters, RequestHelper;
 
-    protected string $indexTitle;
-    protected string $createTitle;
-    protected string $editTitle;
-    protected string $createBtn;
-    protected string $deleteSuccessMessage;
-    protected string $deleteErrorMessage;
-    protected string $restoreSuccessMessage;
-    protected string $restoreErrorMessage;
-    protected string $forceDeleteSuccessMessage;
-    protected string $forceDeleteErrorMessage;
-    protected string $trashedEditErrorMessage;
+    protected string $indexTitle = 'Управление на разрешения';
+    protected string $createTitle = 'Създаване на ново разрешение';
+    protected string $editTitle = 'Редактиране на разрешението';
+    protected array $messages = [];
 
     public function __construct()
     {
-        $this->indexTitle = 'Управление на разрешения';
-        $this->createTitle = 'Създаване на ново разрешение';
-        $this->editTitle = 'Редактиране на разрешението';
-        $this->createBtn = 'Ново разрешение';
-        $this->deleteSuccessMessage = 'Изтрито успешно.';
-        $this->deleteErrorMessage = 'Това разрешение не съществува.';
-        $this->restoreSuccessMessage = 'Разрешението е възстановено успешно.';
-        $this->restoreErrorMessage = 'Грешка при възстановяване на разрешението.';
-        $this->forceDeleteSuccessMessage = 'Разрешението е изтрито перманентно.';
-        $this->forceDeleteErrorMessage = 'Грешка при перманентното изтриване.';
-        $this->trashedEditErrorMessage = 'Не може да редактирате изтрито разрешение.';
+        $this->initMessages();
+    }
+
+    private function initMessages(): void
+    {
+        $this->messages = [
+            'delete_success' => 'Разрешението беше успешно преместено в кошчето.',
+            'restore_success' => 'Разрешението е възстановено успешно.',
+            'force_delete_success' => 'Разрешението е изтрито перманентно.',
+            'toggle_active' => 'Разрешението беше активирано успешно!',
+            'toggle_inactive' => 'Разрешението беше деактивирано успешно!',
+            'not_found' => 'Това разрешение не съществува.',
+            'trashed_edit' => 'Не може да редактирате изтрито разрешение.',
+            'create_success' => 'Разрешението беше създадено успешно!',
+            'update_success' => 'Разрешението беше обновено успешно!'
+        ];
     }
 
     #[UseExceptions]
@@ -55,16 +55,14 @@ class PermissionController extends BaseController
             $query,
             ['name', 'slug'],
             ['name', 'slug', 'created_at'],
-            [
-                'status' => StatusFilter::class,
-            ],
+            ['status' => StatusFilter::class],
             'name'
         )->get();
 
         $data = [
             'title' => $this->indexTitle,
             'permissions' => $permissions,
-            'primaryButton' => $this->createButton('/admin/users/permissions/create', $this->createTitle)
+            'primaryButton' => $this->createButton('/admin/users/permissions/create', 'Ново разрешение')
         ];
 
         render_view('admin/permissions/index', $data);
@@ -73,12 +71,12 @@ class PermissionController extends BaseController
     #[UseExceptions]
     public function create()
     {
-        $allRoles = Role::orderBy('name', 'asc')->get();
         $data = [
             'title' => $this->createTitle,
-            'allRoles' => $allRoles,
+            'allRoles' => Role::orderBy('name', 'asc')->get(),
             'assignedRoleIds' => [],
-            'primaryButton' => $this->createButton('/admin/users/permissions/create', $this->createTitle)
+            'permission' => new Permission(),
+            'primaryButton' => $this->createButton('/admin/users/permissions/create', 'Ново разрешение')
         ];
 
         render_view('admin/permissions/form', $data);
@@ -87,11 +85,12 @@ class PermissionController extends BaseController
     #[UseExceptions]
     public function store()
     {
-        $data = $this->getPermissionData();
+        $data = $this->prepareData($_POST);
         $permission = Permission::create($data);
 
         $permission->roles()->sync(array_keys($_POST['roles'] ?? []));
 
+        Flash::success($this->messages['create_success']);
         View::redirect('/admin/users/permissions/edit/' . $permission->id);
     }
 
@@ -100,23 +99,17 @@ class PermissionController extends BaseController
     {
         $permission = Permission::withTrashed()->find($id);
 
-        if (!$permission) {
-            throw new Exception($this->deleteErrorMessage);
-        }
-
-        if ($permission->trashed()) {
-            throw new Exception($this->trashedEditErrorMessage);
-        }
-
-        $allRoles = Role::orderBy('name', 'asc')->get();
-        $assignedRoleIds = $permission->roles()->pluck('roles.id')->toArray();
+        if (!$permission)
+            throw new Exception($this->messages['not_found']);
+        if ($permission->trashed())
+            throw new Exception($this->messages['trashed_edit']);
 
         $data = [
             'title' => $this->editTitle,
             'permission' => $permission,
-            'allRoles' => $allRoles,
-            'assignedRoleIds' => $assignedRoleIds,
-            'primaryButton' => $this->createButton('/admin/users/permissions/create', $this->createTitle)
+            'allRoles' => Role::orderBy('name', 'asc')->get(),
+            'assignedRoleIds' => $permission->roles()->pluck('roles.id')->toArray(),
+            'primaryButton' => $this->createButton('/admin/users/permissions/create', 'Ново разрешение')
         ];
 
         render_view('admin/permissions/form', $data);
@@ -127,59 +120,57 @@ class PermissionController extends BaseController
     {
         $permission = Permission::withTrashed()->find($id);
 
-        if (!$permission) {
-            throw new Exception($this->deleteErrorMessage);
-        }
+        if (!$permission)
+            throw new Exception($this->messages['not_found']);
+        if ($permission->trashed())
+            throw new Exception($this->messages['trashed_edit']);
 
-        if ($permission->trashed()) {
-            throw new Exception($this->trashedEditErrorMessage);
-        }
-
-        $permission->update($this->getPermissionData());
+        $permission->update($this->prepareData($_POST, $permission));
         $permission->roles()->sync(array_keys($_POST['roles'] ?? []));
 
+        Flash::success($this->messages['update_success']);
         View::redirect('/admin/users/permissions/edit/' . $id);
     }
 
     #[UseExceptions]
     public function delete()
     {
-        return $this->deleteRecord(Permission::class);
+        $this->deleteRecord(Permission::class);
+        return $this->jsonResponse(true, $this->messages['delete_success']);
     }
 
     #[UseExceptions]
     public function restore()
     {
-        return $this->restoreRecord(Permission::class);
+        $this->restoreRecord(Permission::class);
+        return $this->jsonResponse(true, $this->messages['restore_success']);
     }
 
     #[UseExceptions]
     public function forceDelete()
     {
-        return $this->forceDeleteRecord(Permission::class);
+        $this->forceDeleteRecord(Permission::class);
+        return $this->jsonResponse(true, $this->messages['force_delete_success']);
     }
 
     #[UseExceptions]
     public function toggle()
     {
         $result = $this->toggleStatus(Permission::class, 'is_active');
-
-        if (!$result['success']) {
-            return $this->jsonResponse(false, $result['message']);
-        }
-
-        $statusText = $result['new_status'] ? 'активирано' : 'деактивирано';
-        
-        return $this->jsonResponse(true, "Разрешението беше {$statusText} успешно!");
+        $msgKey = $result['new_status'] ? 'toggle_active' : 'toggle_inactive';
+        return $this->jsonResponse($result['success'], $this->messages[$msgKey]);
     }
 
-    private function getPermissionData(): array
+    private function prepareData(array $post, $model = null): array
     {
-        return [
-            'name' => $_POST['name'] ?? '',
-            'slug' => $_POST['slug'] ?? '',
-            'module' => $_POST['module'] ?? 'General',
-            'description' => $_POST['description'] ?? ''
-        ];
+        $post = $this->normalizeCheckboxes($post);
+
+        return $this->buildUpdateData($post, $model, [
+            'name',
+            'slug',
+            'module',
+            'description',
+            'is_active'
+        ]);
     }
 }
