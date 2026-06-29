@@ -31,6 +31,7 @@ class EmailTemplateController extends BaseController
     {
         $this->messages = [
             'delete_success' => 'Шаблонът беше успешно преместен в кошчето.',
+            'force_delete_success' => 'Шаблонът беше успешно премахнат завинаги.',
             'restore_success' => 'Шаблонът беше успешно възстановен.',
             'toggle_active' => 'Шаблонът беше активиран успешно!',
             'toggle_inactive' => 'Шаблонът беше деактивиран успешно!',
@@ -121,6 +122,13 @@ class EmailTemplateController extends BaseController
     {
         $this->deleteRecord(EmailTemplate::class);
         return $this->jsonResponse(true, $this->messages['delete_success']);
+    }
+
+    #[UseExceptions]
+    public function forceDelete()
+    {
+        $this->forceDeleteRecord(EmailTemplate::class);
+        return $this->jsonResponse(true, $this->messages['force_delete_success']);
     }
 
     #[UseExceptions]

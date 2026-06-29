@@ -57,7 +57,7 @@ $dateFormats = $dateFormats ?? [];
     <div class="mt-2 p-3 bg-slate-50 dark:bg-slate-900/30 rounded border border-slate-200 dark:border-slate-700 text-sm">
         <span class="text-slate-500 dark:text-slate-400">Текущо системно време: </span>
         <span class="font-mono font-medium text-slate-800 dark:text-slate-200">
-            <?php echo DateHelper::format(); ?>
+            <?php echo DateHelper::format(null, true); ?>
         </span>
     </div>
 

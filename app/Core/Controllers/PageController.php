@@ -2,6 +2,7 @@
 
 namespace Flex\Core\Controllers;
 
+use Exception;
 use Flex\Attributes\UseExceptions;
 use Flex\Core\Filters\Shared\StatusFilter;
 use Flex\Core\Helpers\Flash;
@@ -166,20 +167,7 @@ class PageController extends BaseController
     #[UseExceptions]
     public function updatePosition()
     {
-        $data = $this->getJsonInput();
-
-        $id = $data['id'] ?? null;
-        $position = $data['position'] ?? null;
-
-        if (!is_numeric($id) || !is_numeric($position)) {
-            return $this->jsonResponse(false, 'Невалидни данни.');
-        }
-
-        $page = Page::findOrFail($id);
-
-        $page->position = (int) $position;
-        $page->save();
-
+        $this->updatePositionMethod(Page::class);
         return $this->jsonResponse(true, 'Позицията беше променена успешно.');
     }
 
@@ -218,6 +206,12 @@ class PageController extends BaseController
     #[UseExceptions]
     private function prepareData(array $post, $model = null): array
     {
+        $slugExists = Page::where('slug', $post['slug'] ?? '')->where('id', '!=', $model->id ?? 0)->exists();
+
+        if ($slugExists) {
+            throw new Exception('Slug вече съществува. Моля, изберете друг.');
+        }
+
         $post = $this->normalizeCheckboxes($post);
 
         $data = $this->buildUpdateData($post, $model, [

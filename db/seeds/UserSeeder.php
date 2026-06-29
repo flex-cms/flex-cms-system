@@ -13,8 +13,6 @@ class UserSeeder extends AbstractSeed
 
     public function run(): void
     {
-        $now = date('Y-m-d H:i:s');
-
         $pdo = $this->getAdapter()->getConnection();
 
         $email = $_ENV['ADMIN_EMAIL'] ?? 'admin@example.com';
@@ -25,8 +23,6 @@ class UserSeeder extends AbstractSeed
             'email'    => $email,
             'password' => password_hash($password, PASSWORD_BCRYPT),
             'is_active' => 1,
-            'created_at' => $now,
-            'updated_at' => $now,
         ];
 
         $this->table('users')->insert($adminData)->saveData();

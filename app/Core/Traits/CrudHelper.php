@@ -133,4 +133,21 @@ trait CrudHelper
         $jsonInput = file_get_contents('php://input');
         return json_decode($jsonInput, true);
     }
+    
+    protected function updatePositionMethod($modelClass): void
+    {
+        $data = $this->getJsonInput();
+
+        $id = $data['id'] ?? null;
+        $position = $data['position'] ?? null;
+
+        if (!is_numeric($id) || !is_numeric($position)) {
+            throw new InvalidArgumentException('Невалидни данни за позиция.');
+        }
+
+        $page = $modelClass::findOrFail($id);
+
+        $page->position = (int) $position;
+        $page->save();
+    }
 }

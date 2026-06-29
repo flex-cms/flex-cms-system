@@ -103,13 +103,12 @@ Page::header(
 
         }, ['md' => 2]); ?>
 
-        <div x-data="{ withPageOptions: <?= $page->options['is_with_page_options'] ?> }">
-            
+        <div x-data="{ withPageOptions: <?= $page->options['is_with_page_options'] ?? false ?> }">
             <?php Form::row(function () use ($page) {
 
                 Form::toggle('is_active', 'Активна страница', [
                     'value' => $page->is_active ?? true,
-                    'description' => 'Ако е изключено, страницата няма да бъде достъпна за потребителите.'
+                    'description' => 'Ако деактивирате страницата, тя няма да бъде достъпна за посетителите на сайта.'
                 ]);
 
                 Form::toggle('use_full_slug', 'Използване на пълния път (full_slug)', [
@@ -117,14 +116,16 @@ Page::header(
                     'description' => 'Ако е включено, ще се генерира пълен път (напр. /parent/child). Ако е изключено - само slug (напр. /child).'
                 ]);
 
-                Form::toggle('is_with_page_options', 'Активиране на още полета', [
-                    'value' => $page->options['is_with_page_options'],
-                    'description' => 'Ако е активирано, ще можете да добавите още полета за тази страница.',
-                    'attr' => [
-                        'name' => 'is_with_page_options',
-                        '@change' => 'withPageOptions = $event.target.checked'
-                    ]
-                ]);
+                if (!empty($page->id)) {
+                    Form::toggle('is_with_page_options', 'Активиране на още полета', [
+                        'value' => $page->options['is_with_page_options'] ?? false,
+                        'description' => 'Ако е активирано, ще можете да добавите още полета за тази страница.',
+                        'attr' => [
+                            'name' => 'is_with_page_options',
+                            '@change' => 'withPageOptions = $event.target.checked'
+                        ]
+                    ]);
+                }
 
             }, ['md' => 2, 'lg' => 3]); ?>
 
@@ -140,7 +141,6 @@ Page::header(
                     }, ['md' => 2]); ?>
                 </div>
             </div>
-
         </div>
 
     <?php }); ?>

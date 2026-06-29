@@ -2,24 +2,37 @@
 
 namespace Flex\Core\Controllers;
 
+use DateTimeZone;
 use Flex\Attributes\UseExceptions;
 use Flex\Core\Controllers\BaseController;
-use Flex\Core\Routing\View;
 use Flex\Core\Traits\HandlesSettings;
 
 class SettingsController extends BaseController
 {
     use HandlesSettings;
 
-    private $languages;
-    private $timezones;
-    private $dateFormats;
+    private array $languages;
+    private array $timezones;
+    private array $dateFormats;
 
     public function __construct()
     {
         $this->languages = core_info('languages');
-        $this->timezones = core_info('timezones');
+        $this->timezones = $this->getTimezones();
         $this->dateFormats = core_info('date_formats');
+    }
+
+    private function getTimezones(): array
+    {
+        $timezones = [];
+
+        foreach (DateTimeZone::listIdentifiers() as $timezone) {
+            $timezones[$timezone] = str_replace('_', ' ', basename($timezone));
+        }
+
+        asort($timezones, SORT_NATURAL | SORT_FLAG_CASE);
+
+        return $timezones;
     }
 
     #[UseExceptions]
@@ -28,9 +41,9 @@ class SettingsController extends BaseController
         $groups = core_info('settings_options.settings_page_groups', []);
 
         $data = $this->getSettingsData($group, (array) $groups, [
-            'languages' => core_info('languages'),
-            'timezones' => core_info('timezones'),
-            'dateFormats' => core_info('date_formats')
+            'languages'   => $this->languages,
+            'timezones'   => $this->timezones,
+            'dateFormats' => $this->dateFormats,
         ]);
 
         render_view('admin/settings/layout', $data, 'core', 'admin');

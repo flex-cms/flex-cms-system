@@ -36,7 +36,9 @@ $routes = [
     ['GET', '/admin/users/edit/{id}', [UserController::class, 'edit'], [AuthMiddleware::class, AdminMiddleware::class]],
     ['POST', '/admin/users/update/{id}', [UserController::class, 'update'], [AuthMiddleware::class, AdminMiddleware::class]],
     ['POST', '/admin/users/delete/{id}', [UserController::class, 'delete'], [AuthMiddleware::class, AdminMiddleware::class]],
+    ['POST', '/admin/users/force-delete', [UserController::class, 'forceDelete'], [AuthMiddleware::class, AdminMiddleware::class]],
     ['POST', '/admin/users/toggle', [UserController::class, 'toggle'], [AuthMiddleware::class, AdminMiddleware::class]],
+    ['POST', '/admin/users/update-position', [UserController::class, 'updatePosition'], [AuthMiddleware::class, AdminMiddleware::class]],
 
     // Roles
     ['GET', '/admin/users/roles', [RoleController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]],
@@ -48,6 +50,7 @@ $routes = [
     ['POST', '/admin/users/roles/delete', [RoleController::class, 'delete'], [AuthMiddleware::class, AdminMiddleware::class]],
     ['POST', '/admin/users/roles/force-delete', [RoleController::class, 'forceDelete'], [AuthMiddleware::class, AdminMiddleware::class]],
     ['POST', '/admin/users/roles/restore', [RoleController::class, 'restore'], [AuthMiddleware::class, AdminMiddleware::class]],
+    ['POST', '/admin/users/roles/update-position', [RoleController::class, 'updatePosition'], [AuthMiddleware::class, AdminMiddleware::class]],
 
     // Permissions
     ['GET', '/admin/users/permissions', [PermissionController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]],
@@ -59,6 +62,7 @@ $routes = [
     ['POST', '/admin/users/permissions/force-delete', [PermissionController::class, 'forceDelete'], [AuthMiddleware::class, AdminMiddleware::class]],
     ['POST', '/admin/users/permissions/restore', [PermissionController::class, 'restore'], [AuthMiddleware::class, AdminMiddleware::class]],
     ['POST', '/admin/users/permissions/toggle', [PermissionController::class, 'toggle'], [AuthMiddleware::class, AdminMiddleware::class]],
+    ['POST', '/admin/users/permissions/update-position', [PermissionController::class, 'updatePosition'], [AuthMiddleware::class, AdminMiddleware::class]],
 
     // Settings
     ['GET', '/admin/settings/{group}', [SettingsController::class, 'show'], [AuthMiddleware::class, AdminMiddleware::class]],
@@ -90,7 +94,6 @@ $routes = [
     ['POST', '/admin/pages/restore', [PageController::class, 'restore'], [AuthMiddleware::class, AdminMiddleware::class]],
     ['POST', '/admin/pages/force-delete', [PageController::class, 'forceDelete'], [AuthMiddleware::class, AdminMiddleware::class]],
     ['POST', '/admin/pages/update-position', [PageController::class, 'updatePosition'], [AuthMiddleware::class, AdminMiddleware::class]],
-    ['POST', '/admin/pages/reorder', [PageController::class, 'reorder'], [AuthMiddleware::class, AdminMiddleware::class]],
     
     // Email Templates
     ['GET', '/admin/email-templates', [EmailTemplateController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]],
@@ -101,6 +104,8 @@ $routes = [
     ['POST', '/admin/email-templates/delete', [EmailTemplateController::class, 'delete'], [AuthMiddleware::class, AdminMiddleware::class]],
     ['POST', '/admin/email-templates/toggle', [EmailTemplateController::class, 'toggle'], [AuthMiddleware::class, AdminMiddleware::class]],
     ['POST', '/admin/email-templates/restore', [EmailTemplateController::class, 'restore'], [AuthMiddleware::class, AdminMiddleware::class]],
+    ['POST', '/admin/email-templates/force-delete', [EmailTemplateController::class, 'forceDelete'], [AuthMiddleware::class, AdminMiddleware::class]],
+    ['POST', '/admin/email-templates/update-position', [EmailTemplateController::class, 'updatePosition'], [AuthMiddleware::class, AdminMiddleware::class]],
 
     // File Structure
     ['GET', '/admin/file-structure', [FileStructureController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]],
