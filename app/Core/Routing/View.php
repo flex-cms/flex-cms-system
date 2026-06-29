@@ -96,17 +96,28 @@ class View
         exit;
     }
 
-    public static function renderPageTemplate(object $page): void
+    public static function dispatchOptions(object $page, $location): void
     {
-        $template = preg_replace('/[^a-zA-Z0-9\-]/', '', $page->options['page_template'] ?? 'default');
-        $template = ucfirst($template);
+        $templateKey = preg_replace('/[^a-zA-Z0-9\-]/', '', $page->options['page_template'] ?? 'default');
+        $templateName = ucfirst($templateKey);
 
-        $class = "\\Themes\\" . ACTIVE_THEME . "\\PageTemplates\\" . $template . 'Template';
+        $isOptions = ($location === 'options');
+
+        $folder = $isOptions ? 'PageOptions' : 'PageTemplates';
+        $suffix = $isOptions ? $page->options['page_options_key'] : "Template";
+
+        $class = "\\Themes\\" . ACTIVE_THEME . "\\" . $folder . "\\" . $templateName . $suffix;
 
         if (!class_exists($class)) {
-            $class = "\\Themes\\" . ACTIVE_THEME . "\\PageTemplates\\DefaultTemplate";
+            $defaultSuffix = $isOptions ? "DefaultOptions" : "DefaultTemplate";
+            $class = "\\Themes\\" . ACTIVE_THEME . "\\" . $folder . "\\" . $defaultSuffix;
         }
 
-        (new $class($page->id, $page))->render();
+        if (class_exists($class)) {
+            $instance = new $class($page->id, $page);
+            if (method_exists($instance, 'render')) {
+                $instance->render();
+            }
+        }
     }
 }

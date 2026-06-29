@@ -431,7 +431,7 @@ class Form
             $gridClass = "grid-cols-{$cols}";
         }
 
-        echo "<div class='grid gap-5{$gridClass}'>";
+        echo "<div class='grid gap-5 {$gridClass}'>";
         $slot();
         echo "</div>";
     }

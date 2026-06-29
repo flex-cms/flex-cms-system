@@ -103,24 +103,53 @@ Page::header(
 
         }, ['md' => 2]); ?>
 
-        <?php Form::row(function () use ($page) { ?>
+        <div x-data="{ withPageOptions: <?= $page->options['is_with_page_options'] ?> }">
+            
+            <?php Form::row(function () use ($page) {
 
-            <?php Form::toggle('is_active', 'Активна страница', [
-                'value' => $page->is_active ?? true,
-                'description' => 'Ако е изключено, страницата няма да бъде достъпна за потребителите.'
-            ]); ?>
+                Form::toggle('is_active', 'Активна страница', [
+                    'value' => $page->is_active ?? true,
+                    'description' => 'Ако е изключено, страницата няма да бъде достъпна за потребителите.'
+                ]);
 
-            <?php Form::toggle('use_full_slug', 'Използване на пълния път (full_slug)', [
-                'value' => ($page->options['use_full_slug'] ?? true),
-                'description' => 'Ако е включено, ще се генерира пълен път (напр. /parent/child). Ако е изключено - само slug (напр. /child).'
-            ]); ?>
+                Form::toggle('use_full_slug', 'Използване на пълния път (full_slug)', [
+                    'value' => ($page->options['use_full_slug'] ?? true),
+                    'description' => 'Ако е включено, ще се генерира пълен път (напр. /parent/child). Ако е изключено - само slug (напр. /child).'
+                ]);
 
-        <?php }, ['md' => 2, 'lg' => 3]); ?>
+                Form::toggle('is_with_page_options', 'Активиране на още полета', [
+                    'value' => $page->options['is_with_page_options'],
+                    'description' => 'Ако е активирано, ще можете да добавите още полета за тази страница.',
+                    'attr' => [
+                        'name' => 'is_with_page_options',
+                        '@change' => 'withPageOptions = $event.target.checked'
+                    ]
+                ]);
+
+            }, ['md' => 2, 'lg' => 3]); ?>
+
+            <div x-show="withPageOptions" x-collapse x-cloak>
+                <div class="mt-5">
+                    <?php Form::row(function () use ($page) {
+
+                        Form::input('page_options_key', 'Ключ на допълнителните полета', [
+                            'value' => $page->options['page_options_key'] ?? '',
+                            'description' => 'Въведете името на файла, който да се зареди (напр. "Home").'
+                        ]);
+
+                    }, ['md' => 2]); ?>
+                </div>
+            </div>
+
+        </div>
 
     <?php }); ?>
 
     <?php if (!empty($page->options['page_template']))
-        View::renderPageTemplate($page); ?>
+        View::dispatchOptions($page, 'template'); ?>
+
+    <?php if (!empty($page->options['is_with_page_options']))
+        View::dispatchOptions($page, 'options'); ?>
 
     <?php Form::submit(!$isEdit ? 'Създаване' : 'Запазване', 'fa-save') ?>
 
