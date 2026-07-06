@@ -95,7 +95,7 @@ $themePath = __DIR__ . '/themes/' . $activeTheme;
 
 if (is_dir($themePath)) {
     define('ACTIVE_THEME', $activeTheme);
-    $themeClass = "Themes\\" . $activeTheme . "\\ThemeServiceProvider";
+    $themeClass = "Themes\\" . $activeTheme . "\\Initializer";
     if (class_exists($themeClass)) {
         $themeClass::init();
     }

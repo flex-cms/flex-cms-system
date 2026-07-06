@@ -5,12 +5,13 @@ namespace Flex\Core\Controllers;
 use Flex\Attributes\UseExceptions;
 use Flex\Core\Auth;
 use Flex\Core\Controllers\BaseController;
+use Flex\Core\Helpers\Flash;
 use Flex\Core\Routing\View;
 
 class AuthController extends BaseController
 {
     #[UseExceptions]
-    public function showLogin(): void
+    public function login(): void
     {
         if (Auth::check()) {
             $this->redirectByUserRole();
@@ -21,22 +22,34 @@ class AuthController extends BaseController
     }
 
     #[UseExceptions]
-    public function login(): void
+    public function authenticate(): void
     {
-        $username = $_POST['username'] ?? '';
+        $email = $_POST['email'] ?? '';
         $password = $_POST['password'] ?? '';
+        $remember = isset($_POST['remember']);
 
-        if (Auth::attempt($username, $password)) {
+        $duration = $_POST['remember_duration'] ?? 'month';
+
+        if (Auth::attempt($email, $password, $remember, $duration)) {
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
+
+            $redirectUrl = $_SESSION['redirect_url'] ?? null;
+            if ($redirectUrl) {
+                unset($_SESSION['redirect_url']);
+                View::redirect($redirectUrl, 302);
+            }
+
             $this->redirectByUserRole();
-            return;
         }
 
         $data = [
-            'error' => 'Невалидно потребителско име или парола!',
-            'old' => ['username' => $username]
+            'error' => 'Невалиден имейл адрес, парола или неактивен профил!',
+            'old' => ['email' => $email],
         ];
 
-        render_view('auth/login', $data);
+        render_view('auth/login', $data, 'core', 'main');
     }
 
     #[UseExceptions]

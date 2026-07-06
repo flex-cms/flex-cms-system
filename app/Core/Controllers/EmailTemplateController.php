@@ -5,17 +5,16 @@ namespace Flex\Core\Controllers;
 use Flex\Attributes\UseExceptions;
 use Flex\Core\Filters\Shared\StatusFilter;
 use Flex\Core\Helpers\Flash;
-use Flex\Core\Services\EmailService;
+use Flex\Core\Mail\Services\EmailService;
 use Flex\Core\Controllers\BaseController;
 use Flex\Core\Routing\View;
 use Flex\Core\Traits\CrudHelper;
 use Flex\Core\Traits\HandlesTableFilters;
-use Flex\Core\Traits\RequestHelper;
 use Flex\Models\EmailTemplate;
 
 class EmailTemplateController extends BaseController
 {
-    use HandlesTableFilters, CrudHelper, RequestHelper;
+    use HandlesTableFilters, CrudHelper;
 
     protected string $indexTitle = 'Имейл шаблони';
     protected string $createTitle = 'Нов шаблон';
@@ -148,8 +147,6 @@ class EmailTemplateController extends BaseController
 
     private function prepareData(array $post, $model = null): array
     {
-        $post = $this->normalizeCheckboxes($post);
-
         $data = $this->buildUpdateData($post, $model, [
             'name',
             'slug',

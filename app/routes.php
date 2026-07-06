@@ -19,8 +19,8 @@ use Flex\Core\Controllers\EmailTemplateController;
 use Flex\Core\Controllers\InstallController;
 
 $routes = [
-    ['GET', '/admin', [AuthController::class, 'showLogin']],
-    ['POST', '/admin', [AuthController::class, 'login']],
+    ['GET', '/admin', [AuthController::class, 'login']],
+    ['POST', '/admin', [AuthController::class, 'authenticate']],
     ['GET', '/logout', [AuthController::class, 'logout']],
 
     // Dashboard & UI

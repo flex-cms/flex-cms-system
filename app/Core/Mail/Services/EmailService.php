@@ -1,6 +1,6 @@
 <?php
 
-namespace Flex\Core\Services;
+namespace Flex\Core\Mail\Services;
 
 class EmailService
 {

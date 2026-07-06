@@ -1,5 +1,6 @@
 <?php
 
+use Flex\Core\Auth;
 use Flex\Core\Routing\View;
 use Flex\Core\UI\Form;
 use Flex\Core\UI\Page;
@@ -40,10 +41,12 @@ Page::header(
 
         <?php }, ['md' => 2]); ?>
 
-        <?php Form::toggle('is_active', 'Активен потребител', [
-            'value' => $user?->is_active ?? true,
-            'description' => 'Ако деактивирате потребителя, той няма да има достъп до системата.'
-        ]); ?>
+        <?php if (Auth::user()->id !== $user->id): ?>
+            <?php Form::toggle('is_active', 'Активен потребител', [
+                'value' => $user?->is_active ?? true,
+                'description' => 'Ако деактивирате потребителя, той няма да има достъп до системата.'
+            ]); ?>
+        <?php endif; ?>
 
         <?php Form::image('featured_image', 'Изображение на профила', [
             'current_image' => $user->options['featured_image'] ?? null,
@@ -57,18 +60,20 @@ Page::header(
         <?php View::component('password-strength', ['user' => $user], 'admin/users/components'); ?>
     <?php }); ?>
 
-    <?php Form::section(title: 'Роли на потребителя', slot: function () use ($allRoles, $assignedRoleIds) { ?>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <?php foreach ($allRoles as $role): ?>
-                <div class="p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg">
-                    <?php Form::toggle('roles[' . $role->id . ']', $role->name, [
-                        'value' => in_array($role->id, $assignedRoleIds ?? []),
-                        'description' => $role->description ?? ''
-                    ]); ?>
-                </div>
-            <?php endforeach; ?>
-        </div>
-    <?php }); ?>
+    <?php if (Auth::user()->id !== $user->id): ?>
+        <?php Form::section(title: 'Роли на потребителя', slot: function () use ($allRoles, $assignedRoleIds) { ?>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <?php foreach ($allRoles as $role): ?>
+                    <div class="p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg">
+                        <?php Form::toggle('roles[' . $role->id . ']', $role->name, [
+                            'value' => in_array($role->id, $assignedRoleIds ?? []),
+                            'description' => $role->description ?? ''
+                        ]); ?>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        <?php }); ?>
+    <?php endif; ?>
 
     <?php Form::submit($user ? 'Запазване' : 'Създаване', 'fa-save'); ?>
 

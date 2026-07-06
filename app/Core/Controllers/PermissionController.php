@@ -9,13 +9,12 @@ use Flex\Core\Helpers\Flash;
 use Flex\Core\Routing\View;
 use Flex\Core\Traits\CrudHelper;
 use Flex\Core\Traits\HandlesTableFilters;
-use Flex\Core\Traits\RequestHelper;
 use Flex\Models\Permission;
 use Flex\Models\Role;
 
 class PermissionController extends BaseController
 {
-    use CrudHelper, HandlesTableFilters, RequestHelper;
+    use CrudHelper, HandlesTableFilters;
 
     protected string $indexTitle = 'Управление на разрешения';
     protected string $createTitle = 'Създаване на ново разрешение';
@@ -163,8 +162,6 @@ class PermissionController extends BaseController
 
     private function prepareData(array $post, $model = null): array
     {
-        $post = $this->normalizeCheckboxes($post);
-
         return $this->buildUpdateData($post, $model, [
             'name',
             'slug',
