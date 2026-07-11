@@ -14,7 +14,7 @@ class Auth
 
     public static function attempt(string $usernameOrEmail, string $password, bool $remember = false, string $rememberDuration = 'month'): bool
     {
-        $user = User::where('email', $usernameOrEmail)->orWhere('username', $usernameOrEmail)->first();
+        $user = User::where('email', $usernameOrEmail)->first();
 
         if ($user && $user->is_active && password_verify($password, $user->password)) {
 

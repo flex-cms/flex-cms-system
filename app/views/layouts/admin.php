@@ -103,7 +103,7 @@ $currentVersion = $currentConfig['version'];
                         <?php if ($currentUser): ?>
                             <div class="text-right hidden sm:block">
                                 <p class="text-sm font-medium leading-none text-slate-900 dark:text-white">
-                                    <?= htmlspecialchars($currentUser->username) ?>
+                                    <?= htmlspecialchars($currentUser->fullname) ?>
                                 </p>
                                 <p class="text-xs text-slate-500 mt-1">
                                     <?= htmlspecialchars($currentUser->email) ?>
@@ -111,7 +111,7 @@ $currentVersion = $currentConfig['version'];
                             </div>
                             <div
                                 class="h-10 w-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold shadow-sm">
-                                <?= strtoupper(substr($currentUser->username, 0, 1)) ?>
+                                <?= strtoupper(substr($currentUser->fullname, 0, 1)) ?>
                             </div>
                         <?php else: ?>
                             <div class="text-right hidden sm:block">

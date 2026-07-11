@@ -2,6 +2,8 @@
 
 namespace Flex\Core\Services;
 
+use Exception;
+use Flex\Models\EmailTemplate;
 use Flex\Models\User;
 use Flex\Models\PasswordReset;
 use Flex\Core\Mail\Mailer;
@@ -28,12 +30,12 @@ class PasswordResetService
                 $secondsLeft = 300 - $timePassed;
                 $minutesLeft = ceil($secondsLeft / 60);
 
-                throw new \Exception("Моля, изчакайте {$minutesLeft} мин. преди да поискате нов линк.");
+                throw new Exception("Моля, изчакайте {$minutesLeft} мин. преди да поискате нов линк.");
             }
         }
 
         $token = bin2hex(random_bytes(32));
-        $resetLink = "http://" . ($_SERVER['HTTP_HOST'] ?? 'localhost') . "/password/forgot-form?token=" . $token;
+        $resetLink = "http://" . ($_SERVER['HTTP_HOST'] ?? 'localhost') . "/password/reset?token=" . $token;
 
         PasswordReset::where('email', $email)->delete();
 
@@ -44,12 +46,18 @@ class PasswordResetService
         $passwordReset->created_at = date('Y-m-d H:i:s');
         $passwordReset->save();
 
+        $template = EmailTemplate::where('slug', 'auth.password_reset')->first();
+
+        if (!$template) {
+            throw new Exception("Шаблонът за парола не е намерен.");
+        }
+
         return Mailer::to($email)
-            ->subject('Възстановяване на парола - Flex CMS')
-            ->template('password-reset', [
-                'title' => 'Възстановяване на парола',
-                'subComponent' => 'password-reset',
-                'subData' => ['resetLink' => $resetLink]
+            ->subject($template->subject)
+            ->body($template->body)
+            ->withVariables([
+                'user_name' => $user->fullname ?? 'Fullname',
+                'reset_url' => $resetLink
             ])
             ->send();
     }

@@ -9,7 +9,7 @@ $allRoles = $allRoles ?? [];
 $assignedRoleIds = $assignedRoleIds ?? [];
 
 $isEdit = isset($user->id);
-$action = $isEdit ? '/admin/users/update/' . $user->id : '/admin/users/create';
+$action = $isEdit ? '/admin/users/update/' . $user->id : '/admin/users/store';
 
 Page::header(
     title: $user ? 'Редактиране на потребителя' : 'Създаване на нов потребител',
@@ -34,7 +34,7 @@ Page::header(
                 'value' => $user?->email,
                 'placeholder' => 'ivan@example.com',
                 'required' => true,
-                'readonly' => true,
+                'disabled' => !!$user->id,
                 'type' => 'email'
             ]); ?>
 

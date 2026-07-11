@@ -14,7 +14,6 @@ class User extends Model
     protected ?array $permissionsCache = null;
 
     protected $fillable = [
-        'username',
         'fullname',
         'email',
         'password',
@@ -53,6 +52,11 @@ class User extends Model
         }
 
         return in_array($permissionSlug, $this->getPermissions(), true);
+    }
+
+    public function isActive(): bool
+    {
+        return (bool) $this->is_active;
     }
 
     public function hasRole(string $roleSlug): bool

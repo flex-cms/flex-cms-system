@@ -223,8 +223,11 @@ class Form
     {
         $value = $attrs['value'] ?? '';
         $placeholder = $attrs['placeholder'] ?? '';
-        $required = isset($attrs['required']) ? 'required' : '';
-        $disabled = isset($attrs['disabled']) ? 'disabled' : '';
+        
+        // Правилна проверка за булеви стойности (гледа се дали е true, а не само дали съществува)
+        $required = (!empty($attrs['required']) && $attrs['required'] === true) ? 'required' : '';
+        $disabled = (!empty($attrs['disabled']) && $attrs['disabled'] === true) ? 'disabled' : '';
+        
         $extra = $attrs['extra'] ?? '';
         $xModel = isset($attrs['x-model']) ? "x-model=\"{$attrs['x-model']}\"" : '';
         $customClass = $attrs['class'] ?? '';
@@ -240,7 +243,8 @@ class Form
             $typeAttr = 'type="text"';
         }
 
-        $ignoredKeys = ['value', 'type', ':type', 'placeholder', 'required', 'disabled', 'extra', 'x-model', 'class', 'icon'];
+        // Добавен е 'hint' в игнорираните ключове
+        $ignoredKeys = ['value', 'type', ':type', 'placeholder', 'required', 'disabled', 'extra', 'x-model', 'class', 'icon', 'hint'];
         $dynamicAttrs = '';
         foreach ($attrs as $key => $val) {
             if (!in_array($key, $ignoredKeys)) {
@@ -249,21 +253,25 @@ class Form
         }
 
         ?>
-        <div>
-            <?php if (!empty($icon)): ?>
-                <i class="absolute top-4 left-3 fa-solid text-slate-500 hover:text-slate-200 <?= $icon ?>"></i>
-            <?php endif; ?>
+        <div class="<?= !empty($icon) ? 'relative' : '' ?>">
+            
             <?php if (!empty($label)): ?>
                 <label for="<?= $name ?>" class="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                    <?= $label ?>             <?= $required ? '<span class="text-rose-500">*</span>' : '' ?>
+                    <?= htmlspecialchars($label) ?> 
+                    <?= $required ? '<span class="text-rose-500">*</span>' : '' ?>
                 </label>
             <?php endif; ?>
+
+            <?php if (!empty($icon)): ?>
+                <i class="absolute top-9 left-3 fa-solid text-slate-500 <?= $icon ?>"></i>
+            <?php endif; ?>
+
             <input <?= $typeAttr ?> name="<?= $name ?>" id="<?= $name ?>" value="<?= htmlspecialchars($value) ?>"
-                placeholder="<?= $placeholder ?>" <?= $required ?> <?= $disabled ?> <?= $extra ?> <?= $xModel ?> <?= $dynamicAttrs ?>
+                placeholder="<?= htmlspecialchars($placeholder) ?>" <?= $required ?> <?= $disabled ?> <?= $extra ?> <?= $xModel ?> <?= $dynamicAttrs ?>
                 class="<?= !empty($icon) ? 'pr-4 pl-9' : 'px-4' ?> w-full py-2.5 rounded-md border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 dark:focus:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-primary transition-all outline-none <?= $customClass ?>">
 
             <?php if (!empty($hint)): ?>
-                <p class="mt-1.5 text-sm text-slate-500 dark:text-slate-400"><?= $hint ?></p>
+                <p class="mt-1.5 text-sm text-slate-500 dark:text-slate-400"><?= htmlspecialchars($hint) ?></p>
             <?php endif; ?>
         </div>
         <?php
