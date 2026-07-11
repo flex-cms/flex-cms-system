@@ -10,14 +10,13 @@ use Flex\Core\Helpers\SlugHelper;
 use Flex\Core\Traits\CrudHelper;
 use Flex\Core\Traits\HandlesMedia;
 use Flex\Core\Traits\HandlesTableFilters;
-use Flex\Core\Traits\RequestHelper;
 use Flex\Models\Page;
 use Flex\Core\Routing\View;
 use Flex\Core\Controllers\BaseController;
 
 class PageController extends BaseController
 {
-    use HandlesMedia, HandlesTableFilters, RequestHelper, CrudHelper;
+    use HandlesMedia, HandlesTableFilters, CrudHelper;
 
     protected string $indexTitle;
     protected string $createTitle;
@@ -211,8 +210,6 @@ class PageController extends BaseController
         if ($slugExists) {
             throw new Exception('Slug вече съществува. Моля, изберете друг.');
         }
-
-        $post = $this->normalizeCheckboxes($post);
 
         $data = $this->buildUpdateData($post, $model, [
             'name',

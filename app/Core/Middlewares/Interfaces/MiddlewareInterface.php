@@ -1,6 +1,6 @@
 <?php
 
-namespace Flex\Core\Interfaces;
+namespace Flex\Core\Middlewares\Interfaces;
 
 interface MiddlewareInterface
 {

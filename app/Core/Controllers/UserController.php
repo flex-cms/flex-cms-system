@@ -3,10 +3,10 @@
 namespace Flex\Core\Controllers;
 
 use Flex\Attributes\UseExceptions;
+use Flex\Core\Filters\Shared\StatusFilter;
 use Flex\Core\Traits\CrudHelper;
 use Flex\Core\Traits\HandlesMedia;
 use Flex\Core\Traits\HandlesTableFilters;
-use Flex\Core\Traits\RequestHelper;
 use Flex\Models\User;
 use Flex\Models\Role;
 use Flex\Core\Routing\View;
@@ -14,7 +14,7 @@ use Flex\Core\Controllers\BaseController;
 
 class UserController extends BaseController
 {
-    use HandlesMedia, HandlesTableFilters, RequestHelper, CrudHelper;
+    use HandlesMedia, HandlesTableFilters, CrudHelper;
 
     protected string $indexTitle;
     protected string $createTitle;
@@ -38,47 +38,29 @@ class UserController extends BaseController
     {
         $query = User::with('roles');
 
-        if (!empty($_GET['search'])) {
-            $search = $_GET['search'];
-            $query->where(function ($q) use ($search) {
-                $q->where('fullname', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%");
-            });
-        }
-
         if (!empty($_GET['role'])) {
-            $query->whereHas('roles', function ($q) {
-                $q->where('slug', $_GET['role']);
+            $roleParam = $_GET['role'];
+
+            $query->whereHas('roles', function ($q) use ($roleParam) {
+                if (is_numeric($roleParam)) {
+                    $q->where('roles.id', $roleParam);
+                } else {
+                    $q->where('roles.slug', $roleParam);
+                }
             });
         }
 
-        if (!empty($_GET['status'])) {
-            $status = $_GET['status'];
-            if ($status === 'active') {
-                $query->where('is_active', true);
-            } elseif ($status === 'inactive') {
-                $query->where('is_active', false);
-            }
-        }
-
-        $sort = $_GET['sort'] ?? 'created_at';
-        $direction = $_GET['direction'] ?? 'desc';
-
-        $validSorts = ['fullname', 'email', 'role', 'created_at'];
-        if (in_array($sort, $validSorts)) {
-            if ($sort === 'role') {
-                $query->join('user_roles', 'users.id', '=', 'user_roles.user_id')
-                    ->join('roles', 'user_roles.role_id', '=', 'roles.id')
-                    ->orderBy('roles.name', $direction)
-                    ->select('users.*');
-            } else {
-                $query->orderBy($sort, $direction);
-            }
-        }
+        $users = $this->applyFilters(
+            $query->orderBy('created_at'),
+            ['name', 'slug'],
+            ['name', 'slug', 'created_at'],
+            ['status' => StatusFilter::class],
+            'fullname'
+        )->get();
 
         $data = [
             'title' => $this->indexTitle,
-            'users' => $query->get(),
+            'users' => $users,
             'roles' => Role::orderBy('name', 'asc')->get(),
             'primaryButton' => $this->createButton('/admin/users/create', $this->createBtn)
         ];
@@ -170,8 +152,6 @@ class UserController extends BaseController
 
     private function prepareData(array $post, $model = null): array
     {
-        $post = $this->normalizeCheckboxes($post);
-
         $data = $this->buildUpdateData($post, $model, [
             'fullname',
             'email',
@@ -183,7 +163,7 @@ class UserController extends BaseController
             $data['password'] = $post['password'];
         }
 
-        $currentOptions = $model ? $model->options->getArrayCopy() : [];
+        $currentOptions = !empty($model->options) ? $model->options->getArrayCopy() : [];
         $data['options'] = $this->mergeOptions($post, $currentOptions);
         $data['options'] = $this->handleFileUploads($data['options'], 'users');
 

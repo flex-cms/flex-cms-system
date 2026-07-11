@@ -10,13 +10,12 @@ use Flex\Core\Helpers\Str;
 use Flex\Core\Routing\View;
 use Flex\Core\Traits\CrudHelper;
 use Flex\Core\Traits\HandlesTableFilters;
-use Flex\Core\Traits\RequestHelper;
 use Flex\Models\Permission;
 use Flex\Models\Role;
 
 class RoleController extends BaseController
 {
-    use CrudHelper, HandlesTableFilters, RequestHelper;
+    use CrudHelper, HandlesTableFilters;
 
     protected string $indexTitle = 'Управление на роли';
     protected string $createTitle = 'Нова роля';
@@ -155,9 +154,6 @@ class RoleController extends BaseController
 
     private function prepareData(array $post, $model = null): array
     {
-        $post = $this->normalizeCheckboxes($post);
-
-        // Ръчна обработка на специфичните полета
         $post['slug'] = !empty($post['slug']) ? Str::slug($post['slug']) : Str::slug($post['name'] ?? '');
         $post['priority'] = (int) ($post['priority'] ?? 0);
         $post['options'] = ['schedule' => $this->parseSchedule($post)];

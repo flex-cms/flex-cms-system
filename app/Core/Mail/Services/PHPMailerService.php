@@ -1,8 +1,8 @@
 <?php
 
-namespace Core\Services;
+namespace Flex\Core\Mail\Services;
 
-use Core\Interfaces\MailerInterface;
+use Flex\Core\Mail\Interfaces\MailerInterface;
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
