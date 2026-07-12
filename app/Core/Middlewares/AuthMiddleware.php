@@ -18,7 +18,7 @@ class AuthMiddleware implements MiddlewareInterface
                 View::redirect('/auth/login');
             }
 
-            View::redirect('/admin');
+            View::redirect('/login');
         }
     }
 }

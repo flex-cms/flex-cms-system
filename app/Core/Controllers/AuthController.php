@@ -14,7 +14,7 @@ use Flex\Models\User;
 class AuthController extends BaseController
 {
     #[UseExceptions]
-    public function login(): void
+    public function showLogin(): void
     {
         if (Auth::check()) {
             $this->redirectByUserRole();
@@ -25,12 +25,11 @@ class AuthController extends BaseController
     }
 
     #[UseExceptions]
-    public function authenticate(): void
+    public function login(): void
     {
         $email = $_POST['email'] ?? '';
         $password = $_POST['password'] ?? '';
         $remember = isset($_POST['remember']);
-
         $duration = $_POST['remember_duration'] ?? 'month';
 
         if (Auth::attempt($email, $password, $remember, $duration)) {
@@ -44,12 +43,10 @@ class AuthController extends BaseController
                 View::redirect($redirectUrl, 302);
             }
 
-        if (Auth::attempt($email, $password)) {
             $this->redirectByUserRole();
         }
 
         Flash::error('Невалиден имейл адрес или парола!');
-
         render_view('auth/login', ['old' => ['email' => $email]], 'core', 'main');
     }
 

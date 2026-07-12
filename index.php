@@ -92,15 +92,13 @@ $pluginManager->loadPlugins($router);
 
 $activeTheme = Setting::get('active_theme', null);
 $themePath = __DIR__ . '/themes/' . $activeTheme;
+define('ACTIVE_THEME', $activeTheme);
 
-if (is_dir($themePath)) {
-    define('ACTIVE_THEME', $activeTheme);
-    $themeClass = "Themes\\" . $activeTheme . "\\Initializer";
-    if (class_exists($themeClass)) {
-        $themeClass::init();
+if ($activeTheme && is_dir($themePath)) {
+    $themeBootstrap = $themePath . '/index.php';
+    if (file_exists($themeBootstrap)) {
+        require_once $themeBootstrap;
     }
-} else {
-    define('ACTIVE_THEME', null);
 }
 
 $content = "Здравей, това е съдържанието на сайта.";

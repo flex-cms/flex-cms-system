@@ -17,9 +17,9 @@ class View
         return new self($path, $data, $layout, $source);
     }
 
-    public static function redirect(string $url, int $code = 302): void
+    public static function redirect(string $url, int $code = 302, bool $replace = true): void
     {
-        header("Location: " . $url, true, $code);
+        header("Location: " . $url, $replace, $code);
         exit;
     }
 
@@ -49,16 +49,6 @@ class View
                 echo "<!-- Component $componentName not found в $filePath -->";
             }
         }
-    }
-
-    public static function render(string $path, array $data = [], string $source = 'core', string $layout = 'main')
-    {
-        if ($source === 'theme') {
-            self::renderTheme($path, $data, $layout);
-        } else {
-            render_view(self::make($path, $data, $layout, $source));
-        }
-        exit;
     }
 
     public static function renderTheme(string $path, array $data = [], string $layout = 'main'): void

@@ -7,7 +7,7 @@ class Theme
     public static function all(): array
     {
         $themes = [];
-        $themesDir = dirname(__DIR__, 2) . '/themes';
+        $themesDir = themes_path();
 
         if (!is_dir($themesDir)) {
             return [];
