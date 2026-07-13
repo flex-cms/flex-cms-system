@@ -31,13 +31,19 @@ class View
         exit;
     }
 
-    public static function component(string $componentName, array $data = [], string $folder = "components"): void
+    public static function component(string $componentName, array $data = [], string $folder = "components", string $source = 'core'): void
     {
         extract($data);
 
         $folderPath = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $folder);
 
-        $basePath = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'views';
+        $rootPath = base_path();
+
+        if ($source === 'theme' && defined('ACTIVE_THEME') && ACTIVE_THEME) {
+            $basePath = $rootPath . DIRECTORY_SEPARATOR . 'themes' . DIRECTORY_SEPARATOR . ACTIVE_THEME . DIRECTORY_SEPARATOR . 'views';
+        } else {
+            $basePath = $rootPath . DIRECTORY_SEPARATOR . 'app' . DIRECTORY_SEPARATOR . 'views';
+        }
 
         $filePath = $basePath . DIRECTORY_SEPARATOR . $folderPath . DIRECTORY_SEPARATOR . $componentName . '.php';
 
@@ -46,44 +52,9 @@ class View
         } else {
             error_log("Component not found: " . $filePath);
             if (($_ENV['DEBUG'] ?? true) === true) {
-                echo "<!-- Component $componentName not found в $filePath -->";
+                echo "";
             }
         }
-    }
-
-    public static function renderTheme(string $path, array $data = [], string $layout = 'main'): void
-    {
-        $helperClass = "Themes\\" . ACTIVE_THEME . "\\Helpers\\ThemeHelper";
-
-        $globals = [];
-        if (class_exists($helperClass) && method_exists($helperClass, 'getGlobals')) {
-            $globals = $helperClass::getGlobals();
-        }
-
-        $data = array_merge($globals, $data);
-
-        $view = self::make($path, $data, $layout, 'theme');
-
-        extract($view->data);
-
-        $root = dirname(__DIR__, 3);
-        $fullViewPath = $root . '/themes/' . ACTIVE_THEME . '/views/' . $view->path . '.php';
-        $layoutPath = $root . '/themes/' . ACTIVE_THEME . '/views/layouts/' . $view->layout . '.php';
-
-        ob_start();
-        if (file_exists($fullViewPath)) {
-            include $fullViewPath;
-        } else {
-            die("View not found: " . htmlspecialchars($fullViewPath));
-        }
-        $content = ob_get_clean();
-
-        if (file_exists($layoutPath)) {
-            include $layoutPath;
-        } else {
-            echo $content;
-        }
-        exit;
     }
 
     public static function dispatchOptions(object $page, $location): void
