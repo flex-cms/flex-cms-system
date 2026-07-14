@@ -5,11 +5,21 @@ namespace Flex\Core;
 class Vite
 {
     private static string $manifestPath = '/public/dist/.vite/manifest.json';
-    private static string $devServer = 'http://localhost:5173';
+    private static string $devServer = 'http://localhost';
 
-    private static function isDev(): bool
+    private string $entry;
+    private string $type;
+    private int $port = 5173;
+
+    public function __construct(string $entry, string $type = 'core')
     {
-        $handle = @fsockopen("localhost", 5173, $errno, $errstr, 0.1);
+        $this->entry = $entry;
+        $this->type = $type;
+    }
+
+    private function isDev(): bool
+    {
+        $handle = @fsockopen("localhost", $this->port, $errno, $errstr, 0.1);
         if ($handle) {
             fclose($handle);
             return true;
@@ -17,8 +27,21 @@ class Vite
         return false;
     }
 
-    public static function use(string $entry, string $type = 'core'): string
+    public static function use(string $entry, string $type = 'core'): self
     {
+        return new self($entry, $type);
+    }
+
+    public function port(int $port): self
+    {
+        $this->port = $port;
+        return $this;
+    }
+
+    public function __toString(): string
+    {
+        $entry = $this->entry;
+        $type = $this->type;
         $isTheme = ($type === 'theme');
 
         if ($isTheme) {
@@ -31,12 +54,14 @@ class Vite
             $entryPath = "resources/js/{$entry}.js";
         }
 
-        if (self::isDev()) {
-            $devUrl = self::$devServer . "/" . ($isTheme ? "themes/" . ACTIVE_THEME . "/" : "") . $entryPath;
+        $currentDevServer = self::$devServer . ":" . $this->port;
+
+        if ($this->isDev()) {
+            $devUrl = $currentDevServer . "/" . ($isTheme ? "themes/" . ACTIVE_THEME . "/" : "") . $entryPath;
             return sprintf(
                 '<script type="module" src="%1$s/@vite/client"></script>' . PHP_EOL .
                 '<script type="module" src="%2$s" defer></script>',
-                self::$devServer,
+                $currentDevServer,
                 $devUrl
             );
         }

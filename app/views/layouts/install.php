@@ -44,7 +44,7 @@ $currentVersion = $currentConfig['version'];
         }
     </style>
 
-    <?= Vite::use('admin') ?>
+    <?= Vite::use('admin')->port(3000) ?>
 
     <script>
         document.addEventListener('alpine:init', () => {
