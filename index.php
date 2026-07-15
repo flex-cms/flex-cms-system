@@ -62,7 +62,7 @@ function db() { return Database::getInstance(); }
 db();
 
 try {
-    $debugMode = Setting::get('debug_mode', false);
+    $debugMode = Setting::getValue('debug_mode', false);
 } catch (\Exception $e) {
     $debugMode = false;
 }
@@ -90,7 +90,7 @@ $pluginManager = new PluginManager($events, $activePlugins);
 $router->setPluginManager($pluginManager);
 $pluginManager->loadPlugins($router);
 
-$activeTheme = Setting::get('active_theme', null);
+$activeTheme = Setting::getValue('active_theme', null);
 $themePath = __DIR__ . '/themes/' . $activeTheme;
 define('ACTIVE_THEME', $activeTheme);
 
@@ -104,7 +104,7 @@ if ($activeTheme && is_dir($themePath)) {
 $content = "Здравей, това е съдържанието на сайта.";
 $content = $events->applyFilters('the_content', $content);
 
-$timezone = Setting::get('timezone', 'Europe/Sofia');
+$timezone = Setting::getValue('timezone', 'Europe/Sofia');
 date_default_timezone_set($timezone);
 
 require_once __DIR__ . '/app/routes.php';

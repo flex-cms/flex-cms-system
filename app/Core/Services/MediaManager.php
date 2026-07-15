@@ -31,13 +31,13 @@ class MediaManager
 
     private function validateFile(array $file): bool
     {
-        $maxSize = (int)Setting::get('media_max_size', 5) * 1024 * 1024;
+        $maxSize = (int)Setting::getValue('media_max_size', 5) * 1024 * 1024;
         if ($file['size'] > $maxSize) {
-            Flash::error('Максималният размер на файла е ' . (Setting::get('media_max_size', 5)) . 'MB.');
+            Flash::error('Максималният размер на файла е ' . (Setting::getValue('media_max_size', 5)) . 'MB.');
             return false;
         }
 
-        $allowed = explode(',', str_replace(' ', '', Setting::get('media_allowed_extensions', 'jpg,png,webp')));
+        $allowed = explode(',', str_replace(' ', '', Setting::getValue('media_allowed_extensions', 'jpg,png,webp')));
         $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
         if (!in_array($ext, $allowed)) {
             Flash::error('Невалиден формат. Разрешени: ' . implode(', ', $allowed));
@@ -49,7 +49,7 @@ class MediaManager
 
     private function generateFileName(array $file): string
     {
-        if (Setting::get('media_keep_original_name', false)) {
+        if (Setting::getValue('media_keep_original_name', false)) {
             return preg_replace('/[^a-zA-Z0-9\._-]/', '_', $file['name']);
         }
 
@@ -59,7 +59,7 @@ class MediaManager
 
     private function getUploadPath(string $folder): string
     {
-        $subPath = Setting::get('media_use_date_folders', true) ? date('Y/m/d') : '';
+        $subPath = Setting::getValue('media_use_date_folders', true) ? date('Y/m/d') : '';
         $path = $this->baseDir . $folder . ($subPath ? '/' . $subPath : '') . '/';
 
         if (!is_dir($path)) {

@@ -19,9 +19,16 @@ class Setting extends Model
         'options' => AsArrayObject::class,
     ];
 
-    public static function get(string $key, $default = null)
+    public static function getValue(string $key, $default = null, ?string $group = null)
     {
-        $setting = self::where('key', $key)->first();
+        $query = self::where('key', $key);
+
+        if ($group !== null) {
+            $query->where('group', $group);
+        }
+
+        $setting = $query->first();
+
         if (!$setting) {
             return $default;
         }

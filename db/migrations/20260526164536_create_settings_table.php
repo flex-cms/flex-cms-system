@@ -11,7 +11,7 @@ class CreateSettingsTable extends AbstractMigration
         $settings = $this->table('settings');
         $settings->addColumn('key', 'string', ['limit' => 100])
             ->addColumn('value', 'text', ['null' => true])
-            ->addColumn('group', 'string', ['limit' => 50, 'default' => 'general'])
+            ->addColumn('group', 'string', ['limit' => 50, 'default' => 'system'])
             ->addColumn('type', 'string', ['limit' => 20, 'default' => 'string'])
             ->addColumn('options', 'json', ['null' => true])
             ->addColumn('created_at', 'timestamp', ['default' => 'CURRENT_TIMESTAMP'])

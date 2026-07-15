@@ -86,7 +86,7 @@ if (!function_exists('handle_exception')) {
     {
         error_log($e->getMessage());
 
-        $debugMode = Setting::get('debug_mode', false);
+        $debugMode = Setting::getValue('debug_mode', false);
 
         if (is_api_request()) {
             header('Content-Type: application/json');

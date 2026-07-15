@@ -4,30 +4,22 @@ namespace Flex\Core\Traits;
 
 use Flex\Models\Setting;
 use Flex\Core\Routing\View;
+use Flex\Core\Services\MediaManager;
 
 trait HandlesSettings
 {
-    protected function getSettingsData(string $group, array $definedGroups, array $customData = []): array
+    protected ?MediaManager $mediaManager = null;
+
+    public function __construct()
     {
-        if (!array_key_exists($group, $definedGroups)) {
-            return [];
-        }
-
-        $groupData = $definedGroups[$group];
-        $label = is_array($groupData) ? ($groupData['label'] ?? $group) : $groupData;
-
-        $data = [
-            'title' => 'Настройки: ' . $label,
-            'currentGroup' => $group,
-            'definedGroups' => $definedGroups ?? [],
-            'group' => $group,
-        ];
-
-        return array_merge($data, $customData);
+        $this->mediaManager = new MediaManager();
     }
 
     protected function updateSettings(string $group, array $postedSettings, string $redirectUrl)
     {
+        $uploadedFiles = $this->handleFileUploads();
+        $postedSettings = array_merge($postedSettings, $uploadedFiles);
+
         $existingSettings = Setting::where('group', $group)
             ->whereIn('value', ['1', '0', 'true', 'false'])
             ->get();
@@ -46,6 +38,28 @@ trait HandlesSettings
         View::redirect($redirectUrl);
     }
 
+    protected function handleFileUploads(): array
+    {
+        $uploadedPaths = [];
+
+        if (!$this->mediaManager) {
+            $this->mediaManager = new MediaManager();
+        }
+
+        foreach ($_FILES as $fieldKey => $fileData) {
+            if (isset($fileData['error']) && $fileData['error'] === UPLOAD_ERR_OK) {
+                
+                $uploadedPath = $this->mediaManager->upload($fileData, ACTIVE_THEME);
+
+                if ($uploadedPath) {
+                    $uploadedPaths[$fieldKey] = $uploadedPath;
+                }
+            }
+        }
+
+        return $uploadedPaths;
+    }
+
     protected function saveSetting(string $key, $value, string $group)
     {
         $setting = Setting::firstOrNew(['key' => $key]);
@@ -53,16 +67,5 @@ trait HandlesSettings
 
         $setting->fill(['key' => $key, 'value' => $value, 'group' => $group, 'type' => $type]);
         $setting->save();
-    }
-
-    public static function getGroupIcon(string $group): string|null
-    {
-        $groups = core_info('settings_options.settings_page_groups', []);
-
-        if (isset($groups[$group]['icon'])) {
-            return $groups[$group]['icon'];
-        }
-
-        return null;
     }
 }

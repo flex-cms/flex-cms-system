@@ -15,25 +15,25 @@ $dateFormats = $dateFormats ?? [];
     <?php Form::row(function () use ($currentUrl) {
 
         Form::input('settings[site_name]', 'Име на сайта', [
-            'value' => Setting::get('site_name', 'Flex CMS'),
+            'value' => Setting::getValue('site_name', 'Flex CMS'),
             'required' => true
         ]);
 
         Form::input('settings[admin_email]', 'Административен имейл', [
-            'value' => Setting::get('admin_email', ''),
+            'value' => Setting::getValue('admin_email', ''),
             'type' => 'email',
             'required' => true
         ]);
 
         Form::input('settings[site_url]', 'URL адрес', [
-            'value' => Setting::get('site_url', $currentUrl),
+            'value' => Setting::getValue('site_url', $currentUrl),
             'placeholder' => 'https://example.com'
         ]);
 
     }, ['md' => 2, 'lg' => 3]); ?>
 
     <?php Form::textarea('settings[site_description]', 'Кратко описание (Meta Description)', [
-        'value' => Setting::get('site_description', ''),
+        'value' => Setting::getValue('site_description', ''),
         'rows' => 5
     ]); ?>
 <?php }, 'Основни настройки'); ?>
@@ -44,13 +44,13 @@ $dateFormats = $dateFormats ?? [];
             'settings[timezone]',
             'Часова зона',
             $timezones,
-            Setting::get('timezone', 'Europe/Sofia')
+            Setting::getValue('timezone', 'Europe/Sofia')
         );
         Form::customSelect(
             'settings[date_format]',
             'Формат на датата',
             $dateFormats,
-            Setting::get('date_format', 'd.m.Y')
+            Setting::getValue('date_format', 'd.m.Y')
         );
     }, ['md' => 2]); ?>
 
@@ -63,18 +63,18 @@ $dateFormats = $dateFormats ?? [];
 
     <div class="mt-4">
         <?php Form::toggle('settings[debug_mode]', 'Debug режим', [
-            'value' => (bool) Setting::get('debug_mode', false),
+            'value' => (bool) Setting::getValue('debug_mode', false),
             'description' => 'Използвай само за разработка. При продукция винаги трябва да е изключен.'
         ]); ?>
     </div>
 <?php }, 'Допълнителни параметри'); ?>
 
 <?php Form::section(function () use ($languages) { ?>
-    <div x-data="{ multipleLanguages: <?= (bool) Setting::get('enable_multilang', false) ? 'true' : 'false' ?> }">
+    <div x-data="{ multipleLanguages: <?= (bool) Setting::getValue('enable_multilang', false) ? 'true' : 'false' ?> }">
 
         <div class="mb-5">
             <?php Form::toggle('settings[enable_multilang]', 'Активиране на многоезичност', [
-                'value' => (bool) Setting::get('enable_multilang', false),
+                'value' => (bool) Setting::getValue('enable_multilang', false),
                 'description' => 'Ако е активирано, сайтът ще поддържа множество езици едновременно.',
                 'attr' => [
                     'name' => 'settings[enable_multilang]',
@@ -90,7 +90,7 @@ $dateFormats = $dateFormats ?? [];
                         'settings[site_default_lang]',
                         'Език на сайта по подразбиране',
                         $languages,
-                        Setting::get('site_default_lang', 'bg')
+                        Setting::getValue('site_default_lang', 'bg')
                     );
                 }, 2); ?>
             </div>
@@ -101,7 +101,7 @@ $dateFormats = $dateFormats ?? [];
                 'settings[admin_default_lang]',
                 'Език на админ панела',
                 $languages,
-                Setting::get('admin_default_lang', 'bg')
+                Setting::getValue('admin_default_lang', 'bg')
             );
         }, 1); ?>
     </div>

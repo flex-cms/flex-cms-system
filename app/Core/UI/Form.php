@@ -87,7 +87,7 @@ class Form
     public static function image(string $name, string $label, array $attrs = []): void
     {
         $id = 'file_' . $name;
-        $currentImage = $attrs['current_image'] ?? null;
+        $currentImage = $attrs['current_image'] ?? '/assets/images/no-image.png';
         $description = $attrs['description'] ?? null;
         $inputName = $name;
 

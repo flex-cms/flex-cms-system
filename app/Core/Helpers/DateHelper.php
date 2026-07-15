@@ -9,10 +9,10 @@ class DateHelper
 {
     public static function format($date = null, bool $includeTime = false)
     {
-        $timezone = Setting::get('timezone', 'Europe/Sofia');
-        $lang = Setting::get('site_default_lang', 'bg');
+        $timezone = Setting::getValue('timezone', 'Europe/Sofia');
+        $lang = Setting::getValue('site_default_lang', 'bg');
 
-        $format = Setting::get('date_format', 'd.m.Y');
+        $format = Setting::getValue('date_format', 'd.m.Y');
 
         if ($includeTime) {
             $format .= ' : H:i';
@@ -27,7 +27,7 @@ class DateHelper
 
     public static function iso($date = null)
     {
-        $timezone = Setting::get('timezone', 'Europe/Sofia');
+        $timezone = Setting::getValue('timezone', 'Europe/Sofia');
 
         return Carbon::parse($date)
             ->setTimezone($timezone)
