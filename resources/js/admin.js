@@ -1,5 +1,11 @@
 import "./admin/helpers.js";
 
+import $ from 'jquery';
+window.$ = window.jQuery = $;
+
+import Sortable from 'sortablejs';
+window.Sortable = Sortable;
+
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import 'dayjs/locale/bg'
@@ -44,6 +50,7 @@ import initDatepicker from './admin/components/datepicker';
 import passwordStrength from './admin/components/password-strength.js';
 import customSelectWithInput from './admin/components/custom-select-with-input.js';
 import sortable from './admin/components/sortable.js';
+import repeater from './admin/components/repeater.js';
 
 window.Alpine = Alpine;
 Alpine.plugin(collapse);
@@ -62,5 +69,6 @@ Alpine.data('datepicker', initDatepicker);
 Alpine.data('passwordStrength', passwordStrength);
 Alpine.data('customSelectWithInput', customSelectWithInput);
 Alpine.data('sortable', sortable);
+Alpine.data('repeater', repeater);
 
 Alpine.start();

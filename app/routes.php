@@ -17,6 +17,7 @@ use Flex\Core\Controllers\PageController;
 use Flex\Core\Controllers\ThemeController;
 use Flex\Core\Controllers\EmailTemplateController;
 use Flex\Core\Controllers\InstallController;
+use Flex\Core\Controllers\MenuController;
 
 // Auth Routes
 $router->get('/login', [AuthController::class, 'showLogin']);
@@ -43,6 +44,15 @@ $router->post('/admin/users/delete/{id}', [UserController::class, 'delete'], [Au
 $router->post('/admin/users/force-delete', [UserController::class, 'forceDelete'], [AuthMiddleware::class, AdminMiddleware::class]);
 $router->post('/admin/users/toggle', [UserController::class, 'toggle'], [AuthMiddleware::class, AdminMiddleware::class]);
 $router->post('/admin/users/update-position', [UserController::class, 'updatePosition'], [AuthMiddleware::class, AdminMiddleware::class]);
+
+$router->get('/admin/menus', [MenuController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]);
+$router->get('/admin/menus/create', [MenuController::class, 'create'], [AuthMiddleware::class, AdminMiddleware::class]);
+$router->post('/admin/menus/store', [MenuController::class, 'store'], [AuthMiddleware::class, AdminMiddleware::class]);
+$router->get('/admin/menus/edit/{id}', [MenuController::class, 'edit'], [AuthMiddleware::class, AdminMiddleware::class]);
+$router->post('/admin/menus/update/{id}', [MenuController::class, 'update'], [AuthMiddleware::class, AdminMiddleware::class]);
+$router->post('/admin/menus/delete/{id}', [MenuController::class, 'delete'], [AuthMiddleware::class, AdminMiddleware::class]);
+$router->post('/admin/menus/force-delete', [MenuController::class, 'forceDelete'], [AuthMiddleware::class, AdminMiddleware::class]);
+$router->post('/admin/menus/toggle', [MenuController::class, 'toggle'], [AuthMiddleware::class, AdminMiddleware::class]);
 
 // Roles
 $router->get('/admin/users/roles', [RoleController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]);

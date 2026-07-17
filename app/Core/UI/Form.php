@@ -224,7 +224,6 @@ class Form
         $value = $attrs['value'] ?? '';
         $placeholder = $attrs['placeholder'] ?? '';
         
-        // Правилна проверка за булеви стойности (гледа се дали е true, а не само дали съществува)
         $required = (!empty($attrs['required']) && $attrs['required'] === true) ? 'required' : '';
         $disabled = (!empty($attrs['disabled']) && $attrs['disabled'] === true) ? 'disabled' : '';
         
@@ -243,14 +242,15 @@ class Form
             $typeAttr = 'type="text"';
         }
 
-        // Добавен е 'hint' в игнорираните ключове
-        $ignoredKeys = ['value', 'type', ':type', 'placeholder', 'required', 'disabled', 'extra', 'x-model', 'class', 'icon', 'hint'];
+        $ignoredKeys = ['value', 'type', ':type', 'placeholder', 'required', 'disabled', 'extra', 'x-model', 'class', 'icon', 'hint', 'options', 'fields'];
         $dynamicAttrs = '';
         foreach ($attrs as $key => $val) {
             if (!in_array($key, $ignoredKeys)) {
                 $dynamicAttrs .= " {$key}=\"{$val}\"";
             }
         }
+
+        $hasXModel = isset($attrs['x-model']) || isset($attrs[':value']);
 
         ?>
         <div class="<?= !empty($icon) ? 'relative' : '' ?>">
@@ -266,7 +266,7 @@ class Form
                 <i class="absolute top-9 left-3 fa-solid text-slate-500 <?= $icon ?>"></i>
             <?php endif; ?>
 
-            <input <?= $typeAttr ?> name="<?= $name ?>" id="<?= $name ?>" value="<?= htmlspecialchars($value) ?>"
+            <input <?= $typeAttr ?> name="<?= $name ?>" id="<?= $name ?>" <?= $hasXModel ? '' : 'value="' . htmlspecialchars($value) . '"' ?>
                 placeholder="<?= htmlspecialchars($placeholder) ?>" <?= $required ?> <?= $disabled ?> <?= $extra ?> <?= $xModel ?> <?= $dynamicAttrs ?>
                 class="<?= !empty($icon) ? 'pr-4 pl-9' : 'px-4' ?> w-full py-2.5 rounded-md border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 dark:focus:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-primary transition-all outline-none <?= $customClass ?>">
 
@@ -282,15 +282,36 @@ class Form
         $value = $attrs['value'] ?? '';
         $rows = $attrs['rows'] ?? 3;
         $placeholder = $attrs['placeholder'] ?? '';
-        $xModel = isset($attrs['x-model']) ? "x-model=\"{$attrs['x-model']}\"" : '';
+
+        $excludeAttrs = ['value', 'rows', 'placeholder', 'label', 'type', 'options', 'fields'];
+        
+        $htmlAttrs = [];
+        foreach ($attrs as $attrKey => $attrVal) {
+            if (!in_array($attrKey, $excludeAttrs, true)) {
+                if ($attrVal === true) {
+                    $htmlAttrs[] = htmlspecialchars($attrKey);
+                } elseif ($attrVal !== false && $attrVal !== null) {
+                    $htmlAttrs[] = sprintf('%s="%s"', htmlspecialchars($attrKey), htmlspecialchars($attrVal));
+                }
+            }
+        }
+        
+        $customAttrsString = implode(' ', $htmlAttrs);
+        $hasXModel = isset($attrs['x-model']) || isset($attrs[':value']);
 
         ?>
         <div>
-            <label for="<?= $name ?>" class="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+            <label for="<?= htmlspecialchars($name) ?>" class="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                 <?= $label ?>
             </label>
-            <textarea name="<?= $name ?>" id="<?= $name ?>" rows="<?= $rows ?>" placeholder="<?= $placeholder ?>" <?= $xModel ?>
-                class="w-full px-4 py-2.5 rounded-md border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 dark:focus:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"><?= isset($attrs['x-model']) ? '' : htmlspecialchars($value) ?></textarea>
+            <textarea 
+                name="<?= htmlspecialchars($name) ?>" 
+                id="<?= htmlspecialchars($name) ?>" 
+                rows="<?= (int)$rows ?>" 
+                placeholder="<?= htmlspecialchars($placeholder) ?>" 
+                <?= $customAttrsString ?>
+                class="w-full px-4 py-2.5 rounded-md border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 dark:focus:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"
+            ><?= $hasXModel ? '' : htmlspecialchars($value) ?></textarea>
         </div>
         <?php
     }
@@ -327,36 +348,47 @@ class Form
 
     public static function toggle(string $name, string $label, array $options = []): void
     {
+        $toggleId = 'toggle-' . bin2hex(random_bytes(4)); 
+        
         $value = $options['value'] ?? false;
-        $id = $options['id'] ?? 'toggle-' . bin2hex(random_bytes(4));
         $description = $options['description'] ?? null;
         $checked = $value ? 'checked' : '';
-
         $isInputArray = str_ends_with($name, ']');
 
         $attributes = '';
+        $hasAlpineBinding = false;
+
         if (isset($options['attr']) && is_array($options['attr'])) {
             foreach ($options['attr'] as $attr => $val) {
+                if (in_array($attr, ['options', 'fields'], true)) continue;
+                
+                if (str_starts_with($attr, ':') || str_starts_with($attr, '@') || $attr === 'x-model' || str_starts_with($attr, 'x-bind')) {
+                    $hasAlpineBinding = true;
+                }
                 $attributes .= " {$attr}=\"{$val}\"";
             }
         }
 
         ?>
-        <div class="flex items-center gap-4">
-            <label for="<?= $id ?>" class="relative inline-flex items-center cursor-pointer shrink-0 mt-0.5">
-                <?php if (!$isInputArray): ?>
+        <div class="flex items-center gap-4" x-id="['<?= $toggleId ?>']">
+            <label :for="$id('<?= $toggleId ?>')" class="relative inline-flex items-center cursor-pointer shrink-0 mt-0.5">
+                <?php if (!$isInputArray && !$hasAlpineBinding): ?>
                     <input type="hidden" name="<?= $name ?>" value="0">
                 <?php endif; ?>
 
-                <input type="checkbox" name="<?= $name ?>" id="<?= $id ?>" value="1" class="sr-only peer" <?= $checked ?>
+                <input type="checkbox" 
+                    :id="$id('<?= $toggleId ?>')" 
+                    value="1" 
+                    class="sr-only peer" 
+                    <?= $checked ?>
                     <?= $attributes ?>>
 
-                <div
-                    class="w-11 h-6 bg-slate-200 dark:bg-slate-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-indigo-600 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all shadow-inner">
+                <div class="w-11 h-6 bg-slate-200 dark:bg-slate-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-indigo-600 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all shadow-inner">
                 </div>
             </label>
 
-            <div class="flex flex-col select-none cursor-pointer" onclick="document.getElementById('<?= $id ?>').click()">
+            <div class="flex flex-col select-none cursor-pointer" 
+                @click="document.getElementById($id('<?= $toggleId ?>')).click()">
                 <span class="font-semibold text-slate-800 dark:text-slate-200 leading-tight"><?= $label ?></span>
                 <?php if ($description): ?>
                     <span class="text-sm text-slate-500 dark:text-slate-400 mt-1"><?= $description ?></span>
@@ -536,22 +568,51 @@ class Form
         <?php
     }
 
-    public static function customSelect(string $name, string $label, array $options = [], string $selected = ''): void
+    public static function customSelect(string $name, string $label, array $options = [], string $selected = '', array $attrs = []): void
     {
         $selectedText = $options[$selected] ?? 'Изберете...';
+        $xModel = $attrs['x-model'] ?? null;
+        $optionsJson = htmlspecialchars(json_encode($options, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8');
+
+        $excludeAttrs = ['x-model', 'options', 'value', 'type', 'fields', 'label'];
+        $htmlAttrs = [];
+        foreach ($attrs as $attrKey => $attrVal) {
+            if (!in_array($attrKey, $excludeAttrs, true)) {
+                if ($attrVal === true) {
+                    $htmlAttrs[] = htmlspecialchars($attrKey);
+                } elseif ($attrVal !== false && $attrVal !== null) {
+                    $htmlAttrs[] = sprintf('%s="%s"', htmlspecialchars($attrKey), htmlspecialchars($attrVal));
+                }
+            }
+        }
+        $selectAttrsString = implode(' ', $htmlAttrs);
         ?>
-        <div class="min-w-60" x-data="{ 
-            open: false, 
-            selected: '<?= $selected ?>', 
-            label: '<?= $selectedText ?>',
-            placement: 'bottom' 
-        }">
+        <div class="min-w-60" 
+            x-data="{ 
+                open: false, 
+                selected: '<?= htmlspecialchars($selected, ENT_QUOTES, 'UTF-8') ?>', 
+                options: <?= $optionsJson ?>,
+                placement: 'bottom',
+                get labelText() {
+                    return this.options[this.selected] || 'Изберете...';
+                }
+            }"
+            <?php if ($xModel): ?>
+            /* Двупосочна връзка (two-way binding) с Alpine модела на репийтъра */
+            x-init="
+                selected = <?= $xModel ?> || '';
+                $watch('<?= $xModel ?>', value => { selected = value || ''; });
+                $watch('selected', value => { <?= $xModel ?> = value; });
+            "
+            <?php endif; ?>
+        >
             <?php if (!empty($label)): ?>
                 <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5"><?= $label ?></label>
             <?php endif; ?>
-            <select name="<?= $name ?>" class="hidden">
+            
+            <select name="<?= htmlspecialchars($name) ?>" <?= $selectAttrsString ?> class="hidden">
                 <?php foreach ($options as $val => $text): ?>
-                    <option value="<?= $val ?>" :selected="selected === '<?= $val ?>'"><?= $text ?></option>
+                    <option value="<?= htmlspecialchars($val) ?>" :selected="selected == '<?= htmlspecialchars($val, ENT_QUOTES, 'UTF-8') ?>'"><?= htmlspecialchars($text) ?></option>
                 <?php endforeach; ?>
             </select>
 
@@ -564,17 +625,17 @@ class Form
             })">
                 <button type="button" @click="open = !open" @click.away="open = false"
                     class="w-full flex justify-between items-center px-4 py-2.5 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-indigo-500">
-                    <span x-text="label"></span>
+                    <span x-text="labelText"></span>
                     <i class="fas fa-chevron-down text-xs text-slate-400"></i>
                 </button>
 
                 <ul x-show="open" x-cloak x-transition :class="placement === 'top' ? 'bottom-full mb-1' : 'top-full mt-1'"
                     class="absolute z-50 w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md shadow-lg max-h-60 overflow-y-auto">
                     <?php foreach ($options as $val => $text): ?>
-                        <li @click="selected = '<?= $val ?>'; label = '<?= $text ?>'; open = false"
+                        <li @click="selected = '<?= htmlspecialchars($val, ENT_QUOTES, 'UTF-8') ?>'; open = false"
                             class="px-4 py-2 cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-900/50"
-                            :class="selected === '<?= $val ?>' ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-200' : ''">
-                            <?= $text ?>
+                            :class="selected == '<?= htmlspecialchars($val, ENT_QUOTES, 'UTF-8') ?>' ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-200' : ''">
+                            <?= htmlspecialchars($text) ?>
                         </li>
                     <?php endforeach; ?>
                 </ul>
@@ -651,36 +712,92 @@ class Form
         <div x-data="repeater(<?= $jsData ?>)" class="space-y-6">
             <label class="block font-semibold text-slate-700 dark:text-slate-300"><?= $label ?></label>
 
-            <template x-for="(item, index) in items" :key="index">
-                <div
-                    class="p-5 bg-slate-50 dark:bg-slate-900/30 border border-slate-200 dark:border-slate-700 rounded-lg relative group">
-                    <div class="grid gap-4">
-                        <?php foreach ($fields as $key => $field): ?>
-                            <div>
-                                <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                                    <?= $field['label'] ?>
-                                </label>
-
-                                <?php if ($field['type'] === 'textarea'): ?>
-                                    <textarea :name="'<?= $name ?>[' + index + '][<?= $key ?>]'" x-model="item.<?= $key ?>" rows="3"
-                                        class="w-full px-4 py-2.5 rounded-md border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 transition-all outline-none"></textarea>
-                                <?php else: ?>
-                                    <input type="text" :name="'<?= $name ?>[' + index + '][<?= $key ?>]'" x-model="item.<?= $key ?>"
-                                        class="w-full px-4 py-2.5 rounded-md border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 transition-all outline-none">
-                                <?php endif; ?>
+            <div class="space-y-4">
+                <template x-for="(item, index) in items" :key="index">
+                    <div class="bg-slate-50 dark:bg-slate-900/30 border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden transition-all duration-200 shadow-sm">
+                        
+                        <!-- HEADER: Кликаемата зона за сгъване/разгъване -->
+                        <div @click="toggleItem(index)" 
+                            class="px-5 py-3.5 bg-slate-100/50 dark:bg-slate-800/50 border-b border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between cursor-pointer select-none hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                            
+                            <div class="flex items-center gap-3">
+                                <i class="fas fa-chevron-right text-slate-400 dark:text-slate-500 text-xs transition-transform duration-200"
+                                :class="item._open ? 'rotate-90' : ''"></i>
+                                
+                                <span class="font-medium text-sm text-slate-700 dark:text-slate-300"
+                                    x-text="(item.label || item.name || '').trim() || ('Елемент #' + (index + 1))">
+                                </span>
                             </div>
-                        <?php endforeach; ?>
-                    </div>
 
-                    <button type="button" @click="removeItem(index)"
-                        class="absolute -right-2 -top-2 bg-rose-500 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-lg hover:bg-rose-600">
-                        <i class="fas fa-times text-xs"></i>
-                    </button>
-                </div>
-            </template>
+                            <button type="button" @click.stop="removeItem(index)"
+                                    class="text-rose-500 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300 p-1 rounded-md hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors">
+                                <i class="fas fa-trash-alt text-sm"></i>
+                            </button>
+                        </div>
+
+                        <div x-show="item._open" x-collapse>
+                            <div class="p-5 grid gap-4">
+                                <?php foreach ($fields as $key => $field): ?>
+                                    <?php 
+                                        $fieldType = $field['type'] ?? 'text'; 
+                                        $fieldLabel = $field['label'] ?? '';
+                                        $fieldOptions = $field['options'] ?? [];
+                                    ?>
+                                    <div class="space-y-1.5">
+                                        <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                            <?= $fieldLabel ?>
+                                        </label>
+
+                                        <?php 
+                                        switch ($fieldType) {
+                                            case 'textarea':
+                                                $field[':name'] = "'" . $name . "[' + index + '][" . $key . "]'";
+                                                $field['x-model'] = "item." . $key;
+
+                                                self::textarea($key, '', $field);
+                                                break;
+
+                                            case 'select':
+                                                $field[':name'] = "'" . $name . "[' + index + '][" . $key . "]'";
+                                                $field['x-model'] = "item." . $key;
+
+                                                self::customSelect($key, '', $fieldOptions, '', $field);
+                                                break;
+
+                                            case 'toggle':
+                                                $toggleAttrs = [
+                                                    'x-bind:name'    => "'{$name}[' + index + '][{$key}]'",
+                                                    'x-bind:checked' => "item.{$key} == 1",
+                                                    '@change'        => "item.{$key} = \$event.target.checked ? 1 : 0"
+                                                ];
+
+                                                self::toggle($key, '', [
+                                                    'attr'    => $toggleAttrs,
+                                                    'id_base' => 'toggle-' . $key,
+                                                    'js_id'   => 'item._id'
+                                                ]);
+                                                break;
+
+                                            default:
+                                                $field[':name'] = "'" . $name . "[' + index + '][" . $key . "]'";
+                                                $field['x-model'] = "item." . $key;
+                                                $field['type'] = $fieldType;
+
+                                                self::input($key, '', $field);
+                                                break;
+                                        }
+                                        ?>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+
+                    </div>
+                </template>
+            </div>
 
             <button type="button" @click="addItem()"
-                class="inline-flex items-center gap-2 text-sm font-semibold text-indigo-600 hover:text-indigo-800">
+                class="inline-flex items-center gap-2 text-sm font-semibold text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors">
                 <i class="fas fa-plus"></i> Добави нов елемент
             </button>
         </div>
