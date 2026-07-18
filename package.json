@@ -10,7 +10,8 @@
         "rollback": "php vendor/bin/phinx rollback",
         "migrate:create": "php vendor/bin/phinx create",
         "migrate:status": "php vendor/bin/phinx status",
-        "seed": "php vendor/bin/phinx seed:run -s DatabaseSeeder"
+        "seed": "php vendor/bin/phinx seed:run -s DatabaseSeeder",
+        "dev:all": "concurrently \"php -S localhost:8000\" \"npm run dev\" \"cd themes/Basic && npm run dev\""
     },
     "dependencies": {
         "@alpinejs/collapse": "^3.15.12",
@@ -28,6 +29,7 @@
     },
     "devDependencies": {
         "@tailwindcss/vite": "^4.3.0",
+        "concurrently": "^10.0.3",
         "vite": "^6.0.0"
     }
 }
