@@ -1,36 +1,40 @@
+import axios from "axios";
 import Sortable from "sortablejs";
 
 export default (url) => ({
+    sortable: null,
+
     init() {
-        new Sortable(this.$el, {
+        this.sortable = new Sortable(this.$el, {
             animation: 150,
-
             handle: ".drag-handle",
+            draggable: ".menu-sortable-item",
+            group: "menu-tree",
 
-            onEnd: () => {
-                this.save(url);
+            onEnd: async (event) => {
+                const item = event.item;
+
+                const id = item.dataset.id;
+
+                const parent = item
+                    .closest(".menu-tree")
+                    ?.closest(".menu-item");
+                const parentId = parent ? parent.dataset.id : null;
+
+                const order = [...event.to.children].indexOf(item);
+
+                await axios.post(url, {
+                    id,
+                    parent_id: parentId,
+                    order,
+                });
             },
         });
     },
 
-    save(url) {
-        const items = [...this.$el.querySelectorAll("tr[data-id]")].map(
-            (row, index) => ({
-                id: row.dataset.id,
-                position: index,
-            }),
-        );
-
-        fetch(url, {
-            method: "POST",
-
-            headers: {
-                "Content-Type": "application/json",
-            },
-
-            body: JSON.stringify({
-                items,
-            }),
-        });
+    destroy() {
+        if (this.sortable) {
+            this.sortable.destroy();
+        }
     },
 });

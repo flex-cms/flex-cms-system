@@ -349,19 +349,14 @@ class Form
     public static function toggle(string $name, string $label, array $options = []): void
     {
         $toggleId = 'toggle-' . bin2hex(random_bytes(4)); 
-        
         $value = $options['value'] ?? false;
         $description = $options['description'] ?? null;
-        $checked = $value ? 'checked' : '';
-        $isInputArray = str_ends_with($name, ']');
-
         $attributes = '';
         $hasAlpineBinding = false;
 
         if (isset($options['attr']) && is_array($options['attr'])) {
             foreach ($options['attr'] as $attr => $val) {
                 if (in_array($attr, ['options', 'fields'], true)) continue;
-                
                 if (str_starts_with($attr, ':') || str_starts_with($attr, '@') || $attr === 'x-model' || str_starts_with($attr, 'x-bind')) {
                     $hasAlpineBinding = true;
                 }
@@ -372,23 +367,22 @@ class Form
         ?>
         <div class="flex items-center gap-4" x-id="['<?= $toggleId ?>']">
             <label :for="$id('<?= $toggleId ?>')" class="relative inline-flex items-center cursor-pointer shrink-0 mt-0.5">
-                <?php if (!$isInputArray && !$hasAlpineBinding): ?>
-                    <input type="hidden" name="<?= $name ?>" value="0">
-                <?php endif; ?>
-
+                <!-- Тук добавяме x-bind за да бъде реактивно -->
+                <input type="hidden" name="<?= $name ?>" :value="<?= $options['attr']['x-model'] ?? '0' ?> ? 1 : 0">
+                
                 <input type="checkbox" 
                     :id="$id('<?= $toggleId ?>')" 
+                    name="<?= $name ?>" 
                     value="1" 
                     class="sr-only peer" 
-                    <?= $checked ?>
+                    :checked="<?= $options['attr']['x-model'] ?? 'false' ?>" 
                     <?= $attributes ?>>
 
                 <div class="w-11 h-6 bg-slate-200 dark:bg-slate-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-indigo-600 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all shadow-inner">
                 </div>
             </label>
-
-            <div class="flex flex-col select-none cursor-pointer" 
-                @click="document.getElementById($id('<?= $toggleId ?>')).click()">
+            
+            <div class="flex flex-col select-none cursor-pointer" @click="document.getElementById($id('<?= $toggleId ?>')).click()">
                 <span class="font-semibold text-slate-800 dark:text-slate-200 leading-tight"><?= $label ?></span>
                 <?php if ($description): ?>
                     <span class="text-sm text-slate-500 dark:text-slate-400 mt-1"><?= $description ?></span>
@@ -704,104 +698,206 @@ class Form
 
     public static function repeater(string $name, string $label, array $options = []): void
     {
-        $items = $options['value'] ?? [[]];
+        $items = $options['value'] ?? [];
         $fields = $options['fields'] ?? [];
+        $loadUrl = $options['loadUrl'] ?? null;
+        $saveUrl = $options['saveUrl'] ?? null;
+
         $jsData = htmlspecialchars(json_encode($items), ENT_QUOTES, 'UTF-8');
-
+        $jsLoadUrl = $loadUrl ? "'" . $loadUrl . "'" : 'null';
+        $jsSaveUrl = $saveUrl ? "'" . $saveUrl . "'" : 'null';
         ?>
-        <div x-data="repeater(<?= $jsData ?>)" class="space-y-6">
-            <label class="block font-semibold text-slate-700 dark:text-slate-300"><?= $label ?></label>
+        <div x-data="repeater(<?= $jsData ?>, 'title', <?= $jsLoadUrl ?>, <?= $jsSaveUrl ?>)" x-cloak>
 
-            <div class="space-y-4">
-                <template x-for="(item, index) in items" :key="index">
-                    <div class="bg-slate-50 dark:bg-slate-900/30 border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden transition-all duration-200 shadow-sm">
-                        
-                        <!-- HEADER: Кликаемата зона за сгъване/разгъване -->
-                        <div @click="toggleItem(index)" 
-                            class="px-5 py-3.5 bg-slate-100/50 dark:bg-slate-800/50 border-b border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between cursor-pointer select-none hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-                            
-                            <div class="flex items-center gap-3">
-                                <i class="fas fa-chevron-right text-slate-400 dark:text-slate-500 text-xs transition-transform duration-200"
-                                :class="item._open ? 'rotate-90' : ''"></i>
-                                
-                                <span class="font-medium text-sm text-slate-700 dark:text-slate-300"
-                                    x-text="(item.label || item.name || '').trim() || ('Елемент #' + (index + 1))">
-                                </span>
+            <div x-show="isLoading" class="text-sm text-slate-500">
+                Зареждане...
+            </div>
+
+            <div x-show="!isLoading">
+                <div class="menu-tree space-y-3">
+                    <template x-for="(item, index) in items" :key="item.id ?? item._id ?? index">
+                        <?php self::renderRepeaterItem('item', 'index', $fields, $name, 0); ?>
+                    </template>
+                </div>
+            </div>
+
+            <button
+                type="button"
+                @click="addItem()"
+                class="inline-flex items-center gap-2 text-sm font-semibold text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors"
+            >
+                <i class="fas fa-plus"></i>
+                Добави нов елемент
+            </button>
+
+        </div>
+        <?php
+    }
+
+    private static function renderRepeaterItem(
+        string $item,
+        string $indexVar,
+        array $fields,
+        string $baseName,
+        int $level = 0
+    ): void {
+        $childItemVar = 'item' . ($level + 1);
+        $childIndexVar = 'index' . ($level + 1);
+        ?>
+        <div
+            class="menu-sortable-item"
+            :data-id="String(<?= $item ?>.id ?? <?= $item ?>._id ?? '')"
+        >
+
+            <input
+                type="hidden"
+                :name="'<?= $baseName ?>[' + <?= $indexVar ?> + '][id]'"
+                x-model="<?= $item ?>.id"
+            >
+
+            <div class="menu-item flex flex-col">
+
+                <div class="bg-slate-50 dark:bg-slate-900/30 border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden shadow-sm">
+
+                    <div class="px-5 py-3.5 bg-slate-100/50 flex items-center justify-between">
+
+                        <div class="flex items-center gap-3 flex-1">
+
+                            <i class="fas fa-grip-vertical drag-handle cursor-move text-slate-400"></i>
+
+                            <div
+                                @click="<?= $item ?>._open = !<?= $item ?>._open"
+                                class="flex-1 cursor-pointer"
+                            >
+                                <span
+                                    class="font-medium text-sm"
+                                    x-text="(<?= $item ?>.label || '').trim() || ('Елемент #' + (<?= $indexVar ?> + 1))"
+                                ></span>
                             </div>
 
-                            <button type="button" @click.stop="removeItem(index)"
-                                    class="text-rose-500 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300 p-1 rounded-md hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors">
-                                <i class="fas fa-trash-alt text-sm"></i>
-                            </button>
                         </div>
 
-                        <div x-show="item._open" x-collapse>
-                            <div class="p-5 grid gap-4">
-                                <?php foreach ($fields as $key => $field): ?>
-                                    <?php 
-                                        $fieldType = $field['type'] ?? 'text'; 
-                                        $fieldLabel = $field['label'] ?? '';
-                                        $fieldOptions = $field['options'] ?? [];
-                                    ?>
+                        <button
+                            type="button"
+                            @click.stop="removeItem(<?= $item ?>)"
+                            class="text-rose-500"
+                        >
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+
+                    </div>
+
+
+                    <div
+                        x-show="<?= $item ?>._open"
+                        x-collapse
+                    >
+
+                        <div class="p-5 grid gap-4">
+
+                            <?php foreach ($fields as $key => $field): ?>
+
+                                <?php if (($field['type'] ?? '') !== 'repeater'): ?>
+
                                     <div class="space-y-1.5">
-                                        <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                                            <?= $fieldLabel ?>
+
+                                        <label class="text-xs font-semibold uppercase">
+                                            <?= $field['label'] ?? '' ?>
                                         </label>
 
-                                        <?php 
-                                        switch ($fieldType) {
-                                            case 'textarea':
-                                                $field[':name'] = "'" . $name . "[' + index + '][" . $key . "]'";
-                                                $field['x-model'] = "item." . $key;
+                                        <?php
 
-                                                self::textarea($key, '', $field);
-                                                break;
+                                        $field[':name'] =
+                                            "'{$baseName}[' + {$indexVar} + '][{$key}]'";
 
-                                            case 'select':
-                                                $field[':name'] = "'" . $name . "[' + index + '][" . $key . "]'";
-                                                $field['x-model'] = "item." . $key;
+                                        $field['x-model'] =
+                                            "{$item}.{$key}";
 
-                                                self::customSelect($key, '', $fieldOptions, '', $field);
-                                                break;
+                                        self::renderField(
+                                            $key,
+                                            $field
+                                        );
 
-                                            case 'toggle':
-                                                $toggleAttrs = [
-                                                    'x-bind:name'    => "'{$name}[' + index + '][{$key}]'",
-                                                    'x-bind:checked' => "item.{$key} == 1",
-                                                    '@change'        => "item.{$key} = \$event.target.checked ? 1 : 0"
-                                                ];
-
-                                                self::toggle($key, '', [
-                                                    'attr'    => $toggleAttrs,
-                                                    'id_base' => 'toggle-' . $key,
-                                                    'js_id'   => 'item._id'
-                                                ]);
-                                                break;
-
-                                            default:
-                                                $field[':name'] = "'" . $name . "[' + index + '][" . $key . "]'";
-                                                $field['x-model'] = "item." . $key;
-                                                $field['type'] = $fieldType;
-
-                                                self::input($key, '', $field);
-                                                break;
-                                        }
                                         ?>
+
                                     </div>
-                                <?php endforeach; ?>
-                            </div>
+
+                                <?php endif; ?>
+
+                            <?php endforeach; ?>
+
                         </div>
 
                     </div>
-                </template>
+
+                </div>
+
+
+                <?php foreach ($fields as $key => $field): ?>
+
+                    <?php if (($field['type'] ?? '') === 'repeater'): ?>
+
+                        <div class="menu-tree pl-5 space-y-3 mt-2">
+
+                            <template
+                                x-for="(<?= $childItemVar ?>, <?= $childIndexVar ?>) in (<?= $item ?>.<?= $key ?> || [])"
+                                :key="<?= $childItemVar ?>.id ?? <?= $childItemVar ?>._id ?? <?= $childIndexVar ?>"
+                            >
+
+                                <?php
+
+                                self::renderRepeaterItem(
+                                    $childItemVar,
+                                    $childIndexVar,
+                                    $field['fields'] ?? [],
+                                    "{$baseName}[' + {$indexVar} + '][{$key}]",
+                                    $level + 1
+                                );
+
+                                ?>
+
+                            </template>
+
+                        </div>
+
+                    <?php endif; ?>
+
+                <?php endforeach; ?>
+
             </div>
 
-            <button type="button" @click="addItem()"
-                class="inline-flex items-center gap-2 text-sm font-semibold text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors">
-                <i class="fas fa-plus"></i> Добави нов елемент
-            </button>
         </div>
         <?php
+    }
+
+    private static function renderField(string $key, array $field): void
+    {
+        $name = $field['name'] ?? $key;
+
+        switch ($field['type'] ?? 'text') {
+
+            case 'textarea':
+                self::textarea($name, '', $field);
+                break;
+
+            case 'select':
+                self::customSelect(
+                    $name,
+                    '',
+                    $field['options'] ?? [],
+                    '',
+                    $field
+                );
+                break;
+
+            case 'toggle':
+                self::toggle($name, '', $field);
+                break;
+
+            default:
+                self::input($name, '', $field);
+                break;
+        }
     }
 
     public static function tabs(array $items, string $activeKey): void

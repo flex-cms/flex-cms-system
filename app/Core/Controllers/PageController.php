@@ -166,40 +166,12 @@ class PageController extends BaseController
     #[UseExceptions]
     public function updatePosition()
     {
-        $this->updatePositionMethod(Page::class);
+        $this->updatePositionMethod(
+            Page::class,
+            'position'
+        );
+
         return $this->jsonResponse(true, 'Позицията беше променена успешно.');
-    }
-
-    #[UseExceptions]
-    public function reorder()
-    {
-        $data = $this->getJsonInput();
-
-        if (!isset($data['items']) || !is_array($data['items'])) {
-            return $this->jsonResponse(false, 'Невалидни данни.');
-        }
-
-        foreach ($data['items'] as $item) {
-
-            if (
-                !isset($item['id'], $item['position']) ||
-                !is_numeric($item['id']) ||
-                !is_numeric($item['position'])
-            ) {
-                continue;
-            }
-
-            $page = Page::find($item['id']);
-
-            if (!$page) {
-                continue;
-            }
-
-            $page->position = (int) $item['position'];
-            $page->save();
-        }
-
-        return $this->jsonResponse(true, 'Редът беше запазен успешно.');
     }
 
     #[UseExceptions]

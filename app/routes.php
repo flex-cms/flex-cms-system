@@ -45,14 +45,17 @@ $router->post('/admin/users/force-delete', [UserController::class, 'forceDelete'
 $router->post('/admin/users/toggle', [UserController::class, 'toggle'], [AuthMiddleware::class, AdminMiddleware::class]);
 $router->post('/admin/users/update-position', [UserController::class, 'updatePosition'], [AuthMiddleware::class, AdminMiddleware::class]);
 
+// Menus
 $router->get('/admin/menus', [MenuController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]);
 $router->get('/admin/menus/create', [MenuController::class, 'create'], [AuthMiddleware::class, AdminMiddleware::class]);
-$router->post('/admin/menus/store', [MenuController::class, 'store'], [AuthMiddleware::class, AdminMiddleware::class]);
+$router->get('/admin/menus/items/{id}', [MenuController::class, 'getItems'], [AuthMiddleware::class, AdminMiddleware::class]);
 $router->get('/admin/menus/edit/{id}', [MenuController::class, 'edit'], [AuthMiddleware::class, AdminMiddleware::class]);
+$router->post('/admin/menus/store', [MenuController::class, 'store'], [AuthMiddleware::class, AdminMiddleware::class]);
 $router->post('/admin/menus/update/{id}', [MenuController::class, 'update'], [AuthMiddleware::class, AdminMiddleware::class]);
 $router->post('/admin/menus/delete/{id}', [MenuController::class, 'delete'], [AuthMiddleware::class, AdminMiddleware::class]);
 $router->post('/admin/menus/force-delete', [MenuController::class, 'forceDelete'], [AuthMiddleware::class, AdminMiddleware::class]);
 $router->post('/admin/menus/toggle', [MenuController::class, 'toggle'], [AuthMiddleware::class, AdminMiddleware::class]);
+$router->post('/admin/menus/items/{id}/tree-update', [MenuController::class, 'updateTreePosition'], [AuthMiddleware::class, AdminMiddleware::class]);
 
 // Roles
 $router->get('/admin/users/roles', [RoleController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]);

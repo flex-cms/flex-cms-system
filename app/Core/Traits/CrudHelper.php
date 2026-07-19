@@ -133,21 +133,130 @@ trait CrudHelper
         $jsonInput = file_get_contents('php://input');
         return json_decode($jsonInput, true);
     }
-    
-    protected function updatePositionMethod($modelClass): void
-    {
+
+    protected function updatePositionMethod(
+        string $modelClass,
+        string $sort_order = 'order',
+        ?string $groupColumn = null
+    ): void {
         $data = $this->getJsonInput();
 
         $id = $data['id'] ?? null;
-        $position = $data['position'] ?? null;
+        $order = $data['order'] ?? null;
 
-        if (!is_numeric($id) || !is_numeric($position)) {
-            throw new InvalidArgumentException('Невалидни данни за позиция.');
+        if (!is_numeric($id) || !is_numeric($order)) {
+            throw new InvalidArgumentException(
+                'Невалидни данни за позиция.'
+            );
         }
 
-        $page = $modelClass::findOrFail($id);
+        $model = $modelClass::findOrFail((int) $id);
 
-        $page->position = (int) $position;
-        $page->save();
+        $model->{$sort_order} = (int) $order;
+        $model->save();
+
+        if (!$groupColumn) {
+            return;
+        }
+
+        $query = $modelClass::where(
+            $groupColumn,
+            $model->{$groupColumn}
+        );
+
+        $items = $query
+            ->orderBy($sort_order)
+            ->get();
+
+        foreach ($items as $index => $item) {
+            if ($item->id === $model->id) {
+                continue;
+            }
+
+            $item->{$sort_order} = $index;
+            $item->save();
+        }
+    }
+
+    protected function updateTreeAndOrder(
+        string $modelClass,
+        string $parentColumn = 'parent_id',
+        string $sort_order = 'order',
+        ?string $groupColumn = null
+    ): void {
+        $data = $this->getJsonInput();
+
+        if (!isset($data['id'])) {
+            throw new InvalidArgumentException('Липсва ID.');
+        }
+
+        $model = $modelClass::findOrFail((int) $data['id']);
+        $oldParentId = $model->{$parentColumn};
+        $newParentId = $data['parent_id'] ?? null;
+
+        if ($newParentId === "0" || $newParentId === 0) {
+            $newParentId = null;
+        }
+
+        $newOrder = (int) ($data['order'] ?? 0);
+        $model->{$parentColumn} = $newParentId;
+
+        $model->save();
+
+        $query = $modelClass::where(
+            $parentColumn,
+            $newParentId
+        );
+
+        if ($groupColumn) {
+            $query->where(
+                $groupColumn,
+                $model->{$groupColumn}
+            );
+        }
+
+        $siblings = $query
+            ->orderBy($sort_order)
+            ->get();
+
+        $siblings = $siblings
+            ->reject(fn($item) => $item->id === $model->id)
+            ->values();
+
+        $siblings->splice(
+            $newOrder,
+            0,
+            [$model]
+        );
+
+        foreach ($siblings as $index => $item) {
+            $item->{$sort_order} = $index;
+            $item->save();
+        }
+
+        if ($oldParentId != $newParentId) {
+
+            $oldQuery = $modelClass::where(
+                $parentColumn,
+                $oldParentId
+            );
+
+            if ($groupColumn) {
+                $oldQuery->where(
+                    $groupColumn,
+                    $model->{$groupColumn}
+                );
+            }
+
+            foreach (
+                $oldQuery
+                    ->orderBy($sort_order)
+                    ->get()
+                as $index => $item
+            ) {
+                $item->{$sort_order} = $index;
+                $item->save();
+            }
+        }
     }
 }

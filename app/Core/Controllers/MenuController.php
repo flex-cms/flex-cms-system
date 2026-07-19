@@ -13,6 +13,7 @@ use Flex\Core\Traits\HandlesTableFilters;
 use Flex\Models\Menu;
 use Flex\Core\Routing\View;
 use Flex\Core\Controllers\BaseController;
+use Flex\Models\MenuItem;
 
 class MenuController extends BaseController
 {
@@ -88,11 +89,12 @@ class MenuController extends BaseController
 
         $menuItems = collect($menu->items)->map(function ($item) {
             return [
-                'label' => is_array($item) ? $item['title'] : $item->title,
-                'url' => is_array($item) ? $item['url'] : $item->url,
-                'target' => is_array($item) ? $item['target'] : $item->target,
-                'description' => is_array($item) ? ($item['description'] ?? '') : ($item->description ?? ''),
-                'is_active'   => is_array($item) ? (isset($item['is_active']) ? (int)$item['is_active'] : 1) : (int)($item->is_active ?? 1),
+                'id' => $item->id,
+                'label' => $item->title,
+                'url' => $item->url,
+                'target' => $item->target,
+                'description' => $item->description ?? '',
+                'is_active' => (int) $item->is_active,
             ];
         })->toArray();
 
@@ -100,7 +102,10 @@ class MenuController extends BaseController
             'title' => $this->editTitle,
             'menu' => $menu,
             'menuItems' => $menuItems,
-            'primaryButton' => $this->createButton('/admin/menus/create', $this->createTitle)
+            'primaryButton' => $this->createButton(
+                '/admin/menus/create',
+                $this->createTitle
+            )
         ];
 
         render_view('admin/menus/form', $data);
@@ -129,20 +134,81 @@ class MenuController extends BaseController
     {
         $menu = Menu::findOrFail($id);
         $post = $_POST;
+
         $data = $this->prepareData($post, $menu);
 
-        $menu->update($data);
+        $menu->update([
+            'name' => $data['name'] ?? $menu->name,
+            'slug' => $data['slug'] ?? $menu->slug,
+            'is_active' => $data['is_active'] ?? $menu->is_active,
+            'options' => $data['options'] ?? $menu->options,
+        ]);
 
-        $menu->items()->delete();
-
-        if (!empty($data['prepared_menu_items'])) {
-            foreach ($data['prepared_menu_items'] as $itemData) {
-                $menu->items()->create($itemData);
-            }
+        if (isset($post['menu_items'])) {
+            $this->syncMenuItems($menu, $post['menu_items']);
         }
 
         Flash::success($this->messages['update_success']);
         View::redirect('/admin/menus/edit/' . $menu->id);
+    }
+
+    protected function syncMenuItems(Menu $menu, array $items, ?int $parentId = null): void
+    {
+        $existingIds = [];
+
+
+        foreach ($items as $index => $itemData) {
+
+            $id = $itemData['id'] ?? null;
+
+
+            $attributes = [
+                'title' => $itemData['label'] ?? $itemData['title'] ?? '',
+                'url' => $itemData['url'] ?? '',
+                'target' => $itemData['target'] ?? '_self',
+                'description' => $itemData['description'] ?? null,
+                'parent_id' => $parentId,
+                'order' => $index,
+                'menu_id' => $menu->id,
+            ];
+
+
+            if ($id) {
+
+                $item = MenuItem::where('menu_id', $menu->id)
+                    ->find($id);
+
+                if ($item) {
+                    $item->update($attributes);
+                } else {
+                    $item = $menu->items()->create($attributes);
+                }
+
+            } else {
+
+                $item = $menu->items()->create($attributes);
+
+            }
+
+
+            $existingIds[] = $item->id;
+
+
+            if (!empty($itemData['children'])) {
+
+                $this->syncMenuItems(
+                    $menu,
+                    $itemData['children'],
+                    $item->id
+                );
+
+            }
+        }
+
+        MenuItem::where('menu_id', $menu->id)
+            ->where('parent_id', $parentId)
+            ->whereNotIn('id', $existingIds)
+            ->delete();
     }
 
     #[UseExceptions]
@@ -180,6 +246,55 @@ class MenuController extends BaseController
     }
 
     #[UseExceptions]
+    public function getItems($menuId)
+    {
+        $items = MenuItem::where('menu_id', $menuId)
+            ->whereNull('parent_id')
+            ->with('allChildren')
+            ->orderBy('sort_order')
+            ->get();
+
+        $data = $items->map(function ($item) {
+            return $this->formatItem($item);
+        })->toArray();
+
+        return $this->jsonResponse(true, 'Данните са заредени успешно', $data);
+    }
+
+    private function formatItem($item)
+    {
+        return [
+            'id' => $item->id,
+            'label' => $item->title,
+            'name' => $item->title,
+            'url' => $item->url,
+            'target' => $item->target,
+            'description' => $item->description,
+            'is_active' => (int) $item->is_active,
+            'parent_id' => $item->parent_id,
+            '_open' => false,
+            'children' => $item->allChildren ? $item->allChildren->map(function ($child) {
+                return $this->formatItem($child);
+            })->toArray() : []
+        ];
+    }
+
+    #[UseExceptions]
+    public function updateTreePosition($id)
+    {
+        $this->updateTreeAndOrder(
+            MenuItem::class,
+            'parent_id',
+            'sort_order',
+            'menu_id'
+        );
+
+        return $this->jsonResponse(
+            true,
+            'Менюто беше обновено успешно.'
+        );
+    }
+
     #[UseExceptions]
     private function prepareData(array $post, $model = null): array
     {
@@ -206,26 +321,35 @@ class MenuController extends BaseController
         $data['options'] = $this->mergeOptions($post, $currentOptions);
         $data['options'] = $this->handleFileUploads($data['options'], 'menus');
 
-        $preparedItems = [];
-        if (!empty($post['menu_items']) && is_array($post['menu_items'])) {
-            foreach ($post['menu_items'] as $index => $item) {
+        $processItems = function ($items, $parentId = null) use (&$processItems) {
+            $result = [];
+            foreach ($items as $index => $item) {
                 if (empty($item['label']) && empty($item['url'])) {
                     continue;
                 }
 
-                $preparedItems[] = [
+                $prepared = [
                     'title' => $item['label'] ?? '',
                     'url' => $item['url'] ?? '',
                     'target' => $item['target'] ?? '_self',
                     'order' => $index,
-                    'parent_id' => null,
+                    'parent_id' => $parentId,
                     'description' => $item['description'] ?? '',
-                    'is_active'   => $item['is_active'] ?: 0,
+                    'is_active' => (int) ($item['is_active'] ?? 0),
                 ];
-            }
-        }
 
-        $data['prepared_menu_items'] = $preparedItems;
+                if (!empty($item['children'])) {
+                    $prepared['children'] = $processItems($item['children'], null);
+                }
+
+                $result[] = $prepared;
+            }
+            return $result;
+        };
+
+        $data['prepared_menu_items'] = !empty($post['menu_items'])
+            ? $processItems($post['menu_items'])
+            : [];
 
         return $data;
     }

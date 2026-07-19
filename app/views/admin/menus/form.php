@@ -45,7 +45,7 @@ Page::header(
 
 }); ?>
 
-<?php Form::section(title: 'Елементи на менюто', slot: function () use ($menuItems) { ?>
+<?php Form::section(title: 'Елементи на менюто', slot: function () use ($menu, $menuItems) { ?>
 
     <div class="mb-4">
         <span class="block font-semibold text-slate-700 dark:text-slate-300 mb-2">Структура на линковете</span>
@@ -56,7 +56,7 @@ Page::header(
     </div>
 
     <?php
-    $repeaterFields = [
+    $baseFields = [
         'label' => [
             'label' => 'Текст на линка',
             'type' => 'text'
@@ -84,12 +84,33 @@ Page::header(
         ]
     ];
 
+    function buildMenuFields(array $baseFields, int $level = 0): array
+    {
+        $fields = $baseFields;
+
+        if ($level >= 20) {
+            return $fields;
+        }
+
+        $fields['children'] = [
+            'label' => 'Подменю',
+            'type' => 'repeater',
+            'fields' => buildMenuFields($baseFields, $level + 1)
+        ];
+
+        return $fields;
+    }
+
+    $menuFields = buildMenuFields($baseFields);
+
     $items = $menuItems ?? [[]];
 
     Form::repeater('menu_items', 'Елементи', [
         'value' => $items,
-        'fields' => $repeaterFields,
-        'title_field' => 'label'
+        'fields' => $menuFields,
+        'title_field' => 'label',
+        'loadUrl' => '/admin/menus/items/' . $menu->id,
+        'saveUrl' => '/admin/menus/items/' . $menu->id . '/tree-update'
     ]);
     ?>
 
