@@ -44,7 +44,8 @@ class PageController extends BaseController
             'toggle_inactive' => 'Страницата беше деактивирана успешно!',
             'error_generic' => 'Възникна неочаквана грешка.',
             'create_success' => 'Страницата беше създадена успешно!',
-            'update_success' => 'Страницата беше обновена успешно!'
+            'update_success' => 'Страницата беше обновена успешно!',
+            'dublicated_slug' => 'Slug вече съществува. Моля, изберете друг.'
         ];
     }
 
@@ -83,7 +84,7 @@ class PageController extends BaseController
     }
 
     #[UseExceptions]
-    public function edit($id)
+    public function edit(int $id)
     {
         $page = Page::findOrFail($id);
 
@@ -110,7 +111,7 @@ class PageController extends BaseController
     }
 
     #[UseExceptions]
-    public function update($id)
+    public function update(int $id)
     {
         $page = Page::findOrFail($id);
 
@@ -177,12 +178,6 @@ class PageController extends BaseController
     #[UseExceptions]
     private function prepareData(array $post, $model = null): array
     {
-        $slugExists = Page::where('slug', $post['slug'] ?? '')->where('id', '!=', $model->id ?? 0)->exists();
-
-        if ($slugExists) {
-            throw new Exception('Slug вече съществува. Моля, изберете друг.');
-        }
-
         $data = $this->buildUpdateData($post, $model, [
             'name',
             'slug',
@@ -192,25 +187,58 @@ class PageController extends BaseController
             'created_at' => 'default_date'
         ]);
 
-        if (empty($data['slug'])) {
-            $data['slug'] = SlugHelper::generate($data['name']);
-        }
+        $data['slug'] = $this->resolveSlug($data);
+        $this->ensureSlugIsUnique($data['slug'], $model);
 
-        if (isset($data['parent_id']) && $data['parent_id'] === '') {
-            $data['parent_id'] = null;
-        }
+        $parentId = $this->resolveParentId($data, $model);
+        $data['parent_id'] = $parentId;
+        $data['full_slug'] = $this->calculateFullSlug($data['slug'], $parentId);
 
-        if ($model && isset($data['parent_id']) && $data['parent_id'] == $model->id) {
-            $data['parent_id'] = null;
-        }
-
-        $data['full_slug'] = $this->calculateFullSlug($data['slug'], $data['parent_id'] ?? null);
-
-        $currentOptions = $model ? $model->options->getArrayCopy() : [];
-        $data['options'] = $this->mergeOptions($post, $currentOptions);
-        $data['options'] = $this->handleFileUploads($data['options'], 'pages');
+        $data['options'] = $this->resolveOptions($post, $model);
 
         return $data;
+    }
+
+    private function resolveSlug(array $data): string
+    {
+        if (!empty($data['slug'])) {
+            return $data['slug'];
+        }
+
+        return SlugHelper::generate($data['name']);
+    }
+
+    #[UseExceptions]
+    private function ensureSlugIsUnique(string $slug, $model = null): void
+    {
+        $slugExists = Page::where('slug', $slug)
+            ->where('id', '!=', $model->id ?? 0)
+            ->exists();
+
+        if ($slugExists) {
+            throw new Exception($this->messages['dublicated_slug']);
+        }
+    }
+
+    private function resolveParentId(array $data, $model = null): ?int
+    {
+        if (empty($data['parent_id'])) {
+            return null;
+        }
+
+        if ($model && $data['parent_id'] == $model->id) {
+            return null;
+        }
+
+        return (int) $data['parent_id'];
+    }
+
+    private function resolveOptions(array $post, $model = null): array
+    {
+        $currentOptions = $model ? $model->options->getArrayCopy() : [];
+        $options = $this->mergeOptions($post, $currentOptions);
+
+        return $this->handleFileUploads($options, 'pages');
     }
 
     private function calculateFullSlug($slug, $parentId)

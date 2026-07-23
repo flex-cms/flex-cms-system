@@ -17,8 +17,6 @@ Page::header(
 
 <?php Form::create(['action' => $action, 'method' => 'POST', 'files' => true]) ?>
 
-    <?php Form::heading('Основна информация'); ?>
-
     <?php Form::section(title: 'Основни данни', slot: function () use ($page) { ?>
 
         <?php Form::row(function () use ($page) {

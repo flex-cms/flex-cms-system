@@ -31,13 +31,12 @@ Page::header(
         );
 
         Form::input(
-            'code',
+            'slug',
             'Уникален код (ID)',
             [
-                'value' => $menu->code ?? '',
+                'value' => $menu->slug ?? '',
                 'placeholder' => 'main-menu',
                 'hint' => 'Можете да зададете собствен ключ или да го оставите празно.',
-                'disabled' => isset($menu->id)
             ]
         );
 
@@ -128,10 +127,10 @@ Page::header(
         ];
 
         Form::customSelect(
-            'location',
+            'options[location]',
             'Позиция в сайта',
             $locations,
-            $menu->location ?? 'header'
+            $menu->options['location'] ?? 'header'
         );
 
     }, ['md' => 2]); ?>

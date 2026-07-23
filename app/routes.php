@@ -52,8 +52,9 @@ $router->get('/admin/menus/items/{id}', [MenuController::class, 'getItems'], [Au
 $router->get('/admin/menus/edit/{id}', [MenuController::class, 'edit'], [AuthMiddleware::class, AdminMiddleware::class]);
 $router->post('/admin/menus/store', [MenuController::class, 'store'], [AuthMiddleware::class, AdminMiddleware::class]);
 $router->post('/admin/menus/update/{id}', [MenuController::class, 'update'], [AuthMiddleware::class, AdminMiddleware::class]);
-$router->post('/admin/menus/delete/{id}', [MenuController::class, 'delete'], [AuthMiddleware::class, AdminMiddleware::class]);
+$router->post('/admin/menus/delete', [MenuController::class, 'delete'], [AuthMiddleware::class, AdminMiddleware::class]);
 $router->post('/admin/menus/force-delete', [MenuController::class, 'forceDelete'], [AuthMiddleware::class, AdminMiddleware::class]);
+$router->post('/admin/menus/restore', [MenuController::class, 'restore'], [AuthMiddleware::class, AdminMiddleware::class]);
 $router->post('/admin/menus/toggle', [MenuController::class, 'toggle'], [AuthMiddleware::class, AdminMiddleware::class]);
 $router->post('/admin/menus/items/{id}/tree-update', [MenuController::class, 'updateTreePosition'], [AuthMiddleware::class, AdminMiddleware::class]);
 

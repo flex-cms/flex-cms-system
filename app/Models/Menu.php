@@ -9,12 +9,18 @@ class Menu extends Model
 {
     use SoftDeletes;
 
-    protected $dates = ['deleted_at'];
-    protected $fillable = ['name', 'slug', 'is_active'];
+    protected $fillable = [
+        'name', 
+        'slug', 
+        'location', 
+        'options', 
+        'is_active',
+    ];
 
-    // Добавяме casts, за да работи като булева стойност
     protected $casts = [
         'is_active' => 'boolean',
+        'options' => 'array',
+        'deleted_at' => 'datetime',
     ];
 
     public function items()

@@ -2,7 +2,6 @@
 
 namespace Flex\Core\Controllers;
 
-use Exception;
 use Flex\Attributes\UseExceptions;
 use Flex\Core\Filters\Shared\StatusFilter;
 use Flex\Core\Helpers\Flash;
@@ -156,25 +155,21 @@ class MenuController extends BaseController
     {
         $existingIds = [];
 
-
         foreach ($items as $index => $itemData) {
 
             $id = $itemData['id'] ?? null;
-
 
             $attributes = [
                 'title' => $itemData['label'] ?? $itemData['title'] ?? '',
                 'url' => $itemData['url'] ?? '',
                 'target' => $itemData['target'] ?? '_self',
                 'description' => $itemData['description'] ?? null,
-                'parent_id' => $parentId,
                 'order' => $index,
                 'menu_id' => $menu->id,
+                'is_active' => (int) ($itemData['is_active'] ?? 0),
             ];
 
-
             if ($id) {
-
                 $item = MenuItem::where('menu_id', $menu->id)
                     ->find($id);
 
@@ -183,25 +178,18 @@ class MenuController extends BaseController
                 } else {
                     $item = $menu->items()->create($attributes);
                 }
-
             } else {
-
                 $item = $menu->items()->create($attributes);
-
             }
-
 
             $existingIds[] = $item->id;
 
-
             if (!empty($itemData['children'])) {
-
                 $this->syncMenuItems(
                     $menu,
                     $itemData['children'],
                     $item->id
                 );
-
             }
         }
 
@@ -280,7 +268,7 @@ class MenuController extends BaseController
     }
 
     #[UseExceptions]
-    public function updateTreePosition($id)
+    public function updateTreePosition()
     {
         $this->updateTreeAndOrder(
             MenuItem::class,
@@ -298,14 +286,15 @@ class MenuController extends BaseController
     #[UseExceptions]
     private function prepareData(array $post, $model = null): array
     {
-        $slugExists = Menu::where('slug', $post['slug'] ?? '')
-            ->where('id', '!=', $model->id ?? 0)
-            ->exists();
+        $data = $this->prepareBaseData($post, $model);
+        $data['options'] = $this->prepareMenuOptions($post, $model);
+        $data['prepared_menu_items'] = $this->prepareMenuItems($post);
 
-        if ($slugExists) {
-            throw new Exception('Slug вече съществува. Моля, изберете друг.');
-        }
+        return $data;
+    }
 
+    private function prepareBaseData(array $post, $model = null): array
+    {
         $data = $this->buildUpdateData($post, $model, [
             'name',
             'slug',
@@ -317,40 +306,81 @@ class MenuController extends BaseController
             $data['slug'] = SlugHelper::generate($data['name']);
         }
 
-        $currentOptions = $model?->options?->getArrayCopy() ?? [];
-        $data['options'] = $this->mergeOptions($post, $currentOptions);
-        $data['options'] = $this->handleFileUploads($data['options'], 'menus');
-
-        $processItems = function ($items, $parentId = null) use (&$processItems) {
-            $result = [];
-            foreach ($items as $index => $item) {
-                if (empty($item['label']) && empty($item['url'])) {
-                    continue;
-                }
-
-                $prepared = [
-                    'title' => $item['label'] ?? '',
-                    'url' => $item['url'] ?? '',
-                    'target' => $item['target'] ?? '_self',
-                    'order' => $index,
-                    'parent_id' => $parentId,
-                    'description' => $item['description'] ?? '',
-                    'is_active' => (int) ($item['is_active'] ?? 0),
-                ];
-
-                if (!empty($item['children'])) {
-                    $prepared['children'] = $processItems($item['children'], null);
-                }
-
-                $result[] = $prepared;
-            }
-            return $result;
-        };
-
-        $data['prepared_menu_items'] = !empty($post['menu_items'])
-            ? $processItems($post['menu_items'])
-            : [];
+        $data['slug'] = $this->generateUniqueSlug($data['slug'], $model->id ?? 0);
 
         return $data;
+    }
+
+    private function generateUniqueSlug(string $slug, int $excludeId = 0): string
+    {
+        $baseSlug = $slug;
+        $counter = 2;
+
+        while ($this->slugExists($slug, $excludeId)) {
+            $slug = $baseSlug . '-' . $counter;
+            $counter++;
+        }
+
+        return $slug;
+    }
+
+    private function slugExists(string $slug, int $excludeId = 0): bool
+    {
+        return Menu::where('slug', $slug)
+            ->where('id', '!=', $excludeId)
+            ->exists();
+    }
+
+    private function prepareMenuOptions(array $post, $model = null): array
+    {
+        $currentOptions = ($model && is_array($model->options)) ? $model->options : [];
+
+        $options = $this->mergeOptions($post, $currentOptions);
+        $options = $this->handleFileUploads($options, 'menus');
+
+        return $options;
+    }
+
+    private function prepareMenuItems(array $post): array
+    {
+        if (empty($post['menu_items'])) {
+            return [];
+        }
+
+        return $this->processMenuItemsTree($post['menu_items']);
+    }
+
+    private function processMenuItemsTree(array $items, ?int $parentId = null): array
+    {
+        $result = [];
+
+        foreach ($items as $index => $item) {
+            if (empty($item['label']) && empty($item['url'])) {
+                continue;
+            }
+
+            $result[] = $this->prepareMenuItemAttributes($item, $index, $parentId);
+        }
+
+        return $result;
+    }
+
+    private function prepareMenuItemAttributes(array $item, int $order, ?int $parentId): array
+    {
+        $prepared = [
+            'title' => $item['label'] ?? '',
+            'url' => $item['url'] ?? '',
+            'target' => $item['target'] ?? '_self',
+            'order' => $order,
+            'parent_id' => $parentId,
+            'description' => $item['description'] ?? '',
+            'is_active' => (int) ($item['is_active'] ?? 0),
+        ];
+
+        if (!empty($item['children'])) {
+            $prepared['children'] = $this->processMenuItemsTree($item['children'], null);
+        }
+
+        return $prepared;
     }
 }

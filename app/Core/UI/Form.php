@@ -348,40 +348,43 @@ class Form
 
     public static function toggle(string $name, string $label, array $options = []): void
     {
-        $toggleId = 'toggle-' . bin2hex(random_bytes(4)); 
+        $toggleId = 'toggle-' . bin2hex(random_bytes(4));
         $value = $options['value'] ?? false;
         $description = $options['description'] ?? null;
-        $attributes = '';
-        $hasAlpineBinding = false;
+        $xModel = $options['attr']['x-model'] ?? null;
+        $dynamicName = $options['attr'][':name'] ?? null;
 
+        $localVar = 'toggle_' . str_replace('-', '_', $toggleId);
+        $model = $xModel ?? $localVar;
+
+        $attributes = '';
         if (isset($options['attr']) && is_array($options['attr'])) {
             foreach ($options['attr'] as $attr => $val) {
-                if (in_array($attr, ['options', 'fields'], true)) continue;
-                if (str_starts_with($attr, ':') || str_starts_with($attr, '@') || $attr === 'x-model' || str_starts_with($attr, 'x-bind')) {
-                    $hasAlpineBinding = true;
-                }
+                if (in_array($attr, ['options', 'fields', 'x-model', ':name'], true)) continue;
                 $attributes .= " {$attr}=\"{$val}\"";
             }
         }
 
+        $nameAttr = $dynamicName ? ":name=\"{$dynamicName}\"" : "name=\"{$name}\"";
+
+        $dataAttr = $xModel ? '' : "x-data=\"{ {$localVar}: " . ($value ? 'true' : 'false') . " }\"";
         ?>
-        <div class="flex items-center gap-4" x-id="['<?= $toggleId ?>']">
+        <div class="flex items-center gap-4" <?= $dataAttr ?> x-id="['<?= $toggleId ?>']">
             <label :for="$id('<?= $toggleId ?>')" class="relative inline-flex items-center cursor-pointer shrink-0 mt-0.5">
-                <!-- Тук добавяме x-bind за да бъде реактивно -->
-                <input type="hidden" name="<?= $name ?>" :value="<?= $options['attr']['x-model'] ?? '0' ?> ? 1 : 0">
-                
-                <input type="checkbox" 
-                    :id="$id('<?= $toggleId ?>')" 
-                    name="<?= $name ?>" 
-                    value="1" 
-                    class="sr-only peer" 
-                    :checked="<?= $options['attr']['x-model'] ?? 'false' ?>" 
+                <input type="hidden" <?= $nameAttr ?> :value="<?= $model ?> ? 1 : 0">
+
+                <input type="checkbox"
+                    :id="$id('<?= $toggleId ?>')"
+                    <?= $nameAttr ?>
+                    value="1"
+                    class="sr-only peer"
+                    x-model="<?= $model ?>"
                     <?= $attributes ?>>
 
                 <div class="w-11 h-6 bg-slate-200 dark:bg-slate-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-indigo-600 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all shadow-inner">
                 </div>
             </label>
-            
+
             <div class="flex flex-col select-none cursor-pointer" @click="document.getElementById($id('<?= $toggleId ?>')).click()">
                 <span class="font-semibold text-slate-800 dark:text-slate-200 leading-tight"><?= $label ?></span>
                 <?php if ($description): ?>
@@ -875,22 +878,19 @@ class Form
         $name = $field['name'] ?? $key;
 
         switch ($field['type'] ?? 'text') {
-
             case 'textarea':
                 self::textarea($name, '', $field);
                 break;
 
             case 'select':
-                self::customSelect(
-                    $name,
-                    '',
-                    $field['options'] ?? [],
-                    '',
-                    $field
-                );
+                self::customSelect($name, '', $field['options'] ?? [], '', $field);
                 break;
 
             case 'toggle':
+                $field['attr'] = [
+                    'x-model' => $field['x-model'] ?? null,
+                    ':name' => $field[':name'] ?? null,
+                ];
                 self::toggle($name, '', $field);
                 break;
 
