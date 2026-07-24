@@ -1,10 +1,12 @@
 import axios from "axios";
+import Sortable from "sortablejs";
 
 export default (config = {}) => ({
     toggleUrl: config.toggleUrl || null,
     deleteUrl: config.deleteUrl || null,
     restoreUrl: config.restoreUrl || null,
     forceDeleteUrl: config.forceDeleteUrl || null,
+    reorderUrl: config.reorderUrl || null,
 
     statuses: config.initialStatuses || {},
 
@@ -17,13 +19,46 @@ export default (config = {}) => ({
     errorRestoreMessage: config.errorRestoreMessage || "Грешка при възстановяването.",
     errorForceDeleteMessage: config.errorForceDeleteMessage || "Грешка при перманентното изтриване.",
     errorNetworkMessage: config.errorNetworkMessage || "Грешка при комуникация със сървъра.",
+    errorReorderMessage: "Грешка при запазване на подредбата.",
 
     successToggleMessage: config.successToggleMessage || "Статусът е променен успешно.",
     successDeleteMessage: config.successDeleteMessage || "Записът беше изтрит успешно!",
     successRestoreMessage: config.successRestoreMessage || "Записът беше възстановен успешно!",
     successForceDeleteMessage: config.successForceDeleteMessage || "Записът беше изтрит перманентно!",
+    successReorderMessage: "Успешно преподреждане!",
 
     loading: {},
+
+    init() {
+        const tbody = this.$el.querySelector('tbody[x-data*="sortable"]') || this.$el.querySelector('tbody');
+        
+        if (tbody && this.reorderUrl) {
+            Sortable.create(tbody, {
+                handle: '.drag-handle',
+                animation: 150,
+                onEnd: async (evt) => {
+                    const row = evt.item;
+                    const id = row.dataset.id;
+                    const newIndex = evt.newIndex;
+
+                    try {
+                        const res = await axios.post(this.reorderUrl, { 
+                            id: id, 
+                            order: newIndex 
+                        });
+                        
+                        if (res.data && res.data.success) {
+                            notify(res.data.message || this.successReorderMessage, "success");
+                        } else {
+                            notify(res.data?.message || this.errorReorderMessage);
+                        }
+                    } catch (error) {
+                        notify(error.response?.data?.message || this.errorNetworkMessage);
+                    }
+                }
+            });
+        }
+    },
 
     async toggleStatus(id) {
         if (!this.toggleUrl || this.loading[id]) return;

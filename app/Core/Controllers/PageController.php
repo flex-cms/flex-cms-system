@@ -165,7 +165,7 @@ class PageController extends BaseController
     }
 
     #[UseExceptions]
-    public function updatePosition()
+    public function reorder()
     {
         $this->updatePositionMethod(
             Page::class,

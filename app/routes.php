@@ -111,7 +111,7 @@ $router->post('/admin/pages/update/{id}', [PageController::class, 'update'], [Au
 $router->post('/admin/pages/toggle', [PageController::class, 'toggle'], [AuthMiddleware::class, AdminMiddleware::class]);
 $router->post('/admin/pages/restore', [PageController::class, 'restore'], [AuthMiddleware::class, AdminMiddleware::class]);
 $router->post('/admin/pages/force-delete', [PageController::class, 'forceDelete'], [AuthMiddleware::class, AdminMiddleware::class]);
-$router->post('/admin/pages/update-position', [PageController::class, 'updatePosition'], [AuthMiddleware::class, AdminMiddleware::class]);
+$router->post('/admin/pages/reorder', [PageController::class, 'reorder'], [AuthMiddleware::class, AdminMiddleware::class]);
 
 // Email Templates
 $router->get('/admin/email-templates', [EmailTemplateController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]);

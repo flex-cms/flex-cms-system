@@ -18,6 +18,7 @@ $reorderConfig = [
 ];
 $tableManagerConfig = [
     'toggleUrl' => '/admin/pages/toggle',
+    'reorderUrl' => '/admin/pages/reorder',
     'initialStatuses' => $initialStatuses,
     'deleteUrl' => '/admin/pages/delete',
     'restoreUrl' => '/admin/pages/restore',
