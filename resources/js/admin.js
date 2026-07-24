@@ -1,29 +1,24 @@
-import "./admin/helpers.js";
-
-import $ from 'jquery';
-window.$ = window.jQuery = $;
-
-import Sortable from 'sortablejs';
-window.Sortable = Sortable;
-
-import dayjs from 'dayjs'
-import relativeTime from 'dayjs/plugin/relativeTime'
-import 'dayjs/locale/bg'
-
-dayjs.extend(relativeTime)
-dayjs.locale('bg')
-
+import "../css/app.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 
-import 'ace-builds/src-noconflict/ace.js';
-import 'ace-builds/src-noconflict/mode-html.js';
-import 'ace-builds/src-noconflict/theme-monokai.js';
-import 'ace-builds/src-noconflict/ext-beautify.js';
-import 'tom-select/dist/css/tom-select.bootstrap5.css';
+import $ from "jquery";
+window.$ = window.jQuery = $;
 
-import('ace-builds').then((ace) => {
-    window.ace = ace;
-});
+import Sortable from "sortablejs";
+window.Sortable = Sortable;
+
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+import "dayjs/locale/bg";
+
+dayjs.extend(relativeTime);
+dayjs.locale("bg");
+
+import "ace-builds/src-noconflict/ace.js";
+import "ace-builds/src-noconflict/mode-html.js";
+import "ace-builds/src-noconflict/theme-monokai.js";
+import "ace-builds/src-noconflict/ext-beautify.js";
+import "tom-select/dist/css/tom-select.bootstrap5.css";
 
 import flatpickr from "flatpickr";
 import "flatpickr/dist/flatpickr.min.css";
@@ -32,43 +27,103 @@ import { Bulgarian } from "flatpickr/dist/l10n/bg.js";
 window.flatpickr = flatpickr;
 window.Bulgarian = Bulgarian;
 
-import "../css/app.css";
 import Alpine from "alpinejs";
-import collapse from '@alpinejs/collapse';
+import collapse from "@alpinejs/collapse";
 
-import relativeTimeComponent from './admin/components/relative-time.js';
-import sidebar from "./admin/components/sidebar.js";
-import uiSection from "./admin/components/ui-section.js";
-import alertComponent from './admin/components/alert.js';
-import updater from './admin/components/updater.js';
-import deleteManager from './admin/components/deleteManager.js';
-import tableManager from './admin/components/table-manager.js';
-import pluginManager from './admin/components/plugin-manager';
-import codeEditor from "./admin/components/code-editor.js";
-import selectComponent from './admin/components/select.js';
-import initDatepicker from './admin/components/datepicker';
-import passwordStrength from './admin/components/password-strength.js';
-import customSelectWithInput from './admin/components/custom-select-with-input.js';
-import sortable from './admin/components/sortable.js';
-import repeater from './admin/components/repeater.js';
+import "./admin/helpers.js";
+
+const PAGES_GLOBAL = ["/admin"];
+const PAGES_SPECIFIC = [
+    "/admin/pages",
+    "/admin/menus",
+    "/admin/posts",
+    "/admin/users",
+    "/admin/profile",
+    "/admin/settings",
+    "/admin/navigation",
+    "/admin/media",
+    "/admin/email-templates",
+];
+
+const isPage = (pages) => {
+    const currentPath = window.location.pathname;
+    return pages.some(
+        (path) => currentPath === path || currentPath.startsWith(path + "/"),
+    );
+};
 
 window.Alpine = Alpine;
 Alpine.plugin(collapse);
 
-Alpine.data('relativeTime', relativeTimeComponent);
-Alpine.data("sidebar", sidebar);
-Alpine.data("uiSection", uiSection);
-Alpine.data('alertComponent', alertComponent);
-Alpine.data('updater', updater);
-Alpine.data('deleteManager', deleteManager);
-Alpine.data('tableManager', tableManager);
-Alpine.data('pluginManager', pluginManager);
-Alpine.data('codeEditor', codeEditor);
-Alpine.data('tomSelect', selectComponent);
-Alpine.data('datepicker', initDatepicker);
-Alpine.data('passwordStrength', passwordStrength);
-Alpine.data('customSelectWithInput', customSelectWithInput);
-Alpine.data('sortable', sortable);
-Alpine.data('repeater', repeater);
+async function init() {
+    if (isPage(PAGES_GLOBAL)) {
+        Alpine.data(
+            "relativeTime",
+            (await import("./admin/components/relative-time.js")).default,
+        );
+        Alpine.data(
+            "sidebar",
+            (await import("./admin/components/sidebar.js")).default,
+        );
+        Alpine.data(
+            "uiSection",
+            (await import("./admin/components/ui-section.js")).default,
+        );
+        Alpine.data(
+            "alertComponent",
+            (await import("./admin/components/alert.js")).default,
+        );
+        Alpine.data(
+            "updater",
+            (await import("./admin/components/updater.js")).default,
+        );
+        Alpine.data(
+            "deleteManager",
+            (await import("./admin/components/deleteManager.js")).default,
+        );
+        Alpine.data(
+            "tableManager",
+            (await import("./admin/components/table-manager.js")).default,
+        );
+        Alpine.data(
+            "pluginManager",
+            (await import("./admin/components/plugin-manager")).default,
+        );
+        Alpine.data(
+            "sortable",
+            (await import("./admin/components/sortable.js")).default,
+        );
+    }
 
-Alpine.start();
+    if (isPage(PAGES_SPECIFIC)) {
+        Alpine.data(
+            "datepicker",
+            (await import("./admin/components/datepicker")).default,
+        );
+        Alpine.data(
+            "passwordStrength",
+            (await import("./admin/components/password-strength.js")).default,
+        );
+        Alpine.data(
+            "tomSelect",
+            (await import("./admin/components/select.js")).default,
+        );
+        Alpine.data(
+            "customSelectWithInput",
+            (await import("./admin/components/custom-select-with-input.js"))
+                .default,
+        );
+        Alpine.data(
+            "codeEditor",
+            (await import("./admin/components/code-editor.js")).default,
+        );
+        Alpine.data(
+            "repeater",
+            (await import("./admin/components/repeater.js")).default,
+        );
+    }
+
+    Alpine.start();
+}
+
+init();

@@ -28,31 +28,33 @@ Page::header(
             <?php Form::input('fullname', 'Пълно име', [
                 'value' => $user?->fullname,
                 'placeholder' => 'Иван Иванов',
-                'required' => true
             ]); ?>
 
             <?php Form::input('email', 'Имейл адрес', [
                 'value' => $user?->email,
                 'placeholder' => 'ivan@example.com',
-                'required' => true,
-                'disabled' => !!$user->id,
+                'readonly' => !!$user->id,
                 'type' => 'email'
             ]); ?>
 
         <?php }, ['md' => 2]); ?>
-
-        <?php if (Auth::user()->id !== $user->id): ?>
-            <?php Form::toggle('is_active', 'Активен потребител', [
-                'value' => $user?->is_active ?? true,
-                'description' => 'Ако деактивирате потребителя, той няма да има достъп до системата.'
-            ]); ?>
-        <?php endif; ?>
 
         <?php Form::image('featured_image', 'Изображение на профила', [
             'current_image' => $user->options['featured_image'] ?? null,
             'title' => 'Изображение на профила',
             'description' => '400x400px'
         ]); ?>
+
+        <?php if ($user->id !== Auth::user()->id) {
+            Form::row(function () use ($user) {
+
+                Form::toggle('is_active', 'Активен потребител', [
+                    'value' => $user->is_active ?? true,
+                    'description' => 'Ако е деактивирано, този потребител няма да може да влиза в профилът си.'
+                ]);
+
+            }, ['md' => 2]);
+        } ?>
 
     <?php }); ?>
 

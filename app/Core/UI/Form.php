@@ -473,7 +473,7 @@ class Form
         echo "</div>";
     }
 
-    public static function section(callable $slot, string|null $title = null, string|null $id = null): void
+    public static function section(callable $slot, string|null $title = null, string|null $id = null, bool $isWithBottomMargin = true): void
     {
         $sectionId = $id ?? 'section_' . substr(md5($title ?? 'default'), 0, 8);
         $user = Auth::user();
@@ -484,7 +484,7 @@ class Form
         ?>
 
         <div x-cloak x-data="uiSection('<?= $sectionId ?>', <?= $isOpen ? 'true' : 'false' ?>)"
-            class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md shadow-sm mb-5">
+            class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md shadow-sm <?= $isWithBottomMargin ? 'mb-5' : '' ?>">
 
             <?php if ($title): ?>
                 <div @click="toggle()"
