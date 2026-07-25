@@ -60,6 +60,6 @@ class UpdateController extends BaseController
 
         @unlink($tempPath);
 
-        View::redirect('/admin/update', 200);
+        View::redirect('/admin/update');
     }
 }
