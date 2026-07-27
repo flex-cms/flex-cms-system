@@ -145,6 +145,18 @@ $currentVersion = $currentConfig['version'];
             </footer>
         </div>
     </div>
+
+    <div
+        x-data="{ loading: false }"
+        x-show="loading"
+        x-on:axios-loading-start.window="loading = true"
+        x-on:axios-loading-end.window="loading = false"
+        x-cloak
+        class="fixed top-0 left-0 z-9999 w-full h-1 overflow-hidden pointer-events-none"
+    >
+        <div class="absolute inset-0 bg-blue-100"></div>
+        <div class="loading-bar absolute top-0 left-0 h-full bg-blue-600"></div>
+    </div>
 </body>
 
 </html>

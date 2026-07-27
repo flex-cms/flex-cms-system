@@ -59,7 +59,9 @@
     @apply hidden;
 }
 
-.ts-dropdown, .ts-control, .ts-control input {
+.ts-dropdown,
+.ts-control,
+.ts-control input {
     @apply dark:text-white;
 }
 
@@ -73,4 +75,21 @@
 .ts-wrapper {
     position: relative;
     z-index: 100;
+}
+
+/* Global Loading */
+
+.loading-bar {
+    width: 100%;
+    animation: loading-bar 1.2s linear infinite;
+}
+
+@keyframes loading-bar {
+    from {
+        transform: translateX(-100%);
+    }
+
+    to {
+        transform: translateX(100%);
+    }
 }

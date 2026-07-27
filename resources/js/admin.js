@@ -14,6 +14,9 @@ import "dayjs/locale/bg";
 dayjs.extend(relativeTime);
 dayjs.locale("bg");
 
+import axios from "./admin/axios.js";
+window.axios = axios;
+
 import "ace-builds/src-noconflict/ace.js";
 import "ace-builds/src-noconflict/mode-html.js";
 import "ace-builds/src-noconflict/theme-monokai.js";
@@ -57,6 +60,10 @@ Alpine.plugin(collapse);
 
 async function init() {
     if (isPage(PAGES_GLOBAL)) {
+        Alpine.data(
+            "loading",
+            (await import("./admin/components/loading.js")).default,
+        );
         Alpine.data(
             "relativeTime",
             (await import("./admin/components/relative-time.js")).default,
