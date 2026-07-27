@@ -12,7 +12,6 @@ class MenuItem extends Model
         'title',
         'url',
         'target',
-        'sort_order',
         'order',
         'description',
         'is_active'
@@ -40,7 +39,7 @@ class MenuItem extends Model
     public function children()
     {
         return $this->hasMany(MenuItem::class, 'parent_id')
-            ->orderBy('sort_order');
+            ->orderBy('order');
     }
 
     public function allChildren()

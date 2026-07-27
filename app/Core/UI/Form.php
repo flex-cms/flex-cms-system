@@ -569,9 +569,10 @@ class Form
     {
         $selectedText = $options[$selected] ?? 'Изберете...';
         $xModel = $attrs['x-model'] ?? null;
+        $dynamicName = $attrs[':name'] ?? null;
         $optionsJson = htmlspecialchars(json_encode($options, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8');
-
-        $excludeAttrs = ['x-model', 'options', 'value', 'type', 'fields', 'label'];
+        
+        $excludeAttrs = ['x-model', ':name', 'options', 'value', 'type', 'fields', 'label'];
         $htmlAttrs = [];
         foreach ($attrs as $attrKey => $attrVal) {
             if (!in_array($attrKey, $excludeAttrs, true)) {
@@ -594,20 +595,21 @@ class Form
                     return this.options[this.selected] || 'Изберете...';
                 }
             }"
-            <?php if ($xModel): ?>
-            /* Двупосочна връзка (two-way binding) с Alpine модела на репийтъра */
-            x-init="
-                selected = <?= $xModel ?> || '';
-                $watch('<?= $xModel ?>', value => { selected = value || ''; });
-                $watch('selected', value => { <?= $xModel ?> = value; });
-            "
-            <?php endif; ?>
+            x-modelable="selected"
+            <?= $xModel ? 'x-model="' . htmlspecialchars($xModel, ENT_QUOTES, 'UTF-8') . '"' : '' ?>
         >
             <?php if (!empty($label)): ?>
                 <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5"><?= $label ?></label>
             <?php endif; ?>
             
-            <select name="<?= htmlspecialchars($name) ?>" <?= $selectAttrsString ?> class="hidden">
+            <select
+                <?= $dynamicName
+                    ? ':name="' . htmlspecialchars($dynamicName, ENT_QUOTES, 'UTF-8') . '"'
+                    : 'name="' . htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . '"' ?>
+                <?= $selectAttrsString ?>
+                x-model="selected"
+                class="hidden"
+            >
                 <?php foreach ($options as $val => $text): ?>
                     <option value="<?= htmlspecialchars($val) ?>" :selected="selected == '<?= htmlspecialchars($val, ENT_QUOTES, 'UTF-8') ?>'"><?= htmlspecialchars($text) ?></option>
                 <?php endforeach; ?>
@@ -711,13 +713,14 @@ class Form
         $jsSaveUrl = $saveUrl ? "'" . $saveUrl . "'" : 'null';
         ?>
         <div x-data="repeater(<?= $jsData ?>, 'title', <?= $jsLoadUrl ?>, <?= $jsSaveUrl ?>)" x-cloak>
+            <input type="hidden" name="_<?= htmlspecialchars($name, ENT_QUOTES, 'UTF-8') ?>_present" value="1">
 
             <div x-show="isLoading" class="text-sm text-slate-500">
                 Зареждане...
             </div>
 
             <div x-show="!isLoading">
-                <div class="menu-tree space-y-3">
+                <div class="menu-tree">
                     <template x-for="(item, index) in items" :key="item.id ?? item._id ?? index">
                         <?php self::renderRepeaterItem('item', 'index', $fields, $name, 0); ?>
                     </template>
@@ -750,6 +753,7 @@ class Form
         <div
             class="menu-sortable-item"
             :data-id="String(<?= $item ?>.id ?? <?= $item ?>._id ?? '')"
+            :data-key="<?= $item ?>._key"
         >
 
             <input
@@ -760,9 +764,9 @@ class Form
 
             <div class="menu-item flex flex-col">
 
-                <div class="bg-slate-50 dark:bg-slate-900/30 border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden shadow-sm">
+                <div class="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden shadow-sm">
 
-                    <div class="px-5 py-3.5 bg-slate-100/50 flex items-center justify-between">
+                    <div class="px-5 py-3.5 flex items-center justify-between">
 
                         <div class="flex items-center gap-3 flex-1">
 
@@ -780,13 +784,25 @@ class Form
 
                         </div>
 
-                        <button
-                            type="button"
-                            @click.stop="removeItem(<?= $item ?>)"
-                            class="text-rose-500"
-                        >
-                            <i class="fas fa-trash-alt"></i>
-                        </button>
+                        <div class="flex items-center gap-1">
+                            <button
+                                type="button"
+                                @click.stop="addChild(<?= $item ?>)"
+                                class="text-primary hover:bg-slate-800 rounded-full w-8 h-8"
+                                title="Добави поделемент"
+                            >
+                                <i class="fas fa-level-down-alt"></i>
+                            </button>
+
+                            <button
+                                type="button"
+                                @click.stop="removeItem(<?= $item ?>._key)"
+                                class="text-red-400 hover:bg-slate-800 rounded-full w-8 h-8"
+                                title="Премахни елемента и неговите поделементи"
+                            >
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
 
                     </div>
 

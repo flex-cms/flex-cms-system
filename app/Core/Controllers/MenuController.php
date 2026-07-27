@@ -13,6 +13,7 @@ use Flex\Models\Menu;
 use Flex\Core\Routing\View;
 use Flex\Core\Controllers\BaseController;
 use Flex\Models\MenuItem;
+use InvalidArgumentException;
 
 class MenuController extends BaseController
 {
@@ -118,6 +119,8 @@ class MenuController extends BaseController
 
         $menu = Menu::create($data);
 
+        $this->syncMenuItems($menu, $post['menu_items'] ?? []);
+
         if (!empty($data['prepared_menu_items'])) {
             foreach ($data['prepared_menu_items'] as $itemData) {
                 $menu->items()->create($itemData);
@@ -143,6 +146,10 @@ class MenuController extends BaseController
             'options' => $data['options'] ?? $menu->options,
         ]);
 
+        if (isset($post['_menu_items_present'])) {
+            $this->syncMenuItems($menu, $post['menu_items'] ?? []);
+        }
+
         if (isset($post['menu_items'])) {
             $this->syncMenuItems($menu, $post['menu_items']);
         }
@@ -166,6 +173,7 @@ class MenuController extends BaseController
                 'description' => $itemData['description'] ?? null,
                 'order' => $index,
                 'menu_id' => $menu->id,
+                'parent_id' => $parentId,
                 'is_active' => (int) ($itemData['is_active'] ?? 0),
             ];
 
@@ -184,19 +192,21 @@ class MenuController extends BaseController
 
             $existingIds[] = $item->id;
 
-            if (!empty($itemData['children'])) {
-                $this->syncMenuItems(
-                    $menu,
-                    $itemData['children'],
-                    $item->id
-                );
-            }
+            $this->syncMenuItems(
+                $menu,
+                is_array($itemData['children'] ?? null) ? $itemData['children'] : [],
+                $item->id
+            );
         }
 
-        MenuItem::where('menu_id', $menu->id)
-            ->where('parent_id', $parentId)
-            ->whereNotIn('id', $existingIds)
-            ->delete();
+        $removedItems = MenuItem::where('menu_id', $menu->id)
+            ->where('parent_id', $parentId);
+
+        if ($existingIds !== []) {
+            $removedItems->whereNotIn('id', $existingIds);
+        }
+
+        $removedItems->delete();
     }
 
     #[UseExceptions]
@@ -239,7 +249,7 @@ class MenuController extends BaseController
         $items = MenuItem::where('menu_id', $menuId)
             ->whereNull('parent_id')
             ->with('allChildren')
-            ->orderBy('sort_order')
+            ->orderBy('order')
             ->get();
 
         $data = $items->map(function ($item) {
@@ -268,12 +278,38 @@ class MenuController extends BaseController
     }
 
     #[UseExceptions]
-    public function updateTreePosition()
+    public function updateTreePosition($menuId)
     {
+        $data = $this->getJsonInput();
+        $itemId = (int) ($data['id'] ?? 0);
+        $parentId = isset($data['parent_id']) ? (int) $data['parent_id'] : null;
+
+        $item = MenuItem::where('menu_id', (int) $menuId)->find($itemId);
+        if (!$item) {
+            throw new InvalidArgumentException('Елементът не принадлежи на това меню.');
+        }
+
+        if ($parentId !== null) {
+            $parent = MenuItem::where('menu_id', (int) $menuId)->find($parentId);
+
+            if (!$parent) {
+                throw new InvalidArgumentException('Родителският елемент не принадлежи на това меню.');
+            }
+
+            $ancestor = $parent;
+            while ($ancestor) {
+                if ($ancestor->id === $item->id) {
+                    throw new InvalidArgumentException('Елемент не може да бъде преместен в собственото си подменю.');
+                }
+
+                $ancestor = $ancestor->parent;
+            }
+        }
+        
         $this->updateTreeAndOrder(
             MenuItem::class,
             'parent_id',
-            'sort_order',
+            'order',
             'menu_id'
         );
 
@@ -288,7 +324,6 @@ class MenuController extends BaseController
     {
         $data = $this->prepareBaseData($post, $model);
         $data['options'] = $this->prepareMenuOptions($post, $model);
-        $data['prepared_menu_items'] = $this->prepareMenuItems($post);
 
         return $data;
     }

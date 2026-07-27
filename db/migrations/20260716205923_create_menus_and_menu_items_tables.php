@@ -20,6 +20,7 @@ final class CreateMenusAndMenuItemsTables extends AbstractMigration
             ->addColumn('name', 'string', ['limit' => 255, 'null' => false])
             ->addColumn('slug', 'string', ['limit' => 255, 'null' => false])
             ->addColumn('is_active', 'boolean', ['default' => 1, 'null' => false])
+            ->addColumn('options', 'json', ['null' => true])
             ->addColumn('created_at', 'timestamp', ['null' => true, 'default' => null])
             ->addColumn('updated_at', 'timestamp', ['null' => true, 'default' => null])
             ->addColumn('deleted_at', 'timestamp', ['null' => true])

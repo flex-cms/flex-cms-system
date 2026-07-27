@@ -104,14 +104,19 @@ Page::header(
 
         $menuFields = buildMenuFields($baseFields);
 
+        $items = $menuItems ?? [];
+
+        $loadUrl = isset($menu->id) ? '/admin/menus/items/' . $menu->id : null;
+        $saveUrl = isset($menu->id) ? '/admin/menus/items/' . $menu->id . '/tree-update' : null;
+
         $items = $menuItems ?? [[]];
 
         Form::repeater('menu_items', 'Елементи', [
             'value' => $items,
             'fields' => $menuFields,
             'title_field' => 'label',
-            'loadUrl' => '/admin/menus/items/' . $menu->id,
-            'saveUrl' => '/admin/menus/items/' . $menu->id . '/tree-update'
+            'loadUrl' => $loadUrl,
+            'saveUrl' => $saveUrl
         ]);
         ?>
 
