@@ -37,12 +37,24 @@ class PluginController extends BaseController
             $this->applyStatusFilter($query, $_GET['status']);
         }
 
-        $this->applySorting($query, ['name', 'is_active'], 'name', 'asc');
+        $this->applySorting(
+            $query,
+            ['name', 'is_active', 'created_at'],
+            'name',
+            'asc'
+        );
 
-        $plugins = $query->get();
+        $plugins = $query->get()->map(function (Plugin $plugin) {
+            $plugin->setAttribute(
+                'manifest',
+                $this->pluginManager->getManifest($plugin->slug)
+            );
+
+            return $plugin;
+        });
 
         $data = [
-            'title' => 'Управление на Плъгини',
+            'title' => 'Управление на плъгини',
             'plugins' => $plugins,
         ];
 

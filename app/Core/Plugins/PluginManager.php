@@ -169,14 +169,85 @@ class PluginManager
     {
         $manifestPath = $this->pluginsPath . '/' . $pluginDir . '/plugin.json';
 
-        if (file_exists($manifestPath)) {
-            $manifest = json_decode(file_get_contents($manifestPath), true);
-            if (json_last_error() === JSON_ERROR_NONE) {
-                return $manifest;
-            }
+        if (!is_file($manifestPath)) {
+            return $this->normalizeManifest([], $pluginDir, false);
         }
 
-        return [];
+        $content = file_get_contents($manifestPath);
+
+        if ($content === false) {
+            return $this->normalizeManifest([], $pluginDir, false);
+        }
+
+        $manifest = json_decode($content, true);
+
+        if (!is_array($manifest) || json_last_error() !== JSON_ERROR_NONE) {
+            return $this->normalizeManifest([], $pluginDir, false);
+        }
+
+        return $this->normalizeManifest($manifest, $pluginDir, true);
+    }
+
+    protected function normalizeManifest(
+        array $manifest,
+        string $pluginDir,
+        bool $isValid
+    ): array {
+        $author = is_array($manifest['author'] ?? null)
+            ? $manifest['author']
+            : [];
+
+        $requires = is_array($manifest['requires'] ?? null)
+            ? $manifest['requires']
+            : [];
+
+        $routes = is_array($manifest['routes'] ?? null)
+            ? $manifest['routes']
+            : [];
+
+        $autoload = is_array($manifest['autoload'] ?? null)
+            ? $manifest['autoload']
+            : [];
+
+        return [
+            'name' => (string) ($manifest['name'] ?? $pluginDir),
+            'slug' => (string) ($manifest['slug'] ?? $pluginDir),
+            'description' => (string) ($manifest['description'] ?? ''),
+            'version' => (string) ($manifest['version'] ?? '1.0.0'),
+            'type' => (string) ($manifest['type'] ?? 'plugin'),
+            'license' => (string) ($manifest['license'] ?? ''),
+            'homepage' => (string) ($manifest['homepage'] ?? ''),
+            'repository' => (string) ($manifest['repository'] ?? ''),
+            'provider' => (string) ($manifest['provider'] ?? ''),
+            'author' => [
+                'name' => (string) ($author['name'] ?? ''),
+                'email' => (string) ($author['email'] ?? ''),
+                'website' => (string) ($author['website'] ?? ''),
+            ],
+            'requires' => [
+                'php' => (string) ($requires['php'] ?? ''),
+                'flex' => (string) ($requires['flex'] ?? ''),
+            ],
+            'autoload' => $autoload,
+            'routes' => $routes,
+            'features' => array_values(
+                is_array($manifest['features'] ?? null)
+                ? $manifest['features']
+                : []
+            ),
+            'permissions' => array_values(
+                is_array($manifest['permissions'] ?? null)
+                ? $manifest['permissions']
+                : []
+            ),
+            'boot' => (bool) ($manifest['boot'] ?? false),
+            'admin_menu' => (bool) ($manifest['admin_menu'] ?? false),
+            'migrations' => (bool) ($manifest['migrations'] ?? false),
+            'seeders' => (bool) ($manifest['seeders'] ?? false),
+            'assets' => $manifest['assets'] ?? false,
+            'manifest_valid' => $isValid,
+            'directory' => $pluginDir,
+        ];
     }
 
     public function deletePlugin(string $slug, bool $dropTables = false): void

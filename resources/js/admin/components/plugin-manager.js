@@ -7,9 +7,34 @@ export default (config = {}) => ({
     statuses: config.initialStatuses || {},
     confirmDeleteMessage:
         config.confirmDeleteMessage ||
-        "Сигурни ли сте, че искате да премахнете този елемент?",
+        "Сигурни ли сте, че искате да премахнете този плъгин?",
 
     loading: {},
+    detailsOpen: false,
+    selectedPlugin: null,
+
+    openDetails(plugin) {
+        this.selectedPlugin = plugin;
+        this.detailsOpen = true;
+        document.documentElement.classList.add("overflow-hidden");
+    },
+
+    closeDetails() {
+        this.detailsOpen = false;
+        document.documentElement.classList.remove("overflow-hidden");
+
+        setTimeout(() => {
+            this.selectedPlugin = null;
+        }, 200);
+    },
+
+    hasItems(value) {
+        return Array.isArray(value) && value.length > 0;
+    },
+
+    booleanLabel(value) {
+        return value ? "Да" : "Не";
+    },
 
     async toggleStatus(id) {
         if (!this.toggleUrl || this.loading[id]) return;
@@ -17,17 +42,18 @@ export default (config = {}) => ({
         this.loading[id] = true;
 
         try {
-            const res = await axios.post(this.toggleUrl, { id: id });
+            const response = await axios.post(this.toggleUrl, { id });
 
-            if (res.data && res.data.success) {
+            if (response.data?.success) {
                 this.statuses[id] = !this.statuses[id];
             } else {
                 alert(
-                    res.data.message ||
+                    response.data?.message ||
                         "Възникна грешка при промяна на статуса.",
                 );
             }
         } catch (error) {
+            console.error(error);
             alert("Грешка при комуникация със сървъра.");
         } finally {
             this.loading[id] = false;
@@ -36,42 +62,46 @@ export default (config = {}) => ({
 
     async deleteItem(id) {
         if (!this.deleteUrl || this.loading[id]) return;
-
         if (!confirm(this.confirmDeleteMessage)) return;
 
         const dropTables = confirm(
-            "Желаете ли да премахнете и таблиците, свързани с този плъгин от базата данни?",
+            "Желаете ли да премахнете и таблиците, свързани с този плъгин?",
         );
 
         this.loading[id] = true;
 
         try {
-            const res = await axios.post(this.deleteUrl, {
-                id: id,
-                dropTables: dropTables,
+            const response = await axios.post(this.deleteUrl, {
+                id,
+                dropTables,
             });
 
-            if (res.data && res.data.success) {
-                const row = this.$el.closest("tr");
-                const tbody = row.closest("tbody");
+            if (response.data?.success) {
+                const card = document.querySelector(
+                    `[data-plugin-card="${id}"]`,
+                );
 
-                if (row) {
-                    row.style.transition = "all 0.3s ease";
-                    row.style.opacity = "0";
+                if (card) {
+                    card.style.transition = "all 0.3s ease";
+                    card.style.opacity = "0";
+                    card.style.transform = "scale(0.97)";
 
                     setTimeout(() => {
-                        row.remove();
+                        card.remove();
 
-                        const remainingRows =
-                            tbody.querySelectorAll("tr").length;
-
-                        if (remainingRows === 0) {
+                        if (
+                            document.querySelectorAll("[data-plugin-card]")
+                                .length === 0
+                        ) {
                             window.location.reload();
                         }
                     }, 300);
                 }
             } else {
-                alert(res.data.message || "Грешка при изтриването.");
+                alert(
+                    response.data?.message ||
+                        "Възникна грешка при премахването.",
+                );
             }
         } catch (error) {
             console.error(error);
@@ -87,15 +117,18 @@ export default (config = {}) => ({
         this.loading[id] = true;
 
         try {
-            const res = await axios.post(this.updateUrl, { id: id });
+            const response = await axios.post(this.updateUrl, { id });
 
-            if (res.data && res.data.success) {
-                alert(res.data.message || "Плъгинът е обновен успешно.");
+            if (response.data?.success) {
+                alert(
+                    response.data.message || "Плъгинът беше обновен успешно.",
+                );
+
                 window.location.reload();
             } else {
                 alert(
-                    res.data.message ||
-                        "Възникна грешка при обновяването на плъгина.",
+                    response.data?.message ||
+                        "Възникна грешка при обновяването.",
                 );
             }
         } catch (error) {
