@@ -18,8 +18,10 @@ class PluginController extends BaseController
     protected EventManager $events;
     protected PluginManager $pluginManager;
 
-    public function __construct(EventManager $events, PluginManager $pluginManager)
-    {
+    public function __construct(
+        EventManager $events,
+        PluginManager $pluginManager
+    ) {
         $this->events = $events;
         $this->pluginManager = $pluginManager;
     }
@@ -28,6 +30,9 @@ class PluginController extends BaseController
     public function index()
     {
         $this->discoverAndSyncPlugins();
+
+        $deactivatedPlugins = $this->pluginManager
+            ->deactivateInvalidPlugins();
 
         $query = Plugin::query();
 
@@ -56,6 +61,7 @@ class PluginController extends BaseController
         $data = [
             'title' => 'Управление на плъгини',
             'plugins' => $plugins,
+            'deactivatedPlugins' => $deactivatedPlugins,
         ];
 
         render_view('admin/plugins/index', $data);
@@ -64,28 +70,63 @@ class PluginController extends BaseController
     #[UseExceptions]
     public function toggle()
     {
-        $result = $this->toggleStatus(Plugin::class, 'is_active');
-
-        if (!$result['success']) {
-            return $this->jsonResponse(false, $result['message']);
-        }
-
         $data = $this->getJsonInput();
         $id = $data['id'] ?? null;
+
+        if (!$id) {
+            return $this->jsonResponse(
+                false,
+                'Липсва ID на плъгина.'
+            );
+        }
+
         $plugin = Plugin::find($id);
+
+        if (!$plugin) {
+            return $this->jsonResponse(
+                false,
+                'Плъгинът не беше намерен.'
+            );
+        }
+
+        $willActivate = !$plugin->is_active;
+
+        if ($willActivate) {
+            $manifest = $this->pluginManager
+                ->getManifest($plugin->slug);
+
+            if (!$manifest['manifest_valid']) {
+                return $this->jsonResponse(
+                    false,
+                    'Плъгинът не може да бъде активиран: ' .
+                    implode(' ', $manifest['manifest_errors'])
+                );
+            }
+        }
+
+        $plugin->is_active = $willActivate;
+        $plugin->save();
 
         if ($plugin->is_active) {
             PluginManager::activate($plugin->slug);
+
+            $this->pluginManager->initSinglePlugin(
+                $plugin->slug
+            );
+        } else {
+            $this->events->trigger(
+                "plugin.deactivated.{$plugin->slug}"
+            );
         }
 
-        $this->pluginManager->initSinglePlugin($plugin->slug);
+        $statusText = $plugin->is_active
+            ? 'активиран'
+            : 'деактивиран';
 
-        $plugin->is_active
-            ? $this->events->trigger("plugin.activated.{$plugin->slug}")
-            : $this->events->trigger("plugin.deactivated.{$plugin->slug}");
-
-        $statusText = $plugin->is_active ? 'активиран' : 'деактивиран';
-        return $this->jsonResponse(true, "Плъгинът беше {$statusText} успешно!");
+        return $this->jsonResponse(
+            true,
+            "Плъгинът беше {$statusText} успешно!"
+        );
     }
 
     #[UseExceptions]

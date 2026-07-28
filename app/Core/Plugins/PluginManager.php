@@ -3,8 +3,11 @@
 namespace Flex\Core\Plugins;
 
 use Flex\Core\Events\EventManager;
+use Flex\Core\Plugins\Contracts\PluginServiceProviderInterface;
 use Flex\Core\Routing\Router;
 use Flex\Core\Services\PluginDatabaseService;
+use Flex\Models\Plugin;
+use RuntimeException;
 
 class PluginManager
 {
@@ -12,30 +15,53 @@ class PluginManager
     protected $pluginsPath;
     protected $activePlugins = [];
     protected $assetsToRender = ['styles' => [], 'scripts' => []];
+    protected array $providers = [];
+    protected ?Router $router = null;
+    protected PluginManifestValidator $manifestValidator;
 
-    public function __construct(EventManager $events, array $activePlugins = [])
-    {
+    public function __construct(
+        EventManager $events,
+        array $activePlugins = [],
+        ?PluginManifestValidator $manifestValidator = null
+    ) {
         $this->events = $events;
         $this->activePlugins = $activePlugins;
         $this->pluginsPath = dirname(__DIR__, 3) . '/plugins';
+        $this->manifestValidator = $manifestValidator
+            ?? new PluginManifestValidator();
     }
 
-    public function initSinglePlugin(string $slug): void
+    public function setRouter(Router $router): self
     {
-        $pluginPath = $this->pluginsPath . '/' . $slug;
-        $pluginFile = $pluginPath . '/plugin.php';
+        $this->router = $router;
 
-        if (file_exists($pluginFile)) {
-            $loader = require dirname(__DIR__, 3) . '/vendor/autoload.php';
-            $namespacePart = str_replace(' ', '', ucwords(str_replace('-', ' ', $slug)));
-            $fullNamespace = "Plugins\\" . $namespacePart . "\\";
+        return $this;
+    }
 
-            $loader->addPsr4($fullNamespace, $pluginPath . '/src');
+    public function initSinglePlugin(
+        string $slug,
+        ?Router $router = null
+    ): bool {
+        $router ??= $this->router;
 
-            $eventManager = $this->events;
-
-            include_once $pluginFile;
+        if (!$router) {
+            throw new RuntimeException(
+                'Router не е зададен в PluginManager.'
+            );
         }
+
+        $provider = $this->registerSinglePlugin(
+            $slug,
+            $router
+        );
+
+        if (!$provider) {
+            return false;
+        }
+
+        $provider->boot();
+
+        return true;
     }
 
     public static function activate(string $slug): void
@@ -73,29 +99,56 @@ class PluginManager
 
     public function loadPlugins(Router $router): void
     {
-        $loader = require dirname(__DIR__, 3) . '/vendor/autoload.php';
-        $currentUri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
+        $this->router = $router;
 
-        foreach ($this->activePlugins as $pluginDir) {
-            $pluginPath = $this->pluginsPath . '/' . $pluginDir;
-            $pluginFile = $pluginPath . '/plugin.php';
+        $currentUri = parse_url(
+            $_SERVER['REQUEST_URI'] ?? '/',
+            PHP_URL_PATH
+        );
 
-            if (file_exists($pluginFile)) {
-                $namespacePart = str_replace(' ', '', ucwords(str_replace('-', ' ', $pluginDir)));
-                $fullNamespace = "Plugins\\" . $namespacePart . "\\";
+        foreach ($this->activePlugins as $pluginSlug) {
+            $provider = $this->registerSinglePlugin(
+                $pluginSlug,
+                $router
+            );
 
-                $loader->addPsr4($fullNamespace, $pluginPath . '/src');
+            if (!$provider) {
+                continue;
+            }
 
-                $this->collectPluginAssets($pluginDir, $currentUri);
+            $this->collectPluginAssets(
+                $pluginSlug,
+                $currentUri
+            );
+        }
 
-                $eventManager = $this->events;
-                include_once $pluginFile;
+        foreach ($this->providers as $slug => $provider) {
+            try {
+                $provider->boot();
+            } catch (\Throwable $exception) {
+                $this->deactivateInvalidPlugin(
+                    $slug,
+                    [
+                        'Provider boot failed: ' .
+                        $exception->getMessage(),
+                    ]
+                );
+
+                $this->events->trigger(
+                    "plugin.failed.{$slug}",
+                    [
+                        'stage' => 'boot',
+                        'exception' => $exception,
+                    ]
+                );
             }
         }
 
         $this->registerAssetHooks();
 
-        $this->events->trigger('plugins_loaded');
+        $this->events->trigger('plugins_loaded', [
+            'providers' => $this->providers,
+        ]);
     }
 
     protected function collectPluginAssets(string $pluginDir, string $currentUri): void
@@ -167,31 +220,72 @@ class PluginManager
 
     public function getManifest(string $pluginDir): array
     {
-        $manifestPath = $this->pluginsPath . '/' . $pluginDir . '/plugin.json';
+        $pluginPath = $this->pluginsPath . '/' . $pluginDir;
+        $manifestPath = $pluginPath . '/plugin.json';
 
         if (!is_file($manifestPath)) {
-            return $this->normalizeManifest([], $pluginDir, false);
+            return $this->normalizeManifest(
+                [],
+                $pluginDir,
+                [
+                    'valid' => false,
+                    'errors' => [
+                        'Файлът plugin.json не съществува.',
+                    ],
+                    'warnings' => [],
+                ]
+            );
         }
 
         $content = file_get_contents($manifestPath);
 
         if ($content === false) {
-            return $this->normalizeManifest([], $pluginDir, false);
+            return $this->normalizeManifest(
+                [],
+                $pluginDir,
+                [
+                    'valid' => false,
+                    'errors' => [
+                        'Файлът plugin.json не може да бъде прочетен.',
+                    ],
+                    'warnings' => [],
+                ]
+            );
         }
 
         $manifest = json_decode($content, true);
 
-        if (!is_array($manifest) || json_last_error() !== JSON_ERROR_NONE) {
-            return $this->normalizeManifest([], $pluginDir, false);
+        if (!is_array($manifest)) {
+            return $this->normalizeManifest(
+                [],
+                $pluginDir,
+                [
+                    'valid' => false,
+                    'errors' => [
+                        'Невалиден JSON: ' . json_last_error_msg(),
+                    ],
+                    'warnings' => [],
+                ]
+            );
         }
 
-        return $this->normalizeManifest($manifest, $pluginDir, true);
+        $validation = $this->manifestValidator->validate(
+            $manifest,
+            $pluginDir,
+            $pluginPath
+        );
+
+        return $this->normalizeManifest(
+            $manifest,
+            $pluginDir,
+            $validation
+        );
     }
 
     protected function normalizeManifest(
         array $manifest,
         string $pluginDir,
-        bool $isValid
+        array $validation
     ): array {
         $author = is_array($manifest['author'] ?? null)
             ? $manifest['author']
@@ -213,7 +307,7 @@ class PluginManager
             'name' => (string) ($manifest['name'] ?? $pluginDir),
             'slug' => (string) ($manifest['slug'] ?? $pluginDir),
             'description' => (string) ($manifest['description'] ?? ''),
-            'version' => (string) ($manifest['version'] ?? '1.0.0'),
+            'version' => (string) ($manifest['version'] ?? '0.0.0'),
             'type' => (string) ($manifest['type'] ?? 'plugin'),
             'license' => (string) ($manifest['license'] ?? ''),
             'homepage' => (string) ($manifest['homepage'] ?? ''),
@@ -241,11 +335,17 @@ class PluginManager
                 : []
             ),
             'boot' => (bool) ($manifest['boot'] ?? false),
-            'admin_menu' => (bool) ($manifest['admin_menu'] ?? false),
+            'admin_menu' => $manifest['admin_menu'] ?? false,
             'migrations' => (bool) ($manifest['migrations'] ?? false),
             'seeders' => (bool) ($manifest['seeders'] ?? false),
             'assets' => $manifest['assets'] ?? false,
-            'manifest_valid' => $isValid,
+            'manifest_valid' => (bool) ($validation['valid'] ?? false),
+            'manifest_errors' => array_values(
+                $validation['errors'] ?? []
+            ),
+            'manifest_warnings' => array_values(
+                $validation['warnings'] ?? []
+            ),
             'directory' => $pluginDir,
         ];
     }
@@ -275,6 +375,64 @@ class PluginManager
         }
     }
 
+    public function deactivateInvalidPlugins(): array
+    {
+        $deactivated = [];
+
+        foreach ($this->getAvailablePlugins() as $pluginDir) {
+            $manifest = $this->getManifest($pluginDir);
+
+            if ($manifest['manifest_valid'] ?? false) {
+                continue;
+            }
+
+            $errors = $manifest['manifest_errors'] ?? [];
+
+            if (!$this->deactivateInvalidPlugin($pluginDir, $errors)) {
+                continue;
+            }
+
+            $deactivated[] = [
+                'slug' => $pluginDir,
+                'errors' => $errors,
+            ];
+        }
+
+        return $deactivated;
+    }
+
+    public function deactivateInvalidPlugin(
+        string $slug,
+        array $errors = []
+    ): bool {
+        $plugin = Plugin::where('slug', $slug)->first();
+
+        if (!$plugin || !$plugin->is_active) {
+            return false;
+        }
+
+        Plugin::where('slug', $slug)->update([
+            'is_active' => false,
+        ]);
+
+        $this->activePlugins = array_values(
+            array_filter(
+                $this->activePlugins,
+                fn(string $activeSlug): bool => $activeSlug !== $slug
+            )
+        );
+
+        $this->events->trigger(
+            "plugin.deactivated.{$slug}",
+            [
+                'reason' => 'invalid_manifest',
+                'errors' => $errors,
+            ]
+        );
+
+        return true;
+    }
+
     private function deleteDirectory(string $dir): void
     {
         $dir = rtrim(str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $dir), DIRECTORY_SEPARATOR);
@@ -291,6 +449,118 @@ class PluginManager
 
         if (is_dir($dir)) {
             usleep(100000);
+        }
+    }
+
+    private function registerPluginAutoload(
+        array $manifest,
+        string $pluginPath
+    ): void {
+        $psr4 = $manifest['autoload']['psr-4'] ?? [];
+
+        if (!is_array($psr4) || $psr4 === []) {
+            return;
+        }
+
+        $loader = require dirname(__DIR__, 3) . '/vendor/autoload.php';
+
+        foreach ($psr4 as $namespace => $relativePath) {
+            $absolutePath = $pluginPath . DIRECTORY_SEPARATOR .
+                trim($relativePath, '/\\');
+
+            $loader->addPsr4($namespace, $absolutePath);
+        }
+    }
+
+    private function createProvider(
+        array $manifest,
+        string $pluginPath,
+        Router $router
+    ): PluginServiceProviderInterface {
+        $providerClass = $manifest['provider'] ?? null;
+
+        if (!is_string($providerClass) || $providerClass === '') {
+            throw new \RuntimeException(
+                'В plugin.json не е зададен provider клас.'
+            );
+        }
+
+        if (!class_exists($providerClass)) {
+            throw new \RuntimeException(
+                "Provider класът {$providerClass} не беше намерен."
+            );
+        }
+
+        $provider = new $providerClass(
+            $this->events,
+            $router,
+            $manifest,
+            $pluginPath
+        );
+
+        if (!$provider instanceof PluginServiceProviderInterface) {
+            throw new \RuntimeException(
+                "Provider класът {$providerClass} трябва да имплементира " .
+                PluginServiceProviderInterface::class . '.'
+            );
+        }
+
+        return $provider;
+    }
+
+    private function registerSinglePlugin(
+        string $slug,
+        Router $router
+    ): ?PluginServiceProviderInterface {
+        $manifest = $this->getManifest($slug);
+
+        if (!($manifest['manifest_valid'] ?? false)) {
+            $this->deactivateInvalidPlugin(
+                $slug,
+                $manifest['manifest_errors'] ?? []
+            );
+
+            return null;
+        }
+
+        try {
+            $pluginPath = $this->pluginsPath .
+                DIRECTORY_SEPARATOR . $slug;
+
+            $this->registerPluginAutoload(
+                $manifest,
+                $pluginPath
+            );
+
+            $provider = $this->createProvider(
+                $manifest,
+                $pluginPath,
+                $router
+            );
+
+            $provider->register();
+
+            $this->providers[$slug] = $provider;
+
+            return $provider;
+        } catch (\Throwable $exception) {
+            $this->deactivateInvalidPlugin(
+                $slug,
+                [
+                    'Provider initialization failed: ' .
+                    $exception->getMessage(),
+                ]
+            );
+
+            $this->events->trigger(
+                "plugin.failed.{$slug}",
+                [
+                    'stage' => 'register',
+                    'exception' => $exception,
+                ]
+            );
+
+            return null;
         }
     }
 }

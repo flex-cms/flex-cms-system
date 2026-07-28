@@ -5,6 +5,8 @@ session_start();
 require_once 'vendor/autoload.php';
 require_once 'functions.php';
 
+require_once 'version.php';
+
 use Dotenv\Dotenv;
 use Flex\Core\Controllers\InstallController;
 use Flex\Core\Database;

@@ -52,9 +52,43 @@ $pluginToArray = static function ($plugin): array {
         'seeders' => (bool) ($manifest['seeders'] ?? false),
         'assets' => $manifest['assets'] ?? false,
         'manifest_valid' => (bool) ($manifest['manifest_valid'] ?? false),
+        'manifest_errors' => array_values(
+            (array) ($manifest['manifest_errors'] ?? [])
+        ),
+        'manifest_warnings' => array_values(
+            (array) ($manifest['manifest_warnings'] ?? [])
+        ),
     ];
 };
 ?>
+
+<?php $deactivatedPlugins = $deactivatedPlugins ?? []; ?>
+
+<?php if ($deactivatedPlugins !== []): ?>
+    <div class="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
+        <div class="flex items-start gap-3">
+            <i class="fa-solid fa-triangle-exclamation mt-0.5"></i>
+
+            <div>
+                <p class="font-semibold">
+                    Някои плъгини бяха деактивирани автоматично
+                </p>
+
+                <ul class="mt-2 space-y-1 text-sm">
+                    <?php foreach ($deactivatedPlugins as $item): ?>
+                        <li>
+                            <strong><?= e($item['slug']) ?></strong>
+
+                            <?php if (!empty($item['errors'])): ?>
+                                — <?= e(implode(' ', $item['errors'])) ?>
+                            <?php endif; ?>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+        </div>
+    </div>
+<?php endif; ?>
 
 <div x-data='pluginManager(<?= htmlspecialchars(
     json_encode(
@@ -63,9 +97,7 @@ $pluginToArray = static function ($plugin): array {
     ),
     ENT_QUOTES,
     'UTF-8'
-) ?>)'
-    @keydown.escape.window="closeDetails()"
-    >
+) ?>)' @keydown.escape.window="closeDetails()">
     <?php Table::header(slot: function () { ?>
         <?php Table::search('Търсене на плъгин...'); ?>
 
@@ -117,6 +149,7 @@ $pluginToArray = static function ($plugin): array {
                     ENT_QUOTES,
                     'UTF-8'
                 );
+                $manifestValid = (bool) ($manifest['manifest_valid'] ?? false);
                 ?>
 
                 <article data-plugin-card="<?= (int) $plugin->id ?>"
@@ -140,6 +173,26 @@ $pluginToArray = static function ($plugin): array {
                                             v
                                             <?= e($manifest['version'] ?? $plugin->version ?? '1.0.0') ?>
                                         </span>
+
+                                        <?php if (!$manifestValid): ?>
+                                            <span
+                                                class="inline-flex items-center gap-1 rounded-md bg-red-50 px-2 py-1 text-xs font-semibold text-red-700 dark:bg-red-500/10 dark:text-red-400">
+                                                <i class="fa-solid fa-triangle-exclamation"></i>
+                                                Невалиден manifest
+                                            </span>
+                                        <?php elseif (!empty($manifest['manifest_warnings'])): ?>
+                                            <span
+                                                class="inline-flex items-center gap-1 rounded-md bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-700 dark:bg-amber-500/10 dark:text-amber-400">
+                                                <i class="fa-solid fa-circle-exclamation"></i>
+                                                Има предупреждения
+                                            </span>
+                                        <?php else: ?>
+                                            <span
+                                                class="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400">
+                                                <i class="fa-solid fa-circle-check"></i>
+                                                Валиден
+                                            </span>
+                                        <?php endif; ?>
                                     </div>
 
                                     <p class="mt-1 truncate text-xs text-slate-500 dark:text-slate-400">
@@ -206,8 +259,10 @@ $pluginToArray = static function ($plugin): array {
 
                     <div
                         class="flex items-center gap-2 border-t border-slate-200 bg-slate-50 px-5 py-3 dark:border-slate-700 dark:bg-slate-800/50">
-                        <button type="button" @click="toggleStatus(<?= (int) $plugin->id ?>)"
-                            :disabled="loading[<?= (int) $plugin->id ?>]"
+                        <button type="button" @click="toggleStatus(<?= (int) $plugin->id ?>)" :disabled="
+                                loading[<?= (int) $plugin->id ?>] ||
+                                (!statuses[<?= (int) $plugin->id ?>] && !<?= $manifestValid ? 'true' : 'false' ?>)
+                            "
                             class="inline-flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50"
                             :class="statuses[<?= (int) $plugin->id ?>]
                                 ? 'bg-amber-50 text-amber-700 hover:bg-amber-100 dark:bg-amber-500/10 dark:text-amber-400'
@@ -347,6 +402,51 @@ $pluginToArray = static function ($plugin): array {
                                             <code x-text="permission"></code>
                                         </div>
                                     </template>
+                                </div>
+                            </div>
+
+                            <div x-show="hasItems(selectedPlugin.manifest_errors)"
+                                class="mt-6 rounded-xl border border-red-200 bg-red-50 p-4 dark:border-red-500/30 dark:bg-red-500/10">
+                                <div class="flex items-start gap-3">
+                                    <i class="fa-solid fa-circle-xmark mt-0.5 text-red-500"></i>
+
+                                    <div>
+                                        <h3 class="text-sm font-bold text-red-800 dark:text-red-300">
+                                            Грешки в plugin.json
+                                        </h3>
+
+                                        <ul class="mt-2 space-y-1 text-sm text-red-700 dark:text-red-300">
+                                            <template x-for="error in selectedPlugin.manifest_errors" :key="error">
+                                                <li class="flex gap-2">
+                                                    <span>•</span>
+                                                    <span x-text="error"></span>
+                                                </li>
+                                            </template>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div x-show="hasItems(selectedPlugin.manifest_warnings)"
+                                class="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-500/30 dark:bg-amber-500/10">
+                                <div class="flex items-start gap-3">
+                                    <i class="fa-solid fa-triangle-exclamation mt-0.5 text-amber-500"></i>
+
+                                    <div>
+                                        <h3 class="text-sm font-bold text-amber-800 dark:text-amber-300">
+                                            Предупреждения
+                                        </h3>
+
+                                        <ul class="mt-2 space-y-1 text-sm text-amber-700 dark:text-amber-300">
+                                            <template x-for="warning in selectedPlugin.manifest_warnings"
+                                                :key="warning">
+                                                <li class="flex gap-2">
+                                                    <span>•</span>
+                                                    <span x-text="warning"></span>
+                                                </li>
+                                            </template>
+                                        </ul>
+                                    </div>
                                 </div>
                             </div>
 

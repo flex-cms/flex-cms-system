@@ -1,6 +1,3 @@
 <?php
 
-return [
-    'version' => '0.0.4',
-    'release_date' => '2026-07-07'
-];
+define('FLEX_VERSION', '1.0.0');
