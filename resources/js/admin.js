@@ -100,6 +100,14 @@ async function init() {
             "sortable",
             (await import("./admin/components/sortable.js")).default,
         );
+        Alpine.data(
+            "repeater",
+            (await import("./admin/components/repeater.js")).default,
+        );
+        Alpine.data(
+            "imageUpload",
+            (await import("./admin/components/image-upload.js")).default,
+        );
     }
 
     if (isPage(PAGES_SPECIFIC)) {
@@ -123,10 +131,6 @@ async function init() {
         Alpine.data(
             "codeEditor",
             (await import("./admin/components/code-editor.js")).default,
-        );
-        Alpine.data(
-            "repeater",
-            (await import("./admin/components/repeater.js")).default,
         );
     }
 

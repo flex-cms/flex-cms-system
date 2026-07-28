@@ -84,44 +84,151 @@ class Form
         <?php
     }
 
-    public static function image(string $name, string $label, array $attrs = []): void
-    {
+    public static function image(
+        string $name,
+        string $label,
+        array $attrs = []
+    ): void {
         $id = 'file_' . $name;
-        $currentImage = $attrs['current_image'] ?? '/assets/images/no-image.png';
+        $removeInputId = 'remove_' . $name;
+        $currentImage = $attrs['current_image'] ?? null;
+        $fallbackImage = $attrs['fallback_image']
+            ?? '/assets/images/no-image.png';
         $description = $attrs['description'] ?? null;
-        $inputName = $name;
+        $title = $attrs['title'] ?? '';
+        $hasCurrentImage = !empty($currentImage);
 
+        $componentConfig = htmlspecialchars(
+            json_encode([
+                'currentImage' => $currentImage,
+                'fallbackImage' => $fallbackImage,
+                'inputId' => $id,
+                'removeInputId' => $removeInputId,
+            ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
+            ENT_QUOTES,
+            'UTF-8'
+        );
         ?>
-        <div x-data="{ previewUrl: null }" class="space-y-2">
-            <label class="block font-semibold text-slate-700 dark:text-slate-300">
-                <?= $label ?>
+        <div
+            x-data="imageUpload(<?= $componentConfig ?>)"
+            x-on:destroy="destroy()"
+            class="space-y-2"
+        >
+            <label
+                for="<?= htmlspecialchars($id) ?>"
+                class="block font-semibold text-slate-700 dark:text-slate-300"
+            >
+                <?= htmlspecialchars($label) ?>
             </label>
 
-            <div class="flex flex-col gap-2">
-                <input type="file" name="<?= $inputName ?>" id="<?= $id ?>" class="hidden"
-                    @change="previewUrl = URL.createObjectURL($event.target.files[0])">
+            <input
+                type="hidden"
+                name="<?= htmlspecialchars($name) ?>_remove"
+                id="<?= htmlspecialchars($removeInputId) ?>"
+                value="0"
+            >
 
-                <div title="<?= $attrs['title'] ?? '' ?>" @click="document.getElementById('<?= $id ?>').click()"
-                    class="w-40 h-40 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-800 flex items-center justify-center cursor-pointer hover:ring-2 hover:ring-indigo-500 transition-all overflow-hidden relative shadow-sm">
+            <input
+                type="file"
+                name="<?= htmlspecialchars($name) ?>"
+                id="<?= htmlspecialchars($id) ?>"
+                accept="image/*"
+                class="hidden"
+                @change="handleFile($event)"
+            >
 
-                    <img x-show="previewUrl" :src="previewUrl" class="w-full h-full object-cover" x-cloak>
-                    <?php if ($currentImage): ?>
-                        <img x-show="!previewUrl" src="<?= $currentImage ?>" class="w-full h-full object-cover">
+            <div class="flex flex-col gap-3">
+                <div
+                    title="<?= htmlspecialchars($title) ?>"
+                    class="group relative flex h-40 w-40 items-center justify-center overflow-hidden rounded border border-slate-300 bg-white shadow-sm transition-all dark:border-slate-600 dark:bg-slate-800"
+                >
+                    <img
+                        x-show="previewUrl"
+                        :src="previewUrl"
+                        class="h-full w-full object-cover"
+                        x-cloak
+                        alt=""
+                    >
+
+                    <?php if ($hasCurrentImage): ?>
+                        <img
+                            x-show="!previewUrl && !removed"
+                            src="<?= htmlspecialchars($currentImage) ?>"
+                            class="h-full w-full object-cover"
+                            alt="<?= htmlspecialchars($label) ?>"
+                        >
                     <?php endif; ?>
 
-                    <div x-show="!previewUrl && !<?= $currentImage ? 'true' : 'false' ?>" class="text-slate-400">
-                        <i class="fa-solid fa-plus text-sm"></i>
-                    </div>
+                    <img
+                        x-show="!previewUrl && (removed || !currentImage)"
+                        :src="fallbackImage"
+                        class="h-full w-full object-cover"
+                        alt=""
+                        x-cloak
+                    >
+
+                    <button
+                        type="button"
+                        @click="selectFile()"
+                        class="absolute inset-0 flex items-center justify-center bg-black/0 text-white opacity-0 transition-all group-hover:bg-black/40 group-hover:opacity-100"
+                        aria-label="Избери изображение"
+                    >
+                        <i class="fa-solid fa-camera text-xl"></i>
+                    </button>
                 </div>
 
-                <div class="flex flex-col">
+                <div class="flex flex-col items-start gap-1">
                     <?php if ($description): ?>
-                        <span class="text-xs text-slate-500 dark:text-slate-400"><?= $description ?></span>
+                        <span class="text-xs text-slate-500 dark:text-slate-400">
+                            <?= htmlspecialchars($description) ?>
+                        </span>
                     <?php endif; ?>
 
-                    <button type="button" @click="document.getElementById('<?= $id ?>').click()"
-                        class="text-sm font-semibold text-indigo-600 hover:text-indigo-700 self-start">
-                        <?= $currentImage ? 'Промяна на изображението' : 'Избери файл' ?>
+                    <button
+                        type="button"
+                        @click="selectFile()"
+                        class="text-sm font-semibold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300"
+                    >
+                        <span x-show="!previewUrl">
+                            <?= $hasCurrentImage
+                                ? 'Промяна'
+                                : 'Избор на файл' ?>
+                        </span>
+
+                        <span x-show="previewUrl" x-cloak>
+                            Избери друг файл
+                        </span>
+                    </button>
+
+                    <button
+                        type="button"
+                        x-show="previewUrl"
+                        @click="cancelNewFile()"
+                        class="text-sm font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                        x-cloak
+                    >
+                        Отказ от новия файл
+                    </button>
+
+                    <button
+                        type="button"
+                        x-show="previewUrl || (!removed && currentImage)"
+                        @click="removeImage()"
+                        class="text-sm font-semibold text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                        x-cloak
+                    >
+                        <i class="fa-solid fa-trash-can mr-1"></i>
+                        Премахване
+                    </button>
+
+                    <button
+                        type="button"
+                        x-show="removed && currentImage"
+                        @click="restoreImage()"
+                        class="text-sm font-semibold text-slate-600 hover:text-slate-800 dark:text-slate-300 dark:hover:text-white"
+                        x-cloak
+                    >
+                        Възстановяване
                     </button>
                 </div>
             </div>

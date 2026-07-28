@@ -2,6 +2,8 @@
 
 namespace Flex\Core\Routing;
 
+use Flex\Models\Page;
+
 class View
 {
     public function __construct(
@@ -57,28 +59,27 @@ class View
         }
     }
 
-    public static function dispatchOptions(object $page, $location): void
-    {
-        $templateKey = preg_replace('/[^a-zA-Z0-9\-]/', '', $page->options['page_template'] ?? 'default');
-        $templateName = ucfirst($templateKey);
+    public static function dispatchOptions(
+        $page,
+        string $folder = 'elements'
+    ): void {
+        $key = $page->getOption('page_options_key');
 
-        $isOptions = ($location === 'options');
-
-        $folder = $isOptions ? 'PageOptions' : 'PageTemplates';
-        $suffix = $isOptions ? $page->options['page_options_key'] : "Template";
-
-        $class = "\\Themes\\" . ACTIVE_THEME . "\\" . $folder . "\\" . $templateName . $suffix;
-
-        if (!class_exists($class)) {
-            $defaultSuffix = $isOptions ? "DefaultOptions" : "DefaultTemplate";
-            $class = "\\Themes\\" . ACTIVE_THEME . "\\" . $folder . "\\" . $defaultSuffix;
+        if (!$key) {
+            return;
         }
 
-        if (class_exists($class)) {
-            $instance = new $class($page->id, $page);
-            if (method_exists($instance, 'render')) {
-                $instance->render();
-            }
-        }
+        $key = strtolower(trim($key));
+
+        self::component(
+            $key,
+            [
+                'page' => $page,
+                'options' => $page->getOptions(),
+                'elements' => $page->elements,
+            ],
+            'admin/' . $folder,
+            'theme'
+        );
     }
 }
