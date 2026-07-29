@@ -36,31 +36,96 @@ if (!function_exists('render_view')) {
         array $data = [],
         string $viewSource = 'core',
         string $layout = 'admin',
-        string $layoutSource = 'core'
+        string $layoutSource = 'core',
+        ?string $plugin = null
     ): void {
         extract($data);
+
         $root = __DIR__;
 
-        $viewDir = ($viewSource === 'theme') ? "/themes/" . ACTIVE_THEME . "/views/" : "/app/views/";
-        $layoutDir = ($layoutSource === 'theme') ? "/themes/" . ACTIVE_THEME . "/views/layouts/" : "/app/views/layouts/";
+        $viewDir = match ($viewSource) {
+            'core' => '/app/views/',
+            'theme' => '/themes/' . ACTIVE_THEME . '/views/',
+            'plugin' => resolve_plugin_view_directory($plugin),
+            default => throw new InvalidArgumentException(
+                "Invalid view source: {$viewSource}"
+            ),
+        };
 
-        $fullViewPath = $root . $viewDir . $path . '.php';
-        $layoutPath = $root . $layoutDir . $layout . '.php';
+        $layoutDir = match ($layoutSource) {
+            'core' => '/app/views/layouts/',
+            'theme' => '/themes/' . ACTIVE_THEME . '/views/layouts/',
+            'plugin' => resolve_plugin_layout_directory($plugin),
+            default => throw new InvalidArgumentException(
+                "Invalid layout source: {$layoutSource}"
+            ),
+        };
+
+        $fullViewPath = $root
+            . $viewDir
+            . ltrim($path, '/')
+            . '.php';
+
+        $layoutPath = $root
+            . $layoutDir
+            . ltrim($layout, '/')
+            . '.php';
+
+        if (!file_exists($fullViewPath)) {
+            throw new RuntimeException(
+                "View not found: {$fullViewPath}"
+            );
+        }
 
         ob_start();
-        if (file_exists($fullViewPath)) {
+
+        try {
             include $fullViewPath;
-        } else {
-            throw new \Exception("View not found: " . $fullViewPath);
+            $content = ob_get_clean();
+        } catch (Throwable $e) {
+            ob_end_clean();
+            throw $e;
         }
-        $content = ob_get_clean();
 
         if (file_exists($layoutPath)) {
             include $layoutPath;
         } else {
             echo $content;
         }
+
         exit;
+    }
+}
+
+if (!function_exists('resolve_plugin_view_directory')) {
+    function resolve_plugin_view_directory(?string $plugin): string
+    {
+        if ($plugin === null || trim($plugin) === '') {
+            throw new InvalidArgumentException(
+                'Plugin name is required when viewSource is "plugin".'
+            );
+        }
+
+        $plugin = trim($plugin, '/\\');
+
+        if (
+            str_contains($plugin, '..')
+            || str_contains($plugin, '/')
+            || str_contains($plugin, '\\')
+        ) {
+            throw new InvalidArgumentException(
+                'Invalid plugin name.'
+            );
+        }
+
+        return '/plugins/' . $plugin . '/views/';
+    }
+}
+
+if (!function_exists('resolve_plugin_layout_directory')) {
+    function resolve_plugin_layout_directory(?string $plugin): string
+    {
+        return resolve_plugin_view_directory($plugin) . 'layouts/';
     }
 }
 
@@ -165,6 +230,18 @@ if (!function_exists('core_info')) {
     function core_info(?string $key = null, $default = null)
     {
         $path = base_path('core.json');
+        return get_json_data($path, $key, $default);
+    }
+}
+
+if (!function_exists('plugin_info')) {
+    function plugin_info(
+        string $plugin,
+        ?string $key = null,
+        $default = null
+    ) {
+        $path = plugins_path($plugin . '/plugin.json');
+
         return get_json_data($path, $key, $default);
     }
 }
