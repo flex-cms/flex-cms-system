@@ -3,7 +3,177 @@
 use Flex\Core\UI\Sidebar;
 
 $currentSidebarName = $sidebarName ?? 'admin_main';
-$sidebarLinks = Sidebar::getLinks($currentSidebarName);
+
+$coreSidebarLinks = Sidebar::getCoreLinks(
+    $currentSidebarName
+);
+
+$pluginSidebarLinks = Sidebar::getPluginLinks(
+    $currentSidebarName
+);
+
+$currentPath = parse_url(
+    $_SERVER['REQUEST_URI'] ?? '/',
+    PHP_URL_PATH
+);
+
+function renderSidebarLinks(
+    array $links,
+    string $currentPath,
+    bool $pluginLinks = false
+): void {
+    foreach ($links as $link) {
+        $url = (string) ($link['url'] ?? '#');
+        $label = (string) ($link['label'] ?? '');
+        $icon = (string) (
+            $link['icon']
+            ?? 'fa-puzzle-piece'
+        );
+
+        $children = isset($link['children'])
+            && is_array($link['children'])
+            ? $link['children']
+            : [];
+
+        $hasChildren = $children !== [];
+
+        $isGroupActive = $url !== '#'
+            && str_starts_with($currentPath, $url);
+
+        if ($hasChildren) {
+            foreach ($children as $child) {
+                $childUrl = (string) (
+                    $child['url'] ?? ''
+                );
+
+                if (
+                    $childUrl !== ''
+                    && str_starts_with(
+                        $currentPath,
+                        $childUrl
+                    )
+                ) {
+                    $isGroupActive = true;
+                    break;
+                }
+            }
+        }
+
+        $safeUrl = htmlspecialchars(
+            $url,
+            ENT_QUOTES,
+            'UTF-8'
+        );
+
+        $safeLabel = htmlspecialchars(
+            $label,
+            ENT_QUOTES,
+            'UTF-8'
+        );
+
+        $safeIcon = htmlspecialchars(
+            $icon,
+            ENT_QUOTES,
+            'UTF-8'
+        );
+
+        $pluginSlug = htmlspecialchars(
+            (string) ($link['plugin'] ?? ''),
+            ENT_QUOTES,
+            'UTF-8'
+        );
+
+        if ($hasChildren) {
+            ?>
+            <div x-cloak x-data="{
+                    subOpen: <?= $isGroupActive
+                        ? 'true'
+                        : 'false' ?>
+                }" class="space-y-1">
+                <button type="button" @click="subOpen = !subOpen"
+                    class="w-full flex items-center justify-between px-3 py-2 rounded-md font-semibold text-left transition-colors"
+                    :class="subOpen
+                        ? 'text-white bg-neutral-900/50'
+                        : 'text-slate-400 hover:bg-primary hover:text-white'">
+                    <div class="flex min-w-0 items-center gap-3">
+                        <i class="fa-solid <?= $safeIcon ?> text-xl w-6 shrink-0" :class="subOpen ? 'text-primary' : ''"></i>
+
+                        <span class="truncate">
+                            <?= $safeLabel ?>
+                        </span>
+                    </div>
+
+                    <i class="fa-solid fa-chevron-down text-sm transition-transform duration-200" :class="{
+                            'rotate-180': subOpen
+                        }"></i>
+                </button>
+
+                <div x-show="subOpen" x-collapse style="<?= $isGroupActive
+                    ? ''
+                    : 'display: none;' ?>" class="sidebar-child-menu">
+                    <div class="pl-9 space-y-1">
+                        <?php foreach ($children as $child): ?>
+                            <?php
+                            $childUrl = (string) (
+                                $child['url'] ?? '#'
+                            );
+
+                            $childLabel = htmlspecialchars(
+                                (string) (
+                                    $child['label'] ?? ''
+                                ),
+                                ENT_QUOTES,
+                                'UTF-8'
+                            );
+
+                            $safeChildUrl = htmlspecialchars(
+                                $childUrl,
+                                ENT_QUOTES,
+                                'UTF-8'
+                            );
+
+                            $isChildActive =
+                                $childUrl !== '#'
+                                && str_starts_with(
+                                    $currentPath,
+                                    $childUrl
+                                );
+                            ?>
+
+                            <a href="<?= $safeChildUrl ?>" @click.prevent="navigateTo('<?= $safeChildUrl ?>')" class="block px-3 py-1.5 rounded-md text-base transition-colors <?= $isChildActive
+                                    ? 'text-secondary font-bold bg-neutral-900/30'
+                                    : 'text-slate-400 hover:text-white'
+                                    ?>">
+                                <?= $childLabel ?>
+                            </a>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            </div>
+            <?php
+        } else {
+            ?>
+            <a href="<?= $safeUrl ?>" class="flex items-center gap-3 px-3 py-2 rounded-md font-semibold transition-colors <?= $isGroupActive
+                  ? 'bg-primary text-white'
+                  : 'text-slate-400 hover:bg-primary hover:text-white'
+                  ?>">
+                <i class="fa-solid <?= $safeIcon ?> text-xl w-6 shrink-0"></i>
+
+                <span class="min-w-0 flex-1 truncate">
+                    <?= $safeLabel ?>
+                </span>
+
+                <?php if ($pluginLinks): ?>
+                    <span title="Добавено от плъгин: <?= $pluginSlug ?>"
+                        class="shrink-0 rounded bg-primary/15 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary">
+                        Плъгин
+                    </span>
+                <?php endif; ?>
+            </a>
+            <?php
+        }
+    }
+}
 ?>
 
 <div>
@@ -19,7 +189,10 @@ $sidebarLinks = Sidebar::getLinks($currentSidebarName);
             '-translate-x-full': !isOpen,
             'transition-transform duration-300': mounted
         }"
-        class="min-h-screen fixed inset-y-0 left-0 w-72 bg-black text-white z-50 transform shadow-2xl <?= !$is_open ? '-translate-x-full' : '' ?>">
+        class="min-h-screen fixed inset-y-0 left-0 flex w-72 flex-col bg-black text-white z-50 transform shadow-2xl <?= !$is_open
+            ? '-translate-x-full'
+            : ''
+        ?>">
 
         <div class="p-5 flex items-center justify-between">
             <div class="flex flex-col justify-center items-center mx-auto text-center">
@@ -34,64 +207,50 @@ $sidebarLinks = Sidebar::getLinks($currentSidebarName);
 
         <hr class="border-t border-gray-800" />
 
-        <nav x-cloak x-data class="space-y-2 flex-1 text-lg">
+        <nav
+            x-cloak
+            x-data
+            class="flex min-h-0 flex-1 flex-col overflow-y-auto text-lg"
+        >
             <?php $current_path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH); ?>
 
             <div class="p-2 space-y-1">
-                <?php foreach ($sidebarLinks as $link): ?>
-                    <?php $has_children = isset($link['children']) && !empty($link['children']);
+                <div class="p-2 space-y-1">
+                    <?php renderSidebarLinks(
+                        $coreSidebarLinks,
+                        $currentPath
+                    ); ?>
+                </div>
 
-                    $is_group_active = str_starts_with($current_path, $link['url']);
+                <?php if ($pluginSidebarLinks !== []): ?>
+                    <div class="mt-auto">
+                        <div class="px-5 pb-2">
+                            <div class="flex items-center gap-2">
+                                <div class="h-px flex-1 bg-gray-800"></div>
 
-                    if ($has_children) {
-                        foreach ($link['children'] as $child) {
-                            if (str_starts_with($current_path, $child['url'])) {
-                                $is_group_active = true;
-                                break;
-                            }
-                        }
-                    } ?>
+                                <span
+                                    class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-500">
+                                    <i class="fa-solid fa-plug text-[10px]"></i>
+                                    Плъгини
+                                </span>
 
-                    <?php if ($has_children): ?>
-                        <div x-cloak x-data="{ subOpen: <?= $is_group_active ? 'true' : 'false' ?> }" class="space-y-1">
-
-                            <button @click="subOpen = !subOpen"
-                                class="w-full flex items-center justify-between px-3 py-2 rounded-md font-semibold text-left transition-colors"
-                                :class="subOpen ? 'text-white bg-neutral-900/50' : 'text-slate-400 hover:bg-primary hover:text-white'">
-                                <div class="flex items-center gap-3">
-                                    <i class="fa-solid <?= $link['icon'] ?> text-xl w-6"
-                                        :class="subOpen ? 'text-primary' : ''"></i>
-                                    <span>
-                                        <?= $link['label'] ?>
-                                    </span>
-                                </div>
-                                <i class="fa-solid fa-chevron-down text-sm transition-transform duration-200"
-                                    :class="{ 'rotate-180': subOpen }"></i>
-                            </button>
-
-                            <div x-show="subOpen" x-collapse style="<?= $is_group_active ? '' : 'display: none;' ?>" class="sidebar-child-menu">
-                                <div class="pl-9 space-y-1">
-                                    <?php foreach ($link['children'] as $child): ?>
-                                        <?php $is_child_active = str_starts_with($current_path, $child['url']); ?>
-                                        <a href="<?= $child['url'] ?>" @click.prevent="navigateTo('<?= $child['url'] ?>')"
-                                            class="block px-3 py-1.5 rounded-md text-base transition-colors <?= $is_child_active ? 'text-secondary font-bold bg-neutral-900/30' : 'text-slate-400 hover:text-white' ?>">
-                                            <?= $child['label'] ?>
-                                        </a>
-                                    <?php endforeach; ?>
-                                </div>
+                                <div class="h-px flex-1 bg-gray-800"></div>
                             </div>
+
+                            <p class="mt-1 text-center text-xs text-gray-400">
+                                Менюта, добавени от разширения
+                            </p>
                         </div>
-                    <?php else: ?>
-                        <a href="<?= $link['url'] ?>"
-                            class="flex items-center gap-3 px-3 py-2 rounded-md font-semibold transition-colors 
-                            <?= $is_group_active ? 'bg-primary text-white' : 'text-slate-400 hover:bg-primary hover:text-white' ?>">
-                            <i class="fa-solid <?= $link['icon'] ?> text-xl w-6"></i>
-                            <span>
-                                <?= $link['label'] ?>
-                            </span>
-                        </a>
-                    <?php endif; ?>
-                <?php endforeach; ?>
+
+                        <div class="p-2 pt-0 space-y-1">
+                            <?php renderSidebarLinks(
+                                $pluginSidebarLinks,
+                                $currentPath,
+                                true
+                            ); ?>
+                        </div>
+                    </div>
+                <?php endif; ?>
             </div>
 
             <hr class="border-t border-gray-800" />

@@ -16,8 +16,9 @@ class PluginManager
     protected $activePlugins = [];
     protected $assetsToRender = ['styles' => [], 'scripts' => []];
     protected array $providers = [];
-    protected ?Router $router = null;
+
     protected PluginManifestValidator $manifestValidator;
+    protected ?Router $router = null;
 
     public function __construct(
         EventManager $events,
@@ -27,6 +28,7 @@ class PluginManager
         $this->events = $events;
         $this->activePlugins = $activePlugins;
         $this->pluginsPath = dirname(__DIR__, 3) . '/plugins';
+
         $this->manifestValidator = $manifestValidator
             ?? new PluginManifestValidator();
     }
@@ -472,23 +474,16 @@ class PluginManager
         }
     }
 
-    private function createProvider(
-        array $manifest,
-        string $pluginPath,
-        Router $router
-    ): PluginServiceProviderInterface {
+    private function createProvider(array $manifest, string $pluginPath, Router $router): PluginServiceProviderInterface
+    {
         $providerClass = $manifest['provider'] ?? null;
 
         if (!is_string($providerClass) || $providerClass === '') {
-            throw new \RuntimeException(
-                'В plugin.json не е зададен provider клас.'
-            );
+            throw new RuntimeException('В plugin.json не е зададен provider клас.');
         }
 
         if (!class_exists($providerClass)) {
-            throw new \RuntimeException(
-                "Provider класът {$providerClass} не беше намерен."
-            );
+            throw new RuntimeException("Provider класът {$providerClass} не беше намерен.");
         }
 
         $provider = new $providerClass(
@@ -499,9 +494,10 @@ class PluginManager
         );
 
         if (!$provider instanceof PluginServiceProviderInterface) {
-            throw new \RuntimeException(
-                "Provider класът {$providerClass} трябва да имплементира " .
-                PluginServiceProviderInterface::class . '.'
+            throw new RuntimeException(
+                "Provider класът {$providerClass} трябва да имплементира "
+                . PluginServiceProviderInterface::class
+                . '.'
             );
         }
 
