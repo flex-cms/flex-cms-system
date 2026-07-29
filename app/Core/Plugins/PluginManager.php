@@ -8,6 +8,8 @@ use Flex\Core\Plugins\Contracts\PluginServiceProviderInterface;
 use Flex\Core\Routing\Router;
 use Flex\Core\Services\PluginDatabaseService;
 use Flex\Models\Plugin;
+use Flex\Core\Plugins\Migrations\PluginMigrationManager;
+use Illuminate\Database\Connection;
 use RuntimeException;
 
 class PluginManager
@@ -21,10 +23,14 @@ class PluginManager
     protected PluginManifestValidator $manifestValidator;
     protected ?Router $router = null;
 
+    private PluginMigrationManager $migrationManager;
+
     public function __construct(
         EventManager $events,
+        Connection $connection,
         array $activePlugins = [],
-        ?PluginManifestValidator $manifestValidator = null
+        ?PluginManifestValidator $manifestValidator = null,
+        ?PluginMigrationManager $migrationManager = null
     ) {
         $this->events = $events;
         $this->activePlugins = $activePlugins;
@@ -32,6 +38,9 @@ class PluginManager
 
         $this->manifestValidator = $manifestValidator
             ?? new PluginManifestValidator();
+
+        $this->migrationManager = $migrationManager
+            ?? new PluginMigrationManager($connection);
     }
 
     public function setRouter(Router $router): self
@@ -99,6 +108,24 @@ class PluginManager
             $manifest,
             $pluginPath
         );
+
+        $pendingMigrations = $this->migrationManager->pending(
+            $slug,
+            $pluginPath
+            . DIRECTORY_SEPARATOR
+            . 'database'
+            . DIRECTORY_SEPARATOR
+            . 'migrations'
+        );
+
+        if ($pendingMigrations !== []) {
+            throw new RuntimeException(
+                sprintf(
+                    'Плъгинът има %d неизпълнени migration файла и не може да бъде активиран.',
+                    count($pendingMigrations)
+                )
+            );
+        }
 
         try {
             $this->runInstallerHook(
@@ -239,23 +266,17 @@ class PluginManager
             );
 
             if ($removeData) {
-                $uninstallSqlPath = $pluginPath
-                    . DIRECTORY_SEPARATOR
-                    . 'database'
-                    . DIRECTORY_SEPARATOR
-                    . 'uninstall.sql';
-
-                if (is_file($uninstallSqlPath)) {
-                    $databaseService = new PluginDatabaseService();
-
-                    $databaseService->executeSqlFile(
-                        $slug,
-                        $uninstallSqlPath
-                    );
-                }
+                $this->rollbackAllPluginMigrations(
+                    $slug,
+                    $pluginPath
+                );
             }
 
-            Plugin::where('slug', $slug)->delete();
+            Plugin::where('slug', $slug)->update([
+                'is_active' => false,
+                'is_installed' => false,
+                'version' => null,
+            ]);
 
             unset($this->providers[$slug]);
 
@@ -291,6 +312,8 @@ class PluginManager
 
         $this->deleteDirectory($pluginPath);
 
+        Plugin::where('slug', $slug)->delete();
+
         $this->events->trigger(
             "plugin.files_deleted.{$slug}",
             ['slug' => $slug]
@@ -320,14 +343,14 @@ class PluginManager
 
         $plugin = Plugin::where('slug', $slug)->first();
 
-        if ($plugin) {
+        if ($plugin && (bool) $plugin->is_installed) {
             throw new RuntimeException(
                 "Плъгинът „{$slug}“ вече е инсталиран."
             );
         }
 
         try {
-            $this->runPluginInstallMigrations(
+            $this->runPluginMigrations(
                 $slug,
                 $manifest,
                 $pluginPath
@@ -338,12 +361,16 @@ class PluginManager
                 'install'
             );
 
-            Plugin::create([
-                'name' => $manifest['name'],
-                'slug' => $manifest['slug'],
-                'version' => $manifest['version'],
-                'is_active' => false,
-            ]);
+            Plugin::updateOrCreate(
+                ['slug' => $slug],
+                [
+                    'name' => $manifest['name'],
+                    'description' => $manifest['description'] ?? null,
+                    'version' => $manifest['version'],
+                    'is_active' => false,
+                    'is_installed' => true,
+                ]
+            );
 
             $this->events->trigger(
                 "plugin.installed.{$slug}",
@@ -386,7 +413,7 @@ class PluginManager
         return $pluginPath;
     }
 
-    private function runPluginInstallMigrations(
+    private function runPluginMigrations(
         string $slug,
         array $manifest,
         string $pluginPath
@@ -395,29 +422,21 @@ class PluginManager
             return;
         }
 
-        $version = $manifest['version'] ?? '1.0.0';
-
-        $sqlPath = $pluginPath
+        $this->migrationManager->migrate(
+            pluginSlug: $slug,
+            pluginVersion: (string) $manifest['version'],
+            migrationsPath: $pluginPath
             . DIRECTORY_SEPARATOR
             . 'database'
             . DIRECTORY_SEPARATOR
-            . 'migrations'
-            . DIRECTORY_SEPARATOR
-            . $version
-            . '.sql';
-
-        if (!is_file($sqlPath)) {
-            throw new RuntimeException(
-                "Migration файлът за версия {$version} не съществува."
-            );
-        }
-
-        $databaseService = new PluginDatabaseService();
-
-        $databaseService->executeSqlFile(
-            $slug,
-            $sqlPath
+            . 'migrations',
+            tablePrefix: $this->makePluginTablePrefix($slug),
         );
+    }
+
+    private function makePluginTablePrefix(string $slug): string
+    {
+        return 'plugin_' . str_replace('-', '_', $slug);
     }
 
     private function runInstallerHook(
@@ -919,6 +938,104 @@ class PluginManager
             );
 
             return null;
+        }
+    }
+
+    public function migrateUpdatedPlugin(string $slug): bool
+    {
+        $plugin = Plugin::where('slug', $slug)->first();
+
+        if (!$plugin || !(bool) $plugin->is_installed) {
+            throw new RuntimeException(
+                "Плъгинът „{$slug}“ не е инсталиран."
+            );
+        }
+
+        $manifest = $this->getManifest($slug);
+
+        if (!($manifest['manifest_valid'] ?? false)) {
+            throw new RuntimeException(
+                'Новият manifest не е валиден: '
+                . implode(' ', $manifest['manifest_errors'] ?? [])
+            );
+        }
+
+        $installedVersion = (string) $plugin->version;
+        $availableVersion = (string) $manifest['version'];
+
+        if (version_compare($availableVersion, $installedVersion, '<=')) {
+            throw new RuntimeException(
+                "Версия {$availableVersion} не е по-нова от инсталираната версия {$installedVersion}."
+            );
+        }
+
+        $pluginPath = $this->getPluginDirectory($slug);
+
+        $this->registerPluginAutoload(
+            $manifest,
+            $pluginPath
+        );
+
+        try {
+            $this->runPluginMigrations(
+                $slug,
+                $manifest,
+                $pluginPath
+            );
+
+            Plugin::where('slug', $slug)->update([
+                'version' => $availableVersion,
+            ]);
+
+            $this->events->trigger(
+                "plugin.updated.{$slug}",
+                [
+                    'slug' => $slug,
+                    'from_version' => $installedVersion,
+                    'to_version' => $availableVersion,
+                ]
+            );
+
+            return true;
+        } catch (\Throwable $exception) {
+            $this->events->trigger(
+                "plugin.failed.{$slug}",
+                [
+                    'stage' => 'update',
+                    'exception' => $exception,
+                ]
+            );
+
+            throw new RuntimeException(
+                "Обновяването на плъгина „{$slug}“ беше неуспешно: "
+                . $exception->getMessage(),
+                previous: $exception
+            );
+        }
+    }
+
+    private function rollbackAllPluginMigrations(
+        string $slug,
+        string $pluginPath
+    ): void {
+        $migrationsPath = $pluginPath
+            . DIRECTORY_SEPARATOR
+            . 'database'
+            . DIRECTORY_SEPARATOR
+            . 'migrations';
+
+        $tablePrefix = $this->makePluginTablePrefix($slug);
+
+        while (
+            $this->migrationManager
+                ->rollback(
+                    pluginSlug: $slug,
+                    migrationsPath: $migrationsPath,
+                    tablePrefix: $tablePrefix,
+                )
+                ->count() > 0
+        ) {
+            // Връща batch-овете един по един до пълно изчистване.
         }
     }
 }

@@ -6,18 +6,29 @@ use Flex\Core\UI\Table;
 $plugins = $plugins ?? [];
 
 $initialStatuses = [];
+$initialInstalled = [];
+$initialVersions = [];
 
 foreach ($plugins as $plugin) {
-    if (isset($plugin->id)) {
-        $initialStatuses[$plugin->id] = (bool) $plugin->is_active;
-    }
+    $slug = (string) $plugin->slug;
+
+    $initialStatuses[$slug] = (bool) ($plugin->is_active ?? false);
+    $initialInstalled[$slug] = (bool) ($plugin->is_installed ?? false);
+    $initialVersions[$slug] = $plugin->version
+        ? (string) $plugin->version
+        : null;
 }
 
 $pluginManagerConfig = [
+    'installUrl' => '/admin/plugins/install',
     'toggleUrl' => '/admin/plugins/toggle',
     'deleteUrl' => '/admin/plugins/delete',
     'updateUrl' => '/admin/plugins/update',
+
     'initialStatuses' => $initialStatuses,
+    'initialInstalled' => $initialInstalled,
+    'initialVersions' => $initialVersions,
+
     'confirmDeleteMessage' => 'Сигурни ли сте, че искате да премахнете този плъгин?',
 ];
 
@@ -30,7 +41,21 @@ $pluginToArray = static function ($plugin): array {
         'name' => (string) ($manifest['name'] ?? $plugin->name ?? ''),
         'slug' => (string) ($manifest['slug'] ?? $plugin->slug ?? ''),
         'description' => (string) ($manifest['description'] ?? $plugin->description ?? ''),
-        'version' => (string) ($manifest['version'] ?? $plugin->version ?? '1.0.0'),
+        'is_installed' => (bool) ($plugin->is_installed ?? false),
+        'is_active' => (bool) ($plugin->is_active ?? false),
+        'installed_version' => $plugin->version
+            ? (string) $plugin->version
+            : null,
+        'available_version' => (string) (
+            $manifest['version']
+            ?? '1.0.0'
+        ),
+        'update_available' => $plugin->version !== null
+            && version_compare(
+                (string) ($manifest['version'] ?? '0.0.0'),
+                (string) $plugin->version,
+                '>'
+            ),
         'type' => (string) ($manifest['type'] ?? 'plugin'),
         'license' => (string) ($manifest['license'] ?? ''),
         'homepage' => (string) ($manifest['homepage'] ?? ''),
@@ -65,7 +90,8 @@ $pluginToArray = static function ($plugin): array {
 <?php $deactivatedPlugins = $deactivatedPlugins ?? []; ?>
 
 <?php if ($deactivatedPlugins !== []): ?>
-    <div class="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
+    <div
+        class="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
         <div class="flex items-start gap-3">
             <i class="fa-solid fa-triangle-exclamation mt-0.5"></i>
 
@@ -149,16 +175,24 @@ $pluginToArray = static function ($plugin): array {
                     ENT_QUOTES,
                     'UTF-8'
                 );
+                $slug = htmlspecialchars(
+                    json_encode(
+                        (string) $plugin->slug,
+                        JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+                    ),
+                    ENT_QUOTES,
+                    'UTF-8'
+                );
                 $manifestValid = (bool) ($manifest['manifest_valid'] ?? false);
                 ?>
 
                 <article data-plugin-card="<?= (int) $plugin->id ?>"
-                    class="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg dark:border-slate-700 dark:bg-slate-900">
+                    class="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg dark:border-slate-700 dark:bg-slate-950">
                     <div class="flex flex-1 flex-col p-5">
                         <div class="flex items-start justify-between gap-4">
                             <div class="flex min-w-0 items-center gap-3">
                                 <div
-                                    class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400">
+                                    class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-700">
                                     <i class="fa-solid fa-puzzle-piece text-lg"></i>
                                 </div>
 
@@ -167,11 +201,17 @@ $pluginToArray = static function ($plugin): array {
                                         <h2 class="truncate text-base font-bold text-slate-900 dark:text-white">
                                             <?= e($manifest['name'] ?? $plugin->name ?? 'Плъгин') ?>
                                         </h2>
+                                        <p class="mt-1 truncate text-xs text-slate-500 dark:text-slate-400">
+                                            <?= e($manifest['slug'] ?? $plugin->slug ?? '') ?>
+                                        </p>
 
                                         <span
+                                            class="rounded-md bg-slate-100 px-2 py-0.5 font-mono text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+                                            x-text="'Текуща версия: ' + (versions[<?= $slug ?>] || 'Не е инсталиран')"></span>
+                                        <span
                                             class="rounded-md bg-slate-100 px-2 py-0.5 font-mono text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-                                            v
-                                            <?= e($manifest['version'] ?? $plugin->version ?? '1.0.0') ?>
+                                            Налична:
+                                            <?= e($manifest['version'] ?? 'Неизвестна') ?>
                                         </span>
 
                                         <?php if (!$manifestValid): ?>
@@ -194,17 +234,19 @@ $pluginToArray = static function ($plugin): array {
                                             </span>
                                         <?php endif; ?>
                                     </div>
-
-                                    <p class="mt-1 truncate text-xs text-slate-500 dark:text-slate-400">
-                                        <?= e($manifest['slug'] ?? $plugin->slug ?? '') ?>
-                                    </p>
                                 </div>
                             </div>
 
-                            <span x-text="statuses[<?= (int) $plugin->id ?>] ? 'Активен' : 'Неактивен'"
-                                :class="statuses[<?= (int) $plugin->id ?>]
-                                    ? 'bg-emerald-50 text-emerald-700 ring-emerald-600/20 dark:bg-emerald-500/10 dark:text-emerald-400'
-                                    : 'bg-slate-100 text-slate-600 ring-slate-500/20 dark:bg-slate-800 dark:text-slate-400'"
+                            <span x-text="!installed[<?= $slug ?>]
+                                    ? 'Не е инсталиран'
+                                    : statuses[<?= $slug ?>]
+                                        ? 'Активен'
+                                        : 'Неактивен'"
+                                :class="!installed[<?= $slug ?>]
+                                    ? 'bg-slate-100 text-slate-600 ring-slate-500/20 dark:bg-slate-800 dark:text-slate-400'
+                                    : statuses[<?= $slug ?>]
+                                        ? 'bg-emerald-50 text-emerald-700 ring-emerald-600/20 dark:bg-emerald-500/10 dark:text-emerald-400'
+                                        : 'bg-amber-50 text-amber-700 ring-amber-600/20 dark:bg-amber-500/10 dark:text-amber-400'"
                                 class="shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset"></span>
                         </div>
 
@@ -213,10 +255,10 @@ $pluginToArray = static function ($plugin): array {
                         </p>
 
                         <?php if (!empty($manifest['features'])): ?>
-                            <div class="mt-4 flex flex-wrap gap-2">
+                            <div class="mt-4 flex flex-wrap gap-1">
                                 <?php foreach (array_slice($manifest['features'], 0, 3) as $feature): ?>
                                     <span
-                                        class="rounded-lg bg-indigo-50 px-2.5 py-1 text-xs font-medium text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300">
+                                        class="rounded bg-slate-100 dark:bg-slate-700 text-xs px-1.5 py-0.5">
                                         <?= e(ucwords(str_replace(['-', '_'], ' ', $feature))) ?>
                                     </span>
                                 <?php endforeach; ?>
@@ -238,8 +280,9 @@ $pluginToArray = static function ($plugin): array {
 
                                     <?php if (!empty($author['website'])): ?>
                                         <a href="<?= e($author['website']) ?>" target="_blank" rel="noopener noreferrer"
-                                            class="block truncate text-sm font-semibold text-indigo-600 hover:underline dark:text-indigo-400">
+                                            class="block truncate hover:underline text-sm">
                                             <?= e($author['name'] ?? 'KRISKATA.COM') ?>
+                                            <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
                                         </a>
                                     <?php else: ?>
                                         <p class="truncate text-sm font-semibold text-slate-700 dark:text-slate-200">
@@ -259,28 +302,29 @@ $pluginToArray = static function ($plugin): array {
 
                     <div
                         class="flex items-center gap-2 border-t border-slate-200 bg-slate-50 px-5 py-3 dark:border-slate-700 dark:bg-slate-800/50">
-                        <button type="button" @click="toggleStatus(<?= (int) $plugin->id ?>)" :disabled="
-                                loading[<?= (int) $plugin->id ?>] ||
-                                (!statuses[<?= (int) $plugin->id ?>] && !<?= $manifestValid ? 'true' : 'false' ?>)
-                            "
-                            class="inline-flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50"
-                            :class="statuses[<?= (int) $plugin->id ?>]
-                                ? 'bg-amber-50 text-amber-700 hover:bg-amber-100 dark:bg-amber-500/10 dark:text-amber-400'
-                                : 'bg-emerald-600 text-white hover:bg-emerald-700'">
-                            <i class="fa-solid" :class="statuses[<?= (int) $plugin->id ?>] ? 'fa-pause' : 'fa-play'"></i>
+                        <button type="button" @click='handlePluginStatus(<?= $slug ?>)'
+                            :disabled='loading[<?= $slug ?>] || (!installed[<?= $slug ?>] && !<?= $manifestValid ? 'true' : 'false' ?>)'
+                            :class='buttonClass(
+                    <?= $slug ?>)'
+                            class="inline-flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm
+                    font-semibold transition disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                            <i class="fa-solid" :class='buttonIcon(<?= $slug ?>)'></i>
 
-                            <span x-text="statuses[<?= (int) $plugin->id ?>] ? 'Деактивиране' : 'Активиране'"></span>
+                            <span x-text='buttonText(<?= $slug ?>)'></span>
                         </button>
 
-                        <button type="button" @click="updatePlugin(<?= (int) $plugin->id ?>)"
-                            :disabled="loading[<?= (int) $plugin->id ?>]" title="Обновяване"
-                            class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-white text-indigo-600 shadow-sm ring-1 ring-slate-200 transition hover:bg-indigo-50 disabled:opacity-50 dark:bg-slate-900 dark:text-indigo-400 dark:ring-slate-700 dark:hover:bg-slate-800">
-                            <i class="fa-solid fa-cloud-arrow-down"></i>
+                        <button type="button" @click='updatePlugin(<?= $slug ?>)'
+                            :disabled='loading[<?= $slug ?>] || !installed[<?= $slug ?>]' title="Обновяване"
+                            class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-white text-primary shadow-sm ring-1 ring-slate-200 transition hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-slate-900 dark:ring-slate-700 dark:hover:bg-slate-800">
+                            <i class="fa-solid" :class="loading[<?= $slug ?>]
+                ? 'fa-spinner fa-spin'
+                : 'fa-cloud-arrow-down'"></i>
                         </button>
 
-                        <button type="button" @click="deleteItem(<?= (int) $plugin->id ?>)"
-                            :disabled="loading[<?= (int) $plugin->id ?>]" title="Премахване"
-                            class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-white text-red-600 shadow-sm ring-1 ring-slate-200 transition hover:bg-red-50 disabled:opacity-50 dark:bg-slate-900 dark:text-red-400 dark:ring-slate-700 dark:hover:bg-slate-800">
+                        <button type="button" @click='deleteItem(<?= $slug ?>)'
+                            :disabled='loading[<?= $slug ?>] || !installed[<?= $slug ?>]' title="Премахване"
+                            class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-white text-red-600 shadow-sm ring-1 ring-slate-200 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-slate-900 dark:text-red-400 dark:ring-slate-700 dark:hover:bg-slate-800">
                             <i class="fa-solid fa-trash-can"></i>
                         </button>
                     </div>
@@ -293,7 +337,7 @@ $pluginToArray = static function ($plugin): array {
         <div x-show="detailsOpen" x-cloak class="fixed inset-0 z-100 flex items-center justify-center p-4 sm:p-6"
             role="dialog" aria-modal="true">
             <div x-show="detailsOpen" x-transition.opacity @click="closeDetails()"
-                class="absolute inset-0 bg-slate-950/65 backdrop-blur-sm"></div>
+                class="absolute inset-0 bg-slate-900/65 backdrop-blur-sm"></div>
 
             <div x-show="detailsOpen" x-transition:enter="transition duration-200 ease-out"
                 x-transition:enter-start="translate-y-4 scale-95 opacity-0"
@@ -301,28 +345,41 @@ $pluginToArray = static function ($plugin): array {
                 x-transition:leave="transition duration-150 ease-in"
                 x-transition:leave-start="translate-y-0 scale-100 opacity-100"
                 x-transition:leave-end="translate-y-4 scale-95 opacity-0" @click.stop
-                class="relative flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-slate-900">
+                class="relative flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-slate-950">
                 <template x-if="selectedPlugin">
                     <div class="flex min-h-0 flex-1 flex-col">
                         <div
                             class="flex items-start justify-between gap-4 border-b border-slate-200 px-6 py-5 dark:border-slate-700">
                             <div class="flex min-w-0 items-center gap-4">
                                 <div
-                                    class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400">
+                                    class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-700">
                                     <i class="fa-solid fa-puzzle-piece"></i>
                                 </div>
 
                                 <div class="min-w-0">
                                     <div class="flex flex-wrap items-center gap-2">
-                                        <h2 x-text="selectedPlugin.name"
-                                            class="truncate text-xl font-bold text-slate-900 dark:text-white"></h2>
+                                        <h2
+                                            x-text="selectedPlugin.name"
+                                            class="truncate text-xl font-bold text-slate-900 dark:text-white"
+                                        ></h2>
 
-                                        <span x-text="'v' + selectedPlugin.version"
-                                            class="rounded-md bg-slate-100 px-2 py-1 font-mono text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300"></span>
+                                        <span
+                                            x-text="selectedPlugin.installed_version
+                                                ? 'Текуща версия: ' + selectedPlugin.installed_version
+                                                : 'Не е инсталиран'"
+                                            class="rounded-md bg-slate-100 px-2 py-1 font-mono text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+                                        ></span>
+
+                                        <span
+                                            x-text="'Налична: ' + (selectedPlugin.available_version || 'Неизвестна')"
+                                            class="rounded-md bg-slate-100 px-2 py-1 font-mono text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+                                        ></span>
                                     </div>
 
-                                    <p x-text="selectedPlugin.slug"
-                                        class="mt-1 text-sm text-slate-500 dark:text-slate-400"></p>
+                                    <p
+                                        x-text="selectedPlugin.slug"
+                                        class="mt-1 text-sm text-slate-500 dark:text-slate-400"
+                                    ></p>
                                 </div>
                             </div>
 
@@ -342,17 +399,48 @@ $pluginToArray = static function ($plugin): array {
                                         Автор
                                     </p>
 
-                                    <p x-text="selectedPlugin.author.name || '—'"
-                                        class="mt-2 font-semibold text-slate-900 dark:text-white"></p>
+                                    <dl class="mt-2 space-y-2 text-sm">
+                                        <div class="flex justify-between gap-4">
+                                            <dt class="text-slate-500">Име</dt>
 
-                                    <a x-show="selectedPlugin.author.email"
-                                        :href="'mailto:' + selectedPlugin.author.email"
-                                        x-text="selectedPlugin.author.email"
-                                        class="mt-1 block text-sm text-indigo-600 hover:underline dark:text-indigo-400"></a>
+                                            <dd
+                                                x-text="selectedPlugin.author.name || '—'"
+                                                class="min-w-0 truncate text-right font-medium text-slate-900 dark:text-white"
+                                            ></dd>
+                                        </div>
 
-                                    <a x-show="selectedPlugin.author.website" :href="selectedPlugin.author.website"
-                                        x-text="selectedPlugin.author.website" target="_blank" rel="noopener noreferrer"
-                                        class="mt-1 block truncate text-sm text-indigo-600 hover:underline dark:text-indigo-400"></a>
+                                        <div
+                                            x-show="selectedPlugin.author.email"
+                                            class="flex justify-between gap-4"
+                                        >
+                                            <dt class="text-slate-500">Имейл</dt>
+
+                                            <dd class="min-w-0 text-right">
+                                                <a
+                                                    :href="'mailto:' + selectedPlugin.author.email"
+                                                    x-text="selectedPlugin.author.email"
+                                                    class="block truncate text-primary hover:underline"
+                                                ></a>
+                                            </dd>
+                                        </div>
+
+                                        <div
+                                            x-show="selectedPlugin.author.website"
+                                            class="flex justify-between gap-4"
+                                        >
+                                            <dt class="text-slate-500">Уебсайт</dt>
+
+                                            <dd class="min-w-0 text-right">
+                                                <a
+                                                    :href="selectedPlugin.author.website"
+                                                    x-text="selectedPlugin.author.website"
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    class="block truncate text-primary hover:underline"
+                                                ></a>
+                                            </dd>
+                                        </div>
+                                    </dl>
                                 </div>
 
                                 <div class="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
@@ -363,34 +451,40 @@ $pluginToArray = static function ($plugin): array {
                                     <dl class="mt-2 space-y-2 text-sm">
                                         <div class="flex justify-between gap-4">
                                             <dt class="text-slate-500">PHP</dt>
-                                            <dd x-text="selectedPlugin.requires.php || 'Не е зададено'"
-                                                class="font-mono text-slate-900 dark:text-white"></dd>
+
+                                            <dd
+                                                x-text="selectedPlugin.requires.php || 'Не е зададено'"
+                                                class="min-w-0 truncate text-right font-mono text-slate-900 dark:text-white"
+                                            ></dd>
                                         </div>
 
                                         <div class="flex justify-between gap-4">
                                             <dt class="text-slate-500">Flex CMS</dt>
-                                            <dd x-text="selectedPlugin.requires.flex || 'Не е зададено'"
-                                                class="font-mono text-slate-900 dark:text-white"></dd>
+
+                                            <dd
+                                                x-text="selectedPlugin.requires.flex || 'Не е зададено'"
+                                                class="min-w-0 truncate text-right font-mono text-slate-900 dark:text-white"
+                                            ></dd>
                                         </div>
                                     </dl>
                                 </div>
                             </div>
 
                             <div x-show="hasItems(selectedPlugin.features)" class="mt-6">
-                                <h3 class="text-sm font-bold text-slate-900 dark:text-white">
+                                <h3 class="font-semibold text-slate-900 dark:text-white">
                                     Функционалности
                                 </h3>
 
                                 <div class="mt-3 flex flex-wrap gap-2">
                                     <template x-for="feature in selectedPlugin.features" :key="feature">
                                         <span x-text="feature"
-                                            class="rounded-lg bg-indigo-50 px-3 py-1.5 text-sm font-medium text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300"></span>
+                                            class="rounded bg-slate-100 dark:bg-slate-700 px-2.5 py-1.5"></span>
                                     </template>
                                 </div>
                             </div>
 
                             <div x-show="hasItems(selectedPlugin.permissions)" class="mt-6">
-                                <h3 class="text-sm font-bold text-slate-900 dark:text-white">
+                                <h3 class="font-semibold text-slate-900 dark:text-white">
                                     Разрешения
                                 </h3>
 
@@ -451,7 +545,7 @@ $pluginToArray = static function ($plugin): array {
                             </div>
 
                             <div class="mt-6">
-                                <h3 class="text-sm font-bold text-slate-900 dark:text-white">
+                                <h3 class="font-semibold text-slate-900 dark:text-white">
                                     Компоненти
                                 </h3>
 
@@ -476,14 +570,14 @@ $pluginToArray = static function ($plugin): array {
                             <div class="mt-6 grid gap-3 sm:grid-cols-2">
                                 <a x-show="selectedPlugin.homepage" :href="selectedPlugin.homepage" target="_blank"
                                     rel="noopener noreferrer"
-                                    class="flex items-center justify-between rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-indigo-300 hover:text-indigo-600 dark:border-slate-700 dark:text-slate-200">
+                                    class="flex items-center justify-between rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-indigo-300 hover:text-primary dark:border-slate-700 dark:text-slate-200">
                                     Страница на плъгина
                                     <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
                                 </a>
 
                                 <a x-show="selectedPlugin.repository" :href="selectedPlugin.repository" target="_blank"
                                     rel="noopener noreferrer"
-                                    class="flex items-center justify-between rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-indigo-300 hover:text-indigo-600 dark:border-slate-700 dark:text-slate-200">
+                                    class="flex items-center justify-between rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-indigo-300 hover:text-primary dark:border-slate-700 dark:text-slate-200">
                                     GitHub repository
                                     <i class="fa-brands fa-github"></i>
                                 </a>

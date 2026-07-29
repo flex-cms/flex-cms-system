@@ -82,10 +82,7 @@ class PluginController extends BaseController
     public function install()
     {
         $data = $this->getJsonInput();
-
-        $slug = trim(
-            (string) ($data['slug'] ?? '')
-        );
+        $slug = trim((string) ($data['slug'] ?? ''));
 
         if ($slug === '') {
             return $this->jsonResponse(
@@ -95,10 +92,15 @@ class PluginController extends BaseController
         }
 
         $this->pluginManager->install($slug);
+        
+        $plugin = Plugin::where('slug', $slug)->first();
 
         return $this->jsonResponse(
             true,
-            'Плъгинът беше инсталиран успешно!'
+            'Плъгинът беше инсталиран успешно!',
+            [
+                'version' => $plugin?->version,
+            ]
         );
     }
 
@@ -106,20 +108,16 @@ class PluginController extends BaseController
     public function toggle()
     {
         $data = $this->getJsonInput();
+        $slug = $data['slug'];
 
-        $id = filter_var(
-            $data['id'] ?? null,
-            FILTER_VALIDATE_INT
-        );
-
-        if (!$id) {
+        if (!$slug) {
             return $this->jsonResponse(
                 false,
-                'Липсва или е невалидно ID на плъгина.'
+                'Липсва или е невалиден slug на плъгина.'
             );
         }
 
-        $plugin = Plugin::find($id);
+        $plugin = Plugin::firstWhere('slug', '=', $slug);
 
         if (!$plugin) {
             return $this->jsonResponse(
@@ -137,7 +135,6 @@ class PluginController extends BaseController
                 true,
                 'Плъгинът беше деактивиран успешно!',
                 [
-                    'id' => $plugin->id,
                     'slug' => $plugin->slug,
                     'is_active' => false,
                 ]
@@ -152,7 +149,6 @@ class PluginController extends BaseController
             true,
             'Плъгинът беше активиран успешно!',
             [
-                'id' => $plugin->id,
                 'slug' => $plugin->slug,
                 'is_active' => true,
             ]

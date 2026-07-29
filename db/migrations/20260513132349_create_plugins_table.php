@@ -16,7 +16,8 @@ final class CreatePluginsTable extends AbstractMigration
             ->addColumn('author_url', 'string', ['limit' => 255, 'null' => true])
             ->addColumn('requires', 'json', ['null' => true])
             ->addColumn('is_active', 'boolean', ['default' => false, 'null' => false])
-            ->addColumn('version', 'string', ['limit' => 20, 'default' => '1.0.0', 'null' => false])
+            ->addColumn('is_installed', 'boolean', ['default' => false, 'after' => 'is_active'])
+            ->addColumn('version', 'string', ['limit' => 20, 'default' => null, 'null' => true])
             ->addTimestamps()
             ->addIndex(['slug'], ['unique' => true, 'name' => 'idx_plugins_slug'])
             ->create();

@@ -92,6 +92,7 @@ $router->post('/admin/update/process', [UpdateController::class, 'process'], [Au
 
 // Plugins
 $router->get('/admin/plugins', [PluginController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]);
+$router->post('/admin/plugins/install', [PluginController::class, 'install'], [AuthMiddleware::class, AdminMiddleware::class]);
 $router->post('/admin/plugins/toggle', [PluginController::class, 'toggle'], [AuthMiddleware::class, AdminMiddleware::class]);
 $router->post('/admin/plugins/delete', [PluginController::class, 'delete'], [AuthMiddleware::class, AdminMiddleware::class]);
 $router->post('/admin/plugins/update', [PluginController::class, 'update'], [AuthMiddleware::class, AdminMiddleware::class]);

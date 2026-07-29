@@ -76,15 +76,21 @@ trait PluginUpdatable
             $this->deleteDirectory($extractPath);
             unlink($tempZipFile);
 
-            $newManifestPath = $targetPluginPath . '/plugin.json';
-            if (file_exists($newManifestPath)) {
-                $newManifest = json_decode(file_get_contents($newManifestPath), true);
-                if (json_last_error() === JSON_ERROR_NONE) {
-                    $plugin->version = $newManifest['version'] ?? $plugin->version;
-                    $plugin->name = $newManifest['name'] ?? $plugin->name;
-                    $plugin->description = $newManifest['description'] ?? $plugin->description;
-                    $plugin->save();
-                }
+            $this->pluginManager->migrateUpdatedPlugin(
+                $plugin->slug
+            );
+
+            $newManifest = json_decode(
+                file_get_contents($targetPluginPath . '/plugin.json'),
+                true
+            );
+
+            if (is_array($newManifest)) {
+                Plugin::where('slug', $plugin->slug)->update([
+                    'name' => $newManifest['name'] ?? $plugin->name,
+                    'description' => $newManifest['description']
+                        ?? $plugin->description,
+                ]);
             }
 
             return $this->jsonResponse(true, 'Плъгинът беше актуализиран успешно до последна версия!');

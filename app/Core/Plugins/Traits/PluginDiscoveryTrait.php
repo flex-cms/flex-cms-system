@@ -19,7 +19,7 @@ trait PluginDiscoveryTrait
         foreach ($folders as $folder) {
             $slug = basename($folder);
             $manifest = $this->getManifestData($folder, $slug);
-            
+
             $this->syncPluginRecord($slug, $manifest);
         }
     }
@@ -29,23 +29,23 @@ trait PluginDiscoveryTrait
         $manifestPath = $folder . '/plugin.json';
 
         $data = [
-            'name'        => ucfirst(str_replace('-', ' ', $slug)),
+            'name' => ucfirst(str_replace('-', ' ', $slug)),
             'description' => 'Управление на функционалности за ' . $slug,
-            'version'     => '1.0.0',
-            'author'      => null,
-            'author_url'  => null,
-            'requires'    => null,
+            'version' => '1.0.0',
+            'author' => null,
+            'author_url' => null,
+            'requires' => null,
         ];
 
         if (file_exists($manifestPath)) {
             $manifest = json_decode(file_get_contents($manifestPath), true);
             if (json_last_error() === JSON_ERROR_NONE) {
-                $data['name']        = $manifest['name'] ?? $data['name'];
+                $data['name'] = $manifest['name'] ?? $data['name'];
                 $data['description'] = $manifest['description'] ?? $data['description'];
-                $data['version']     = $manifest['version'] ?? $data['version'];
-                $data['author']      = $manifest['author'] ?? null;
-                $data['author_url']  = $manifest['author_url'] ?? null;
-                $data['requires']    = $manifest['requires'] ?? null;
+                $data['version'] = $manifest['version'] ?? $data['version'];
+                $data['author'] = $manifest['author'] ?? null;
+                $data['author_url'] = $manifest['author_url'] ?? null;
+                $data['requires'] = $manifest['requires'] ?? null;
             }
         }
 
@@ -58,20 +58,20 @@ trait PluginDiscoveryTrait
 
         if (!$plugin) {
             Plugin::create([
-                'name'        => $manifest['name'],
-                'slug'        => $slug,
+                'name' => $manifest['name'],
+                'slug' => $slug,
                 'description' => $manifest['description'],
-                'author'      => $manifest['author'],
-                'author_url'  => $manifest['author_url'],
-                'requires'    => $manifest['requires'],
-                'is_active'   => false,
-                'version'     => $manifest['version']
+                'author' => $manifest['author'],
+                'author_url' => $manifest['author_url'],
+                'requires' => $manifest['requires'],
+                'is_active' => false,
+                'is_installed' => false,
+                'version' => null,
             ]);
         } else {
             $dbRequires = is_string($plugin->requires) ? json_decode($plugin->requires, true) : $plugin->requires;
 
             if (
-                $plugin->version !== $manifest['version'] ||
                 $plugin->name !== $manifest['name'] ||
                 $plugin->description !== $manifest['description'] ||
                 $plugin->author !== $manifest['author'] ||
@@ -79,12 +79,11 @@ trait PluginDiscoveryTrait
                 $dbRequires !== $manifest['requires']
             ) {
                 Plugin::where('slug', $slug)->update([
-                    'name'        => $manifest['name'],
+                    'name' => $manifest['name'],
                     'description' => $manifest['description'],
-                    'version'     => $manifest['version'],
-                    'author'      => $manifest['author'],
-                    'author_url'  => $manifest['author_url'],
-                    'requires'    => $manifest['requires']
+                    'author' => $manifest['author'],
+                    'author_url' => $manifest['author_url'],
+                    'requires' => $manifest['requires']
                 ]);
             }
         }

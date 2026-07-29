@@ -19,36 +19,22 @@ class AdminController extends BaseController
         $stats = [
             'users_count' => User::count(),
             'active_users_count' => User::where('is_active', true)->count(),
-
             'pages_count' => Page::count(),
             'active_pages_count' => Page::where('is_active', true)->count(),
-
             'menus_count' => Menu::count(),
             'active_menus_count' => Menu::where('is_active', true)->count(),
-
             'plugins_count' => Plugin::count(),
             'active_plugins_count' => Plugin::where('is_active', true)->count(),
         ];
 
         $recentPages = Page::query()
-            ->select([
-                'id',
-                'name',
-                'full_slug',
-                'is_active',
-                'updated_at',
-            ])
+            ->select(['id', 'name', 'full_slug', 'is_active', 'updated_at'])
             ->latest('updated_at')
             ->limit(5)
             ->get();
 
         $recentLogins = User::query()
-            ->select([
-                'id',
-                'fullname',
-                'email',
-                'last_login',
-            ])
+            ->select(['id', 'fullname', 'email', 'last_login'])
             ->whereNotNull('last_login')
             ->latest('last_login')
             ->limit(5)
@@ -63,18 +49,13 @@ class AdminController extends BaseController
             'active_theme' => Setting::getValue('active_theme', 'Няма активна тема'),
         ];
 
-        render_view(
-            'admin/dashboard',
-            [
-                'title' => 'Табло за управление',
-                'stats' => $stats,
-                'recentPages' => $recentPages,
-                'recentLogins' => $recentLogins,
-                'system' => $system,
-            ],
-            'core',
-            'admin'
-        );
+        render_view('admin/dashboard', [
+            'title' => 'Табло за управление',
+            'stats' => $stats,
+            'recentPages' => $recentPages,
+            'recentLogins' => $recentLogins,
+            'system' => $system,
+        ], 'core', 'admin');
     }
 
     #[UseExceptions]

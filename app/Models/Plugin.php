@@ -16,10 +16,12 @@ class Plugin extends Model
         'author_url',
         'requires',
         'is_active',
+        'is_installed',
         'version'
     ];
 
     protected $casts = [
+        'is_installed' => 'boolean',
         'is_active' => 'boolean',
         'author_url' => 'string',
         'requires' => 'array',

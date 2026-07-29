@@ -1,22 +1,52 @@
 import axios from "axios";
 
 export default (config = {}) => ({
-    toggleUrl: config.toggleUrl || null,
-    deleteUrl: config.deleteUrl || null,
-    updateUrl: config.updateUrl || null,
-    statuses: config.initialStatuses || {},
-    confirmDeleteMessage:
-        config.confirmDeleteMessage ||
-        "Сигурни ли сте, че искате да премахнете този плъгин?",
+    installUrl: config.installUrl,
+    toggleUrl: config.toggleUrl,
+    deleteUrl: config.deleteUrl,
+    updateUrl: config.updateUrl,
 
+    statuses: { ...(config.initialStatuses || {}) },
+    installed: { ...(config.initialInstalled || {}) },
+    versions: { ...(config.initialVersions || {}) },
     loading: {},
+
     detailsOpen: false,
     selectedPlugin: null,
 
+    buttonText(slug) {
+        if (this.loading[slug]) return "Обработка...";
+        if (!this.installed[slug]) return "Инсталиране";
+        return this.statuses[slug] ? "Деактивиране" : "Активиране";
+    },
+
+    buttonIcon(slug) {
+        if (this.loading[slug]) return "fa-spinner fa-spin";
+        if (!this.installed[slug]) return "fa-download";
+        return this.statuses[slug] ? "fa-pause" : "fa-play";
+    },
+
+    buttonClass(slug) {
+        if (!this.installed[slug]) {
+            return "bg-blue-600 text-white hover:bg-blue-700";
+        }
+
+        return this.statuses[slug]
+            ? "bg-amber-50 text-amber-700 hover:bg-amber-100 dark:bg-amber-500/10 dark:text-amber-400"
+            : "bg-emerald-600 text-white hover:bg-emerald-700";
+    },
+
     openDetails(plugin) {
-        this.selectedPlugin = plugin;
+        const slug = plugin.slug;
+
+        this.selectedPlugin = {
+            ...plugin,
+            is_installed: this.installed[slug] ?? plugin.is_installed,
+            is_active: this.statuses[slug] ?? plugin.is_active,
+            installed_version: this.versions[slug] ?? plugin.installed_version,
+        };
+
         this.detailsOpen = true;
-        document.documentElement.classList.add("overflow-hidden");
     },
 
     closeDetails() {
@@ -36,27 +66,25 @@ export default (config = {}) => ({
         return value ? "Да" : "Не";
     },
 
-    async toggleStatus(id) {
-        if (!this.toggleUrl || this.loading[id]) return;
+    async toggleStatus(slug) {
+        if (!this.toggleUrl || this.loading[slug]) return;
 
-        this.loading[id] = true;
+        this.loading[slug] = true;
 
         try {
-            const response = await axios.post(this.toggleUrl, { id });
+            const response = await axios.post(this.toggleUrl, { slug });
 
             if (response.data?.success) {
-                this.statuses[id] = !this.statuses[id];
+                this.statuses[slug] = !this.statuses[slug];
+                notify(response.data.message, 'success');
             } else {
-                alert(
-                    response.data?.message ||
-                        "Възникна грешка при промяна на статуса.",
-                );
+                notify(response.data?.message || "Възникна грешка при промяна на статуса.");
             }
         } catch (error) {
             console.error(error);
-            alert("Грешка при комуникация със сървъра.");
+            notify("Грешка при комуникация със сървъра.", "error");
         } finally {
-            this.loading[id] = false;
+            this.loading[slug] = false;
         }
     },
 
@@ -64,9 +92,7 @@ export default (config = {}) => ({
         if (!this.deleteUrl || this.loading[id]) return;
         if (!confirm(this.confirmDeleteMessage)) return;
 
-        const dropTables = confirm(
-            "Желаете ли да премахнете и таблиците, свързани с този плъгин?",
-        );
+        const dropTables = confirm("Желаете ли да премахнете и таблиците, свързани с този плъгин?");
 
         this.loading[id] = true;
 
@@ -97,15 +123,14 @@ export default (config = {}) => ({
                         }
                     }, 300);
                 }
+
+                notify(response.data.message || "Плъгинът беше премахнат успешно.");
             } else {
-                alert(
-                    response.data?.message ||
-                        "Възникна грешка при премахването.",
-                );
+                notify(response.data?.message || "Възникна грешка при премахването.", "error");
             }
         } catch (error) {
             console.error(error);
-            alert("Грешка при комуникация със сървъра.");
+            notify("Грешка при комуникация със сървъра.", "error");
         } finally {
             this.loading[id] = false;
         }
@@ -120,22 +145,49 @@ export default (config = {}) => ({
             const response = await axios.post(this.updateUrl, { id });
 
             if (response.data?.success) {
-                alert(
-                    response.data.message || "Плъгинът беше обновен успешно.",
-                );
-
+                notify(response.data.message || "Плъгинът беше обновен успешно.");
                 window.location.reload();
             } else {
-                alert(
-                    response.data?.message ||
-                        "Възникна грешка при обновяването.",
-                );
+                notify(response.data?.message || "Възникна грешка при обновяването.", "error");
             }
         } catch (error) {
             console.error(error);
-            alert("Грешка при комуникация със сървъра.");
+            notify("Грешка при комуникация със сървъра.", "error");
         } finally {
             this.loading[id] = false;
+        }
+    },
+
+    async handlePluginStatus(slug) {
+        if (this.installed[slug]) {
+            await this.toggleStatus(slug);
+        } else {
+            await this.installPlugin(slug);
+        }
+    },
+
+    async installPlugin(slug) {
+        this.loading[slug] = true;
+
+        try {
+            const response = await axios.post(this.installUrl, { slug });
+            const data = response.data;
+
+            if (!data.success) {
+                throw new Error(data.message);
+            }
+
+            const version = data.version ?? data.data?.version ?? null;
+
+            this.installed[slug] = true;
+            this.statuses[slug] = false;
+            this.versions[slug] = version;
+
+            notify(data.message, "success");
+        } catch (error) {
+            notify(error.response?.data?.message || error.message, "error");
+        } finally {
+            this.loading[slug] = false;
         }
     },
 });

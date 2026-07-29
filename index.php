@@ -1,5 +1,7 @@
 <?php
 
+use Illuminate\Database\Capsule\Manager;
+
 session_start();
 
 require_once 'vendor/autoload.php';
@@ -88,7 +90,13 @@ try {
     $activePlugins = [];
 }
 
-$pluginManager = new PluginManager($events, $activePlugins);
+$connection = Manager::connection();
+
+$pluginManager = new PluginManager(
+    $events,
+    $connection,
+    $activePlugins
+);
 $router->setPluginManager($pluginManager);
 $pluginManager->loadPlugins($router);
 

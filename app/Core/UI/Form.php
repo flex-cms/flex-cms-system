@@ -674,7 +674,6 @@ class Form
 
     public static function customSelect(string $name, string $label, array $options = [], string $selected = '', array $attrs = []): void
     {
-        $selectedText = $options[$selected] ?? 'Изберете...';
         $xModel = $attrs['x-model'] ?? null;
         $dynamicName = $attrs[':name'] ?? null;
         $optionsJson = htmlspecialchars(json_encode($options, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8');

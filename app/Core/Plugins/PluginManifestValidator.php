@@ -27,6 +27,7 @@ class PluginManifestValidator
         $this->validateProvider($manifest, $pluginPath);
         $this->validateRoutes($manifest, $pluginPath);
         $this->validateOptionalLinks($manifest);
+        $this->validateMigrations($manifest, $pluginPath);
 
         return [
             'valid' => $this->errors === [],
@@ -449,5 +450,37 @@ class PluginManifestValidator
 
         return version_compare($currentVersion, $requiredVersion, '>=')
             && version_compare($currentVersion, $upperBound, '<');
+    }
+
+    private function validateMigrations(
+        array $manifest,
+        string $pluginPath
+    ): void {
+        if (!($manifest['migrations'] ?? false)) {
+            return;
+        }
+
+        $migrationsPath = $pluginPath
+            . DIRECTORY_SEPARATOR
+            . 'database'
+            . DIRECTORY_SEPARATOR
+            . 'migrations';
+
+        if (!is_dir($migrationsPath)) {
+            $this->errors[] =
+                'Полето „migrations“ е true, но директорията '
+                . 'database/migrations не съществува.';
+
+            return;
+        }
+
+        foreach (glob($migrationsPath . '/*.php') ?: [] as $file) {
+            $name = pathinfo($file, PATHINFO_FILENAME);
+
+            if (!preg_match('/^\d{14}_[a-z][a-z0-9_]*$/', $name)) {
+                $this->errors[] =
+                    "Migration файлът „{$name}.php“ има невалидно име.";
+            }
+        }
     }
 }

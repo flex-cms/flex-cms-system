@@ -121,12 +121,6 @@ class MenuController extends BaseController
 
         $this->syncMenuItems($menu, $post['menu_items'] ?? []);
 
-        if (!empty($data['prepared_menu_items'])) {
-            foreach ($data['prepared_menu_items'] as $itemData) {
-                $menu->items()->create($itemData);
-            }
-        }
-
         Flash::success($this->messages['create_success']);
         View::redirect('/admin/menus/edit/' . $menu->id);
     }
