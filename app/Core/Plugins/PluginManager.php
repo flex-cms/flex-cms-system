@@ -237,8 +237,10 @@ class PluginManager
 
     public function uninstall(
         string $slug,
-        bool $removeData = false
+        ?UninstallOptions $options = null
     ): bool {
+        $options ??= new UninstallOptions();
+
         $plugin = Plugin::where('slug', $slug)->first();
 
         if (!$plugin) {
@@ -261,11 +263,12 @@ class PluginManager
 
         try {
             $this->runInstallerHook(
-                $manifest,
-                'uninstall'
+                manifest: $manifest,
+                method: 'uninstall',
+                arguments: [$options]
             );
 
-            if ($removeData) {
+            if ($options->deleteData) {
                 $this->rollbackAllPluginMigrations(
                     $slug,
                     $pluginPath
@@ -284,7 +287,12 @@ class PluginManager
                 "plugin.uninstalled.{$slug}",
                 [
                     'slug' => $slug,
-                    'data_removed' => $removeData,
+                    'options' => $options,
+                    'data_removed' => $options->deleteData,
+                    'settings_removed' => $options->deleteSettings,
+                    'cache_removed' => $options->deleteCache,
+                    'logs_removed' => $options->deleteLogs,
+                    'uploads_removed' => $options->deleteUploads,
                 ]
             );
 
@@ -441,7 +449,8 @@ class PluginManager
 
     private function runInstallerHook(
         array $manifest,
-        string $method
+        string $method,
+        array $arguments = []
     ): void {
         $installerClass = $manifest['installer'] ?? null;
 
@@ -476,7 +485,7 @@ class PluginManager
             );
         }
 
-        $installerClass::$method();
+        $installerClass::$method(...$arguments);
     }
 
     public function loadPlugins(Router $router): void

@@ -2,6 +2,7 @@ import axios from "axios";
 
 export default (config = {}) => ({
     installUrl: config.installUrl,
+    uninstallUrl: config.uninstallUrl,
     toggleUrl: config.toggleUrl,
     deleteUrl: config.deleteUrl,
     updateUrl: config.updateUrl,
@@ -10,6 +11,7 @@ export default (config = {}) => ({
     installed: { ...(config.initialInstalled || {}) },
     versions: { ...(config.initialVersions || {}) },
     loading: {},
+    uninstallLoading: {},
 
     detailsOpen: false,
     selectedPlugin: null,
@@ -76,9 +78,12 @@ export default (config = {}) => ({
 
             if (response.data?.success) {
                 this.statuses[slug] = !this.statuses[slug];
-                notify(response.data.message, 'success');
+                notify(response.data.message, "success");
             } else {
-                notify(response.data?.message || "Възникна грешка при промяна на статуса.");
+                notify(
+                    response.data?.message ||
+                        "Възникна грешка при промяна на статуса.",
+                );
             }
         } catch (error) {
             console.error(error);
@@ -92,7 +97,9 @@ export default (config = {}) => ({
         if (!this.deleteUrl || this.loading[id]) return;
         if (!confirm(this.confirmDeleteMessage)) return;
 
-        const dropTables = confirm("Желаете ли да премахнете и таблиците, свързани с този плъгин?");
+        const dropTables = confirm(
+            "Желаете ли да премахнете и таблиците, свързани с този плъгин?",
+        );
 
         this.loading[id] = true;
 
@@ -124,9 +131,15 @@ export default (config = {}) => ({
                     }, 300);
                 }
 
-                notify(response.data.message || "Плъгинът беше премахнат успешно.");
+                notify(
+                    response.data.message || "Плъгинът беше премахнат успешно.",
+                );
             } else {
-                notify(response.data?.message || "Възникна грешка при премахването.", "error");
+                notify(
+                    response.data?.message ||
+                        "Възникна грешка при премахването.",
+                    "error",
+                );
             }
         } catch (error) {
             console.error(error);
@@ -145,10 +158,16 @@ export default (config = {}) => ({
             const response = await axios.post(this.updateUrl, { id });
 
             if (response.data?.success) {
-                notify(response.data.message || "Плъгинът беше обновен успешно.");
+                notify(
+                    response.data.message || "Плъгинът беше обновен успешно.",
+                );
                 window.location.reload();
             } else {
-                notify(response.data?.message || "Възникна грешка при обновяването.", "error");
+                notify(
+                    response.data?.message ||
+                        "Възникна грешка при обновяването.",
+                    "error",
+                );
             }
         } catch (error) {
             console.error(error);
@@ -188,6 +207,61 @@ export default (config = {}) => ({
             notify(error.response?.data?.message || error.message, "error");
         } finally {
             this.loading[slug] = false;
+        }
+    },
+
+    async uninstallPlugin(slug) {
+        if (!this.installed[slug]) {
+            return;
+        }
+
+        const confirmed = window.confirm(
+            "Сигурни ли сте, че искате да деинсталирате този плъгин?",
+        );
+
+        if (!confirmed) {
+            return;
+        }
+
+        this.uninstallLoading[slug] = true;
+
+        try {
+            const response = await axios.post(this.uninstallUrl, {
+                slug,
+                slug,
+                delete_data: true,
+                delete_settings: true,
+                delete_cache: true,
+                delete_logs: true,
+                delete_uploads: true,
+            });
+
+            const data = response.data;
+
+            if (!data.success) {
+                throw new Error(
+                    data.message || "Плъгинът не можа да бъде деинсталиран.",
+                );
+            }
+
+            this.installed[slug] = false;
+            this.statuses[slug] = false;
+            this.versions[slug] = null;
+
+            if (this.selectedPlugin && this.selectedPlugin.slug === slug) {
+                this.selectedPlugin = {
+                    ...this.selectedPlugin,
+                    is_installed: false,
+                    is_active: false,
+                    installed_version: null,
+                };
+            }
+
+            notify(data.message, "success");
+        } catch (error) {
+            notify(error.response?.data?.message || error.message, "error");
+        } finally {
+            this.uninstallLoading[slug] = false;
         }
     },
 });

@@ -7,6 +7,7 @@ use Flex\Core\Events\EventManager;
 use Flex\Core\Plugins\PluginManager;
 use Flex\Core\Plugins\Traits\PluginDiscoveryTrait;
 use Flex\Core\Plugins\Traits\PluginUpdatable;
+use Flex\Core\Plugins\UninstallOptions;
 use Flex\Core\Traits\CrudHelper;
 use Flex\Core\Traits\HandlesTableFilters;
 use Flex\Models\Plugin;
@@ -92,7 +93,7 @@ class PluginController extends BaseController
         }
 
         $this->pluginManager->install($slug);
-        
+
         $plugin = Plugin::where('slug', $slug)->first();
 
         return $this->jsonResponse(
@@ -214,48 +215,33 @@ class PluginController extends BaseController
     {
         $data = $this->getJsonInput();
 
-        $id = filter_var(
-            $data['id'] ?? null,
-            FILTER_VALIDATE_INT
+        $slug = trim(
+            (string) ($data['slug'] ?? '')
         );
 
-        $removeData = filter_var(
-            $data['removeData']
-            ?? $data['dropTables']
-            ?? false,
-            FILTER_VALIDATE_BOOLEAN
-        );
-
-        if (!$id) {
+        if ($slug === '') {
             return $this->jsonResponse(
                 false,
-                'Липсва или е невалидно ID на плъгина.'
+                'Липсва slug на плъгина.'
             );
         }
 
-        $plugin = Plugin::find($id);
-
-        if (!$plugin) {
-            return $this->jsonResponse(
-                false,
-                'Плъгинът вече е деинсталиран или не съществува.'
-            );
-        }
-
-        $slug = $plugin->slug;
+        $options = new UninstallOptions(
+            deleteData: (bool) ($data['delete_data'] ?? false),
+            deleteSettings: (bool) ($data['delete_settings'] ?? true),
+            deleteCache: (bool) ($data['delete_cache'] ?? true),
+            deleteLogs: (bool) ($data['delete_logs'] ?? false),
+            deleteUploads: (bool) ($data['delete_uploads'] ?? false),
+        );
 
         $this->pluginManager->uninstall(
             $slug,
-            $removeData
+            $options
         );
 
         return $this->jsonResponse(
             true,
-            'Плъгинът беше деинсталиран успешно!',
-            [
-                'slug' => $slug,
-                'data_removed' => $removeData,
-            ]
+            'Плъгинът беше деинсталиран успешно!'
         );
     }
 

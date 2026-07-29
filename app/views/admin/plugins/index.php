@@ -21,6 +21,7 @@ foreach ($plugins as $plugin) {
 
 $pluginManagerConfig = [
     'installUrl' => '/admin/plugins/install',
+    'uninstallUrl' => '/admin/plugins/uninstall',
     'toggleUrl' => '/admin/plugins/toggle',
     'deleteUrl' => '/admin/plugins/delete',
     'updateUrl' => '/admin/plugins/update',
@@ -318,14 +319,29 @@ $pluginToArray = static function ($plugin): array {
                             :disabled='loading[<?= $slug ?>] || !installed[<?= $slug ?>]' title="Обновяване"
                             class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-white text-primary shadow-sm ring-1 ring-slate-200 transition hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-slate-900 dark:ring-slate-700 dark:hover:bg-slate-800">
                             <i class="fa-solid" :class="loading[<?= $slug ?>]
-                ? 'fa-spinner fa-spin'
-                : 'fa-cloud-arrow-down'"></i>
+                                ? 'fa-spinner fa-spin'
+                                : 'fa-cloud-arrow-down'"></i>
                         </button>
 
-                        <button type="button" @click='deleteItem(<?= $slug ?>)'
-                            :disabled='loading[<?= $slug ?>] || !installed[<?= $slug ?>]' title="Премахване"
-                            class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-white text-red-600 shadow-sm ring-1 ring-slate-200 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-slate-900 dark:text-red-400 dark:ring-slate-700 dark:hover:bg-slate-800">
-                            <i class="fa-solid fa-trash-can"></i>
+                        <button
+                            type="button"
+                            x-show="installed[<?= $slug ?>]"
+                            x-cloak
+                            @click="uninstallPlugin(<?= $slug ?>)"
+                            :disabled="uninstallLoading[<?= $slug ?>]"
+                            title="Деинсталиране"
+                            class="inline-flex h-10 w-10 items-center justify-center rounded-lg
+                                bg-white text-red-600 shadow-sm ring-1 ring-slate-200 transition
+                                hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50
+                                dark:bg-slate-900 dark:text-red-400 dark:ring-slate-700
+                                dark:hover:bg-slate-800"
+                        >
+                            <i
+                                class="fa-solid"
+                                :class="uninstallLoading[<?= $slug ?>]
+                                    ? 'fa-spinner fa-spin'
+                                    : 'fa-box-open'"
+                            ></i>
                         </button>
                     </div>
                 </article>

@@ -2,6 +2,8 @@
 
 namespace Flex\Core\Plugins\Contracts;
 
+use Flex\Core\Plugins\UninstallOptions;
+
 interface PluginInstallerInterface
 {
     public static function install(): void;
@@ -10,5 +12,5 @@ interface PluginInstallerInterface
 
     public static function deactivate(): void;
 
-    public static function uninstall(): void;
+    public static function uninstall(UninstallOptions $options): void;
 }
