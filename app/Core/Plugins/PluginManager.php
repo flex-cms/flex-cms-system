@@ -3,6 +3,7 @@
 namespace Flex\Core\Plugins;
 
 use Flex\Core\Events\EventManager;
+use Flex\Core\Plugins\Contracts\PluginInstallerInterface;
 use Flex\Core\Plugins\Contracts\PluginServiceProviderInterface;
 use Flex\Core\Routing\Router;
 use Flex\Core\Services\PluginDatabaseService;
@@ -66,37 +67,397 @@ class PluginManager
         return true;
     }
 
-    public static function activate(string $slug): void
+    public function activate(string $slug): bool
     {
-        $pluginsPath = rtrim(plugins_path(), '/') . '/';
-        $pluginPath = $pluginsPath . $slug;
+        $plugin = Plugin::where('slug', $slug)->first();
 
-        $loader = require dirname(__DIR__, 3) . '/vendor/autoload.php';
-        $namespacePart = str_replace(' ', '', ucwords(str_replace('-', ' ', $slug)));
-        $fullNamespace = "Plugins\\" . $namespacePart . "\\";
-        $loader->addPsr4($fullNamespace, $pluginPath . '/src');
+        if (!$plugin) {
+            throw new RuntimeException(
+                "Плъгинът „{$slug}“ не е инсталиран."
+            );
+        }
 
-        $version = '1.0.0';
-        $manifestPath = $pluginPath . '/plugin.json';
-        if (file_exists($manifestPath)) {
-            $manifest = json_decode(file_get_contents($manifestPath), true);
-            if (isset($manifest['version'])) {
-                $version = $manifest['version'];
+        if ((bool) $plugin->is_active) {
+            return true;
+        }
+
+        $manifest = $this->getManifest($slug);
+
+        if (!($manifest['manifest_valid'] ?? false)) {
+            throw new RuntimeException(
+                'Плъгинът не може да бъде активиран: '
+                . implode(
+                    ' ',
+                    $manifest['manifest_errors'] ?? []
+                )
+            );
+        }
+
+        $pluginPath = $this->getPluginDirectory($slug);
+
+        $this->registerPluginAutoload(
+            $manifest,
+            $pluginPath
+        );
+
+        try {
+            $this->runInstallerHook(
+                $manifest,
+                'activate'
+            );
+
+            Plugin::where('slug', $slug)->update([
+                'is_active' => true,
+            ]);
+
+            if (!in_array($slug, $this->activePlugins, true)) {
+                $this->activePlugins[] = $slug;
             }
+
+            $this->events->trigger(
+                "plugin.activated.{$slug}",
+                [
+                    'slug' => $slug,
+                    'manifest' => $manifest,
+                ]
+            );
+
+            return true;
+        } catch (\Throwable $exception) {
+            $this->events->trigger(
+                "plugin.failed.{$slug}",
+                [
+                    'stage' => 'activate',
+                    'exception' => $exception,
+                ]
+            );
+
+            throw new RuntimeException(
+                "Активирането на плъгина „{$slug}“ беше неуспешно: "
+                . $exception->getMessage(),
+                previous: $exception
+            );
+        }
+    }
+
+    public function deactivate(string $slug): bool
+    {
+        $plugin = Plugin::where('slug', $slug)->first();
+
+        if (!$plugin) {
+            throw new RuntimeException(
+                "Плъгинът „{$slug}“ не е инсталиран."
+            );
         }
 
-        $sqlPath = $pluginPath . "/database/migrations/{$version}.sql";
-
-        if (file_exists($sqlPath)) {
-            $dbService = new PluginDatabaseService();
-            $dbService->executeSqlFile($slug, $sqlPath);
+        if (!(bool) $plugin->is_active) {
+            return true;
         }
 
-        $installerClass = $fullNamespace . "Installer";
+        $manifest = $this->getManifest($slug);
+        $pluginPath = $this->getPluginDirectory($slug);
 
-        if (class_exists($installerClass) && method_exists($installerClass, 'install')) {
-            $installerClass::install();
+        $this->registerPluginAutoload(
+            $manifest,
+            $pluginPath
+        );
+
+        try {
+            $this->runInstallerHook(
+                $manifest,
+                'deactivate'
+            );
+
+            Plugin::where('slug', $slug)->update([
+                'is_active' => false,
+            ]);
+
+            $this->activePlugins = array_values(
+                array_filter(
+                    $this->activePlugins,
+                    static fn(string $activeSlug): bool =>
+                    $activeSlug !== $slug
+                )
+            );
+
+            unset($this->providers[$slug]);
+
+            $this->events->trigger(
+                "plugin.deactivated.{$slug}",
+                [
+                    'slug' => $slug,
+                    'reason' => 'manual',
+                ]
+            );
+
+            return true;
+        } catch (\Throwable $exception) {
+            $this->events->trigger(
+                "plugin.failed.{$slug}",
+                [
+                    'stage' => 'deactivate',
+                    'exception' => $exception,
+                ]
+            );
+
+            throw new RuntimeException(
+                "Деактивирането на плъгина „{$slug}“ беше неуспешно: "
+                . $exception->getMessage(),
+                previous: $exception
+            );
         }
+    }
+
+    public function uninstall(
+        string $slug,
+        bool $removeData = false
+    ): bool {
+        $plugin = Plugin::where('slug', $slug)->first();
+
+        if (!$plugin) {
+            throw new RuntimeException(
+                "Плъгинът „{$slug}“ не е инсталиран."
+            );
+        }
+
+        if ((bool) $plugin->is_active) {
+            $this->deactivate($slug);
+        }
+
+        $manifest = $this->getManifest($slug);
+        $pluginPath = $this->getPluginDirectory($slug);
+
+        $this->registerPluginAutoload(
+            $manifest,
+            $pluginPath
+        );
+
+        try {
+            $this->runInstallerHook(
+                $manifest,
+                'uninstall'
+            );
+
+            if ($removeData) {
+                $uninstallSqlPath = $pluginPath
+                    . DIRECTORY_SEPARATOR
+                    . 'database'
+                    . DIRECTORY_SEPARATOR
+                    . 'uninstall.sql';
+
+                if (is_file($uninstallSqlPath)) {
+                    $databaseService = new PluginDatabaseService();
+
+                    $databaseService->executeSqlFile(
+                        $slug,
+                        $uninstallSqlPath
+                    );
+                }
+            }
+
+            Plugin::where('slug', $slug)->delete();
+
+            unset($this->providers[$slug]);
+
+            $this->events->trigger(
+                "plugin.uninstalled.{$slug}",
+                [
+                    'slug' => $slug,
+                    'data_removed' => $removeData,
+                ]
+            );
+
+            return true;
+        } catch (\Throwable $exception) {
+            $this->events->trigger(
+                "plugin.failed.{$slug}",
+                [
+                    'stage' => 'uninstall',
+                    'exception' => $exception,
+                ]
+            );
+
+            throw new RuntimeException(
+                "Деинсталирането на плъгина „{$slug}“ беше неуспешно: "
+                . $exception->getMessage(),
+                previous: $exception
+            );
+        }
+    }
+
+    public function deletePluginFiles(string $slug): void
+    {
+        $pluginPath = $this->getPluginDirectory($slug);
+
+        $this->deleteDirectory($pluginPath);
+
+        $this->events->trigger(
+            "plugin.files_deleted.{$slug}",
+            ['slug' => $slug]
+        );
+    }
+
+    public function install(string $slug): bool
+    {
+        $manifest = $this->getManifest($slug);
+
+        if (!($manifest['manifest_valid'] ?? false)) {
+            throw new RuntimeException(
+                'Плъгинът не може да бъде инсталиран: '
+                . implode(
+                    ' ',
+                    $manifest['manifest_errors'] ?? []
+                )
+            );
+        }
+
+        $pluginPath = $this->getPluginDirectory($slug);
+
+        $this->registerPluginAutoload(
+            $manifest,
+            $pluginPath
+        );
+
+        $plugin = Plugin::where('slug', $slug)->first();
+
+        if ($plugin) {
+            throw new RuntimeException(
+                "Плъгинът „{$slug}“ вече е инсталиран."
+            );
+        }
+
+        try {
+            $this->runPluginInstallMigrations(
+                $slug,
+                $manifest,
+                $pluginPath
+            );
+
+            $this->runInstallerHook(
+                $manifest,
+                'install'
+            );
+
+            Plugin::create([
+                'name' => $manifest['name'],
+                'slug' => $manifest['slug'],
+                'version' => $manifest['version'],
+                'is_active' => false,
+            ]);
+
+            $this->events->trigger(
+                "plugin.installed.{$slug}",
+                [
+                    'slug' => $slug,
+                    'manifest' => $manifest,
+                ]
+            );
+
+            return true;
+        } catch (\Throwable $exception) {
+            $this->events->trigger(
+                "plugin.failed.{$slug}",
+                [
+                    'stage' => 'install',
+                    'exception' => $exception,
+                ]
+            );
+
+            throw new RuntimeException(
+                "Инсталирането на плъгина „{$slug}“ беше неуспешно: "
+                . $exception->getMessage(),
+                previous: $exception
+            );
+        }
+    }
+
+    private function getPluginDirectory(string $slug): string
+    {
+        $pluginPath = $this->pluginsPath
+            . DIRECTORY_SEPARATOR
+            . $slug;
+
+        if (!is_dir($pluginPath)) {
+            throw new RuntimeException(
+                "Директорията на плъгина „{$slug}“ не съществува."
+            );
+        }
+
+        return $pluginPath;
+    }
+
+    private function runPluginInstallMigrations(
+        string $slug,
+        array $manifest,
+        string $pluginPath
+    ): void {
+        if (!($manifest['migrations'] ?? false)) {
+            return;
+        }
+
+        $version = $manifest['version'] ?? '1.0.0';
+
+        $sqlPath = $pluginPath
+            . DIRECTORY_SEPARATOR
+            . 'database'
+            . DIRECTORY_SEPARATOR
+            . 'migrations'
+            . DIRECTORY_SEPARATOR
+            . $version
+            . '.sql';
+
+        if (!is_file($sqlPath)) {
+            throw new RuntimeException(
+                "Migration файлът за версия {$version} не съществува."
+            );
+        }
+
+        $databaseService = new PluginDatabaseService();
+
+        $databaseService->executeSqlFile(
+            $slug,
+            $sqlPath
+        );
+    }
+
+    private function runInstallerHook(
+        array $manifest,
+        string $method
+    ): void {
+        $installerClass = $manifest['installer'] ?? null;
+
+        if (
+            !is_string($installerClass)
+            || $installerClass === ''
+        ) {
+            return;
+        }
+
+        if (!class_exists($installerClass)) {
+            throw new RuntimeException(
+                "Installer класът „{$installerClass}“ не съществува."
+            );
+        }
+
+        if (
+            !is_subclass_of(
+                $installerClass,
+                PluginInstallerInterface::class
+            )
+        ) {
+            throw new RuntimeException(
+                "Installer класът „{$installerClass}“ трябва да имплементира "
+                . PluginInstallerInterface::class
+            );
+        }
+
+        if (!method_exists($installerClass, $method)) {
+            throw new RuntimeException(
+                "Installer класът „{$installerClass}“ няма метод {$method}()."
+            );
+        }
+
+        $installerClass::$method();
     }
 
     public function loadPlugins(Router $router): void
@@ -315,6 +676,7 @@ class PluginManager
             'homepage' => (string) ($manifest['homepage'] ?? ''),
             'repository' => (string) ($manifest['repository'] ?? ''),
             'provider' => (string) ($manifest['provider'] ?? ''),
+            'installer' => (string) ($manifest['installer'] ?? ''),
             'author' => [
                 'name' => (string) ($author['name'] ?? ''),
                 'email' => (string) ($author['email'] ?? ''),
