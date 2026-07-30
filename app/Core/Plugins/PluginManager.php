@@ -8,7 +8,7 @@ use Flex\Core\Plugins\Contracts\PluginServiceProviderInterface;
 use Flex\Core\Routing\Router;
 use Flex\Core\Services\PluginDatabaseService;
 use Flex\Models\Plugin;
-use Flex\Core\Plugins\Migrations\PluginMigrationManager;
+use Flex\Core\Plugins\Migrations\PluginMigrationRunner;
 use Illuminate\Database\Connection;
 use RuntimeException;
 
@@ -23,14 +23,14 @@ class PluginManager
     protected PluginManifestValidator $manifestValidator;
     protected ?Router $router = null;
 
-    private PluginMigrationManager $migrationManager;
+    private PluginMigrationRunner $migrationRunner;
 
     public function __construct(
         EventManager $events,
         Connection $connection,
         array $activePlugins = [],
         ?PluginManifestValidator $manifestValidator = null,
-        ?PluginMigrationManager $migrationManager = null
+        ?PluginMigrationRunner $migrationRunner = null
     ) {
         $this->events = $events;
         $this->activePlugins = $activePlugins;
@@ -39,8 +39,8 @@ class PluginManager
         $this->manifestValidator = $manifestValidator
             ?? new PluginManifestValidator();
 
-        $this->migrationManager = $migrationManager
-            ?? new PluginMigrationManager($connection);
+        $this->migrationRunner = $migrationRunner
+            ?? new PluginMigrationRunner($connection);
     }
 
     public function setRouter(Router $router): self
@@ -109,14 +109,29 @@ class PluginManager
             $pluginPath
         );
 
-        $pendingMigrations = $this->migrationManager->pending(
-            $slug,
-            $pluginPath
-            . DIRECTORY_SEPARATOR
-            . 'database'
-            . DIRECTORY_SEPARATOR
-            . 'migrations'
-        );
+        if ($manifest['migrations'] ?? false) {
+            $migrationStatus = $this->migrationRunner->status(
+                pluginName: $this->makeMigrationPluginName($slug),
+                pluginPath: $pluginPath
+            );
+
+            $pendingMigrations = array_values(
+                array_filter(
+                    $migrationStatus,
+                    static fn(array $migration): bool =>
+                    !($migration['executed'] ?? false)
+                )
+            );
+
+            if ($pendingMigrations !== []) {
+                throw new RuntimeException(
+                    sprintf(
+                        'Плъгинът има %d неизпълнени migration файла и не може да бъде активиран.',
+                        count($pendingMigrations)
+                    )
+                );
+            }
+        }
 
         if ($pendingMigrations !== []) {
             throw new RuntimeException(
@@ -271,6 +286,7 @@ class PluginManager
             if ($options->deleteData) {
                 $this->rollbackAllPluginMigrations(
                     $slug,
+                    $manifest,
                     $pluginPath
                 );
             }
@@ -430,21 +446,40 @@ class PluginManager
             return;
         }
 
-        $this->migrationManager->migrate(
-            pluginSlug: $slug,
-            pluginVersion: (string) $manifest['version'],
-            migrationsPath: $pluginPath
-            . DIRECTORY_SEPARATOR
-            . 'database'
-            . DIRECTORY_SEPARATOR
-            . 'migrations',
-            tablePrefix: $this->makePluginTablePrefix($slug),
+        $this->migrationRunner->migrate(
+            pluginName: $this->makeMigrationPluginName($slug),
+            pluginPath: $pluginPath,
+            tablePrefix: $this->makePluginTablePrefix($manifest)
         );
     }
 
-    private function makePluginTablePrefix(string $slug): string
+    private function makePluginTablePrefix(array $manifest): string
     {
-        return 'plugin_' . str_replace('-', '_', $slug);
+        $tablePrefix = trim(
+            (string) ($manifest['table_prefix'] ?? '')
+        );
+
+        if ($tablePrefix === '') {
+            throw new RuntimeException(
+                'Липсва задължителното поле "table_prefix" в plugin.json.'
+            );
+        }
+
+        if (
+            !preg_match(
+                '/^[a-z][a-z0-9_]*$/',
+                $tablePrefix
+            )
+        ) {
+            throw new RuntimeException(
+                sprintf(
+                    'Невалиден table_prefix "%s". Разрешени са малки латински букви, цифри и долна черта.',
+                    $tablePrefix
+                )
+            );
+        }
+
+        return $tablePrefix;
     }
 
     private function runInstallerHook(
@@ -699,6 +734,7 @@ class PluginManager
             'slug' => (string) ($manifest['slug'] ?? $pluginDir),
             'description' => (string) ($manifest['description'] ?? ''),
             'version' => (string) ($manifest['version'] ?? '0.0.0'),
+            'table_prefix' => (string) ($manifest['table_prefix'] ?? ''),
             'type' => (string) ($manifest['type'] ?? 'plugin'),
             'license' => (string) ($manifest['license'] ?? ''),
             'homepage' => (string) ($manifest['homepage'] ?? ''),
@@ -1025,26 +1061,37 @@ class PluginManager
 
     private function rollbackAllPluginMigrations(
         string $slug,
+        array $manifest,
         string $pluginPath
     ): void {
-        $migrationsPath = $pluginPath
-            . DIRECTORY_SEPARATOR
-            . 'database'
-            . DIRECTORY_SEPARATOR
-            . 'migrations';
-
-        $tablePrefix = $this->makePluginTablePrefix($slug);
-
-        while (
-            $this->migrationManager
-                ->rollback(
-                    pluginSlug: $slug,
-                    migrationsPath: $migrationsPath,
-                    tablePrefix: $tablePrefix,
-                )
-                ->count() > 0
-        ) {
-            // Връща batch-овете един по един до пълно изчистване.
+        if (!($manifest['migrations'] ?? false)) {
+            return;
         }
+
+        $this->migrationRunner->rollbackAll(
+            pluginName: $this->makeMigrationPluginName($slug),
+            pluginPath: $pluginPath,
+            tablePrefix: $this->makePluginTablePrefix($manifest)
+        );
+    }
+
+    private function makeMigrationPluginName(string $slug): string
+    {
+        $pluginName = preg_replace(
+            '/^flex-plugin-/i',
+            '',
+            trim($slug)
+        );
+
+        if (
+            !is_string($pluginName)
+            || $pluginName === ''
+        ) {
+            throw new RuntimeException(
+                "Не може да бъде определено migration името за плъгина „{$slug}“."
+            );
+        }
+
+        return strtolower($pluginName);
     }
 }
