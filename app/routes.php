@@ -18,6 +18,7 @@ use Flex\Core\Controllers\ThemeController;
 use Flex\Core\Controllers\EmailTemplateController;
 use Flex\Core\Controllers\InstallController;
 use Flex\Core\Controllers\MenuController;
+use Flex\Core\Controllers\Api\UserApiController;
 
 // Auth Routes
 $router->get('/login', [AuthController::class, 'showLogin']);
@@ -35,6 +36,8 @@ $router->post('/admin/theme-toggle', [AdminController::class, 'toggleTheme'], [A
 $router->post('/admin/ui/save-state', [AdminController::class, 'saveUiState'], [AuthMiddleware::class, AdminMiddleware::class]);
 
 // Users
+$router->get('/api/admin/users', [UserApiController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]);
+
 $router->get('/admin/users/index', [UserController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]);
 $router->get('/admin/users/create', [UserController::class, 'create'], [AuthMiddleware::class, AdminMiddleware::class]);
 $router->post('/admin/users/store', [UserController::class, 'store'], [AuthMiddleware::class, AdminMiddleware::class]);

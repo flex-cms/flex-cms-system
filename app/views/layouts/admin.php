@@ -5,11 +5,15 @@ use Flex\Core\Flex;
 use Flex\Core\Helpers\Flash;
 use Flex\Core\Vite;
 use Flex\Core\Routing\View;
+use Flex\Models\Setting;
 
 $currentUser = Auth::user();
 $sidebarOpen = $currentUser->options['sidebar_open'] ?? $_SESSION['sidebar_open'] ?? true;
 $darkMode = ($currentUser->options['theme'] ?? null) === 'dark' ?? $_SESSION['dark_mode'] ?? false;
 $currentVersion = Flex::VERSION;
+$timezone = Setting::getValue('timezone', 'Europe/Sofia');
+$lang = Setting::getValue('site_default_lang', 'bg');
+$dateFormat = Setting::getValue('date_format', 'd.m.Y');
 ?>
 
 <html lang="bg"
@@ -30,6 +34,12 @@ $currentVersion = Flex::VERSION;
                 document.documentElement.classList.remove('dark');
             }
         })();
+
+        window.AppConfig = {
+            timezone: <?= json_encode($timezone) ?>,
+            locale: <?= json_encode($lang) ?>,
+            dateFormat: <?= json_encode($dateFormat) ?>
+        };
     </script>
 
     <style>
@@ -146,14 +156,9 @@ $currentVersion = Flex::VERSION;
         </div>
     </div>
 
-    <div
-        x-data="{ loading: false }"
-        x-show="loading"
-        x-on:axios-loading-start.window="loading = true"
-        x-on:axios-loading-end.window="loading = false"
-        x-cloak
-        class="fixed top-0 left-0 z-9999 w-full h-1 overflow-hidden pointer-events-none"
-    >
+    <div x-data="{ loading: false }" x-show="loading" x-on:axios-loading-start.window="loading = true"
+        x-on:axios-loading-end.window="loading = false" x-cloak
+        class="fixed top-0 left-0 z-9999 w-full h-1 overflow-hidden pointer-events-none">
         <div class="absolute inset-0 bg-blue-100"></div>
         <div class="loading-bar absolute top-0 left-0 h-full bg-blue-600"></div>
     </div>

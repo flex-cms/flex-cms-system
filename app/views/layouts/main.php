@@ -1,15 +1,14 @@
 <?php
 
 use Flex\Core\Auth;
+use Flex\Core\Flex;
 use Flex\Core\Helpers\Flash;
 use Flex\Core\Vite;
-use Flex\Core\Routing\View;
 
 $currentUser = Auth::user();
 $sidebarOpen = $currentUser->options['sidebar_open'] ?? $_SESSION['sidebar_open'] ?? true;
 $darkMode = ($currentUser->options['theme'] ?? null) === 'dark' ?? $_SESSION['dark_mode'] ?? false;
-$currentConfig = require base_path('version.php');
-$currentVersion = $currentConfig['version'];
+$currentVersion = Flex::VERSION;
 ?>
 
 <html lang="bg"
@@ -47,7 +46,7 @@ $currentVersion = $currentConfig['version'];
         }
     </style>
 
-    <?= Vite::use('admin')->port(3000) ?>
+    <?= Vite::use('main')->port(3000) ?>
 
     <script>
         document.addEventListener('alpine:init', () => {
