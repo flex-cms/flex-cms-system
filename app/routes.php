@@ -19,6 +19,8 @@ use Flex\Core\Controllers\EmailTemplateController;
 use Flex\Core\Controllers\InstallController;
 use Flex\Core\Controllers\MenuController;
 use Flex\Core\Controllers\Api\UserApiController;
+use Flex\Core\Controllers\Api\RoleApiController;
+use Flex\Core\Controllers\Api\PermissionApiController;
 
 // Auth Routes
 $router->get('/login', [AuthController::class, 'showLogin']);
@@ -62,6 +64,8 @@ $router->post('/admin/menus/toggle', [MenuController::class, 'toggle'], [AuthMid
 $router->post('/admin/menus/items/{id}/tree-update', [MenuController::class, 'updateTreePosition'], [AuthMiddleware::class, AdminMiddleware::class]);
 
 // Roles
+$router->get('/api/admin/users/roles', [RoleApiController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]);
+
 $router->get('/admin/users/roles', [RoleController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]);
 $router->get('/admin/users/roles/create', [RoleController::class, 'create'], [AuthMiddleware::class, AdminMiddleware::class]);
 $router->post('/admin/users/roles/create', [RoleController::class, 'store'], [AuthMiddleware::class, AdminMiddleware::class]);
@@ -74,6 +78,8 @@ $router->post('/admin/users/roles/restore', [RoleController::class, 'restore'], 
 $router->post('/admin/users/roles/update-position', [RoleController::class, 'updatePosition'], [AuthMiddleware::class, AdminMiddleware::class]);
 
 // Permissions
+$router->get('/api/admin/users/permissions', [PermissionApiController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]);
+
 $router->get('/admin/users/permissions', [PermissionController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]);
 $router->get('/admin/users/permissions/create', [PermissionController::class, 'create'], [AuthMiddleware::class, AdminMiddleware::class]);
 $router->post('/admin/users/permissions/store', [PermissionController::class, 'store'], [AuthMiddleware::class, AdminMiddleware::class]);

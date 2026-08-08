@@ -1,5 +1,5 @@
 import { html } from "lit";
-import { FlexElement } from "../base/flex-element.js";
+import { FlexElement } from "@/components/base/flex-element";
 
 export class FlexAlert extends FlexElement {
     static properties = {

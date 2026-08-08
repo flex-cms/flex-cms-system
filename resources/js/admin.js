@@ -35,7 +35,7 @@ import collapse from "@alpinejs/collapse";
 
 import "./admin/helpers.js";
 
-import './components/index.js';
+import './index.js';
 
 const PAGES_GLOBAL = ["/admin"];
 const PAGES_SPECIFIC = [
