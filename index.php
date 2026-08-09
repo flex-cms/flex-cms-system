@@ -18,6 +18,12 @@ use Flex\Core\Routing\FlexRouterApplication;
 use Flex\Core\Routing\Router;
 use Flex\Models\Setting;
 use Illuminate\Database\Capsule\Manager as Capsule;
+use Flex\Features\Authentication\Adapters\FlexAuthenticator;
+use Flex\Features\Authentication\Adapters\FlexLoginUrlResolver;
+use Flex\Features\Authentication\Contracts\AuthenticatorInterface;
+use Flex\Features\Authentication\Contracts\LoginUrlResolverInterface;
+use Flex\Features\Authentication\Middleware\Authenticate;
+use Flex\Features\Authentication\Middleware\RequireAdmin;
 
 $isInstalled = file_exists(base_path('storage/installed.lock'));
 
@@ -25,7 +31,6 @@ if ($isInstalled) {
     require __DIR__ . '/bootstrap/app.php';
 }
 
-// Инсталаторът остава изцяло на стария Router до неговата отделна миграция.
 if (!$isInstalled) {
     error_reporting(E_ALL);
     ini_set('display_errors', '1');
@@ -73,7 +78,11 @@ if ($debugMode) {
 }
 
 $events = EventManager::getInstance();
-$router = new Router($events);
+
+$legacyRouter = new Router($events);
+
+$router = $legacyRouter;
+$GLOBALS['router'] = $legacyRouter;
 
 try {
     $activePlugins = Capsule::table('plugins')
@@ -92,8 +101,8 @@ $pluginManager = new PluginManager(
     $activePlugins
 );
 
-$router->setPluginManager($pluginManager);
-$pluginManager->loadPlugins($router);
+$legacyRouter->setPluginManager($pluginManager);
+$pluginManager->loadPlugins($legacyRouter);
 
 $activeTheme = Setting::getValue('active_theme', null);
 $themePath = __DIR__ . '/themes/' . $activeTheme;
@@ -136,13 +145,28 @@ $flexApplication = FlexRouterApplication::create(
     },
 );
 
-// Зарежда само новия формат: app/Features/*/Routes/{web,admin,api}.php.
+$flexApplication->container->instance(
+    AuthenticatorInterface::class,
+    new FlexAuthenticator(),
+);
+
+$flexApplication->container->instance(
+    LoginUrlResolverInterface::class,
+    new FlexLoginUrlResolver(),
+);
+
+$flexApplication->middleware
+    ->alias('auth', Authenticate::class)
+    ->alias('admin', RequireAdmin::class);
+
 $flexApplication
     ->featureRoutes(base_path('app/Features'))
     ->load(['web', 'admin', 'api']);
 
-// Старите core/plugin/theme маршрути продължават да се регистрират тук.
-require_once __DIR__ . '/app/routes.php';
+$router = $legacyRouter;
+$GLOBALS['router'] = $legacyRouter;
+
+require __DIR__ . '/app/routes.php';
 
 $request = Request::fromGlobals();
 $flexResult = $flexApplication->kernel->handle($request);
@@ -152,5 +176,4 @@ if ($flexResult->isHandled()) {
     exit;
 }
 
-// FlexRouter няма съвпадение: заявката преминава към стария Router.
-$router->resolve();
+$legacyRouter->resolve();
