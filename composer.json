@@ -2,7 +2,6 @@
     "autoload": {
         "psr-4": {
             "Flex\\": "app/",
-            "Flex\\Core\\": "app/Core/",
             "Plugins\\": "plugins/",
             "Themes\\": "themes/"
         }
@@ -14,6 +13,14 @@
         "phpmailer/phpmailer": "^7.1",
         "nesbot/carbon": "^3.11",
         "maennchen/zipstream-php": "^3.1",
-        "illuminate/pagination": "^12.62"
+        "illuminate/pagination": "^12.62",
+        "nikic/fast-route": "^1.3"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^11.5"
+    },
+    "scripts": {
+        "test": "phpunit --colors=always",
+        "test:unit": "phpunit --testsuite Unit --colors=always"
     }
 }

@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__ . '/app/Core/Routing/helpers.php';
+
 use Flex\Models\Setting;
 
 if (!function_exists('base_path')) {

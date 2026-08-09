@@ -141,3 +141,9 @@ $router->get('/admin/file-structure', [FileStructureController::class, 'index'],
 
 // Install
 $router->get('/install/success', [InstallController::class, 'success']);
+
+$featureRouteFiles = glob(__DIR__ . '/Features/*/routes.php');
+
+foreach ($featureRouteFiles as $routeFile) {
+    require $routeFile;
+}
