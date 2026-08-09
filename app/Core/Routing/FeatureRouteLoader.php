@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Flex\Core\Routing;
 
 use FilesystemIterator;
+use Flex\Core\Container\Container;
+use Flex\Core\Features\Contracts\FeatureServiceProviderInterface;
 use Flex\Core\Routing\Exceptions\FeatureRouteException;
 
 final class FeatureRouteLoader
@@ -18,8 +20,11 @@ final class FeatureRouteLoader
     /** @var array<string, true> */
     private array $loadedFiles = [];
 
+    /** @var array<class-string, true> */
+    private array $loadedProviders = [];
+
     /**
-     * @param list<string>|null $enabledFeatures Null means every discovered feature.
+     * @param list<string>|null $enabledFeatures
      * @param list<string> $disabledFeatures
      */
     public function __construct(
@@ -27,6 +32,7 @@ final class FeatureRouteLoader
         private readonly string $featuresPath,
         private readonly ?array $enabledFeatures = null,
         private readonly array $disabledFeatures = [],
+        private readonly ?Container $container = null,
     ) {
     }
 
@@ -46,7 +52,11 @@ final class FeatureRouteLoader
                 continue;
             }
 
-            $featureLoaded = false;
+            $featureLoaded = $this->registerProviders(
+                $definition['name'],
+                $definition['providers']
+            );
+
             foreach ($routeTypes as $type) {
                 $relative = $definition['routes'][$type] ?? null;
                 if (!is_string($relative) || trim($relative) === '') {
@@ -79,6 +89,7 @@ final class FeatureRouteLoader
     public function reset(): void
     {
         $this->loadedFiles = [];
+        $this->loadedProviders = [];
     }
 
     /**
@@ -87,6 +98,7 @@ final class FeatureRouteLoader
      *   path: string,
      *   enabled: bool,
      *   priority: int,
+     *   providers: list<class-string>,
      *   routes: array<string, string>
      * }>
      */
@@ -115,9 +127,17 @@ final class FeatureRouteLoader
                 'path' => $path,
                 'enabled' => (bool) ($manifest['enabled'] ?? true),
                 'priority' => (int) ($manifest['priority'] ?? 100),
+
+                'providers' => $this->providerClasses(
+                    $name,
+                    $manifest['providers'] ?? []
+                ),
+
                 'routes' => array_replace(
                     self::DEFAULT_ROUTE_FILES,
-                    is_array($manifest['routes'] ?? null) ? $manifest['routes'] : [],
+                    is_array($manifest['routes'] ?? null)
+                    ? $manifest['routes']
+                    : [],
                 ),
             ];
         }
@@ -169,6 +189,108 @@ final class FeatureRouteLoader
         }
 
         return $realFile;
+    }
+
+    /**
+     * @param mixed $providers
+     * @return list<class-string>
+     */
+    private function providerClasses(
+        string $featureName,
+        mixed $providers
+    ): array {
+        if (!is_array($providers)) {
+            throw new FeatureRouteException(
+                sprintf(
+                    'Providers for Feature [%s] must be an array.',
+                    $featureName
+                )
+            );
+        }
+
+        $result = [];
+
+        foreach ($providers as $provider) {
+            if (
+                !is_string($provider)
+                || trim($provider) === ''
+            ) {
+                throw new FeatureRouteException(
+                    sprintf(
+                        'Feature [%s] contains an invalid provider.',
+                        $featureName
+                    )
+                );
+            }
+
+            /** @var class-string $provider */
+            $result[] = ltrim($provider, '\\');
+        }
+
+        return array_values(array_unique($result));
+    }
+
+    /**
+     * @param list<class-string> $providers
+     */
+    private function registerProviders(
+        string $featureName,
+        array $providers
+    ): bool {
+        if ($providers === []) {
+            return false;
+        }
+
+        if ($this->container === null) {
+            throw new FeatureRouteException(
+                sprintf(
+                    'Feature [%s] declares providers, '
+                    . 'but the Feature loader has no container.',
+                    $featureName
+                )
+            );
+        }
+
+        $registered = false;
+
+        foreach ($providers as $providerClass) {
+            if (isset($this->loadedProviders[$providerClass])) {
+                continue;
+            }
+
+            if (!class_exists($providerClass)) {
+                throw new FeatureRouteException(
+                    sprintf(
+                        'Feature provider [%s] does not exist.',
+                        $providerClass
+                    )
+                );
+            }
+
+            $provider = $this->container->make(
+                $providerClass
+            );
+
+            if (
+                !$provider
+                instanceof FeatureServiceProviderInterface
+            ) {
+                throw new FeatureRouteException(
+                    sprintf(
+                        'Feature provider [%s] must implement [%s].',
+                        $providerClass,
+                        FeatureServiceProviderInterface::class
+                    )
+                );
+            }
+
+            $provider->register($this->container);
+
+            $this->loadedProviders[$providerClass] = true;
+            $registered = true;
+        }
+
+        return $registered;
     }
 
     private function isEnabled(string $name, bool $manifestEnabled): bool

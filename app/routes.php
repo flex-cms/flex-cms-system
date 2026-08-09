@@ -92,8 +92,8 @@ $router->post('/admin/users/permissions/toggle', [PermissionController::class, '
 $router->post('/admin/users/permissions/update-position', [PermissionController::class, 'updatePosition'], [AuthMiddleware::class, AdminMiddleware::class]);
 
 // Settings
-$router->get('/admin/settings/{group}', [SettingsController::class, 'show'], [AuthMiddleware::class, AdminMiddleware::class]);
-$router->post('/admin/settings/{group}/update', [SettingsController::class, 'update'], [AuthMiddleware::class, AdminMiddleware::class]);
+// $router->get('/admin/settings/{group}', [SettingsController::class, 'show'], [AuthMiddleware::class, AdminMiddleware::class]);
+// $router->post('/admin/settings/{group}/update', [SettingsController::class, 'update'], [AuthMiddleware::class, AdminMiddleware::class]);
 
 // Updates
 $router->get('/admin/update', [UpdateController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]);

@@ -9,6 +9,9 @@ use Flex\Core\Routing\FlexRouter;
 use Flex\Core\Routing\RouteCollection;
 use Flex\Core\Routing\RouteRegistrar;
 use PHPUnit\Framework\TestCase;
+use Flex\Core\Container\Container;
+use Flex\Core\Features\Contracts\FeatureServiceProviderInterface;
+use Flex\Core\Routing\Exceptions\FeatureRouteException;
 
 final class FeatureRouteLoaderTest extends TestCase
 {
@@ -17,10 +20,13 @@ final class FeatureRouteLoaderTest extends TestCase
 
     protected function setUp(): void
     {
+        parent::setUp();
+        
         $this->path = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'flex-features-' . bin2hex(random_bytes(6));
         mkdir($this->path, 0777, true);
         $this->routes = new RouteCollection();
         FlexRouter::setRegistrar(new RouteRegistrar($this->routes));
+        FeatureRouteLoaderTestProvider::$registrations = 0;
     }
 
     protected function tearDown(): void
@@ -39,7 +45,7 @@ final class FeatureRouteLoaderTest extends TestCase
 
         self::assertSame(['Dashboard', 'Users'], $result->loadedFeatures);
         self::assertSame(['/dashboard', '/users'], array_map(
-            static fn ($route): string => $route->uri(),
+            static fn($route): string => $route->uri(),
             $this->routes->all(),
         ));
     }
@@ -71,17 +77,241 @@ final class FeatureRouteLoaderTest extends TestCase
         self::assertCount(1, $this->routes);
     }
 
-    private function feature(string $name, string $uri, int $priority = 100): void
+    public function testItRegistersFeatureProvider(): void
     {
-        $directory = $this->path . DIRECTORY_SEPARATOR . $name;
-        mkdir($directory . DIRECTORY_SEPARATOR . 'Routes', 0777, true);
+        $this->feature(
+            'Users',
+            '/users',
+            providers: [
+                FeatureRouteLoaderTestProvider::class,
+            ]
+        );
+
+        $container = new Container();
+
+        $loader = new FeatureRouteLoader(
+            registrar: FlexRouter::registrar(),
+            featuresPath: $this->path,
+            container: $container
+        );
+
+        $result = $loader->load(['web']);
+
+        self::assertSame(
+            1,
+            FeatureRouteLoaderTestProvider::$registrations
+        );
+
+        self::assertSame(
+            ['Users'],
+            $result->loadedFeatures
+        );
+
+        self::assertInstanceOf(
+            FeatureRouteLoaderTestService::class,
+            $container->get(
+                FeatureRouteLoaderTestContract::class
+            )
+        );
+    }
+
+    public function testItDoesNotRegisterProviderTwice(): void
+    {
+        $this->feature(
+            'Users',
+            '/users',
+            providers: [
+                FeatureRouteLoaderTestProvider::class,
+            ]
+        );
+
+        $loader = new FeatureRouteLoader(
+            registrar: FlexRouter::registrar(),
+            featuresPath: $this->path,
+            container: new Container()
+        );
+
+        $loader->load(['web']);
+        $loader->load(['web']);
+
+        self::assertSame(
+            1,
+            FeatureRouteLoaderTestProvider::$registrations
+        );
+    }
+
+    public function testDisabledFeatureDoesNotRegisterProvider(): void
+    {
+        $this->feature(
+            'Users',
+            '/users',
+            providers: [
+                FeatureRouteLoaderTestProvider::class,
+            ]
+        );
+
+        $loader = new FeatureRouteLoader(
+            registrar: FlexRouter::registrar(),
+            featuresPath: $this->path,
+            disabledFeatures: ['Users'],
+            container: new Container()
+        );
+
+        $result = $loader->load(['web']);
+
+        self::assertSame(
+            0,
+            FeatureRouteLoaderTestProvider::$registrations
+        );
+
+        self::assertSame(
+            ['Users'],
+            $result->skippedFeatures
+        );
+    }
+
+    public function testItRejectsProviderWithoutRequiredInterface(): void
+    {
+        $this->providerFeature(
+            'InvalidFeature',
+            [
+                InvalidFeatureRouteLoaderTestProvider::class,
+            ]
+        );
+
+        $loader = new FeatureRouteLoader(
+            registrar: FlexRouter::registrar(),
+            featuresPath: $this->path,
+            container: new Container()
+        );
+
+        $this->expectException(
+            FeatureRouteException::class
+        );
+
+        $this->expectExceptionMessage(
+            sprintf(
+                'Feature provider [%s] must implement [%s].',
+                InvalidFeatureRouteLoaderTestProvider::class,
+                FeatureServiceProviderInterface::class
+            )
+        );
+
+        $loader->load(['web']);
+    }
+
+    public function testItRejectsProvidersWithoutContainer(): void
+    {
+        $this->providerFeature(
+            'Users',
+            [
+                FeatureRouteLoaderTestProvider::class,
+            ]
+        );
+
+        $loader = new FeatureRouteLoader(
+            FlexRouter::registrar(),
+            $this->path
+        );
+
+        $this->expectException(
+            FeatureRouteException::class
+        );
+
+        $this->expectExceptionMessage(
+            'Feature [Users] declares providers, '
+            . 'but the Feature loader has no container.'
+        );
+
+        $loader->load(['web']);
+    }
+
+    public function testResetAllowsProviderToBeRegisteredAgain(): void
+    {
+        /*
+         * Тук Feature-ът няма route файл, за да не се
+         * получи duplicate route след reset().
+         */
+        $this->providerFeature(
+            'Users',
+            [
+                FeatureRouteLoaderTestProvider::class,
+            ]
+        );
+
+        $loader = new FeatureRouteLoader(
+            registrar: FlexRouter::registrar(),
+            featuresPath: $this->path,
+            container: new Container()
+        );
+
+        $loader->load(['web']);
+        $loader->reset();
+        $loader->load(['web']);
+
+        self::assertSame(
+            2,
+            FeatureRouteLoaderTestProvider::$registrations
+        );
+    }
+
+    /**
+     * @param list<class-string> $providers
+     */
+    private function feature(
+        string $name,
+        string $uri,
+        int $priority = 100,
+        array $providers = []
+    ): void {
+        $directory = $this->path
+            . DIRECTORY_SEPARATOR
+            . $name;
+
+        mkdir(
+            $directory . DIRECTORY_SEPARATOR . 'Routes',
+            0777,
+            true
+        );
+
         file_put_contents(
             $directory . DIRECTORY_SEPARATOR . 'feature.php',
-            '<?php return ' . var_export(['priority' => $priority], true) . ';',
+            '<?php return ' . var_export([
+                'priority' => $priority,
+                'providers' => $providers,
+            ], true) . ';'
         );
+
         file_put_contents(
-            $directory . DIRECTORY_SEPARATOR . 'Routes' . DIRECTORY_SEPARATOR . 'web.php',
-            '<?php \\Flex\\Core\\Routing\\FlexRouter::get(' . var_export($uri, true) . ', static fn () => null);',
+            $directory
+            . DIRECTORY_SEPARATOR
+            . 'Routes'
+            . DIRECTORY_SEPARATOR
+            . 'web.php',
+            '<?php \\Flex\\Core\\Routing\\FlexRouter::get('
+            . var_export($uri, true)
+            . ', static fn () => null);'
+        );
+    }
+
+    /**
+     * @param list<class-string> $providers
+     */
+    private function providerFeature(
+        string $name,
+        array $providers
+    ): void {
+        $directory = $this->path
+            . DIRECTORY_SEPARATOR
+            . $name;
+
+        mkdir($directory, 0777, true);
+
+        file_put_contents(
+            $directory . DIRECTORY_SEPARATOR . 'feature.php',
+            '<?php return ' . var_export([
+                'providers' => $providers,
+            ], true) . ';'
         );
     }
 
@@ -96,4 +326,33 @@ final class FeatureRouteLoaderTest extends TestCase
         }
         rmdir($path);
     }
+}
+
+interface FeatureRouteLoaderTestContract
+{
+}
+
+final class FeatureRouteLoaderTestService implements
+    FeatureRouteLoaderTestContract
+{
+}
+
+final class FeatureRouteLoaderTestProvider implements
+    FeatureServiceProviderInterface
+{
+    public static int $registrations = 0;
+
+    public function register(Container $container): void
+    {
+        self::$registrations++;
+
+        $container->singleton(
+            FeatureRouteLoaderTestContract::class,
+            FeatureRouteLoaderTestService::class
+        );
+    }
+}
+
+final class InvalidFeatureRouteLoaderTestProvider
+{
 }
