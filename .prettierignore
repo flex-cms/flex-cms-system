@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+vendor/
+
+# Generated build output
+public/dist/
+**/dist/
+**/build/
+coverage/
+
+# Runtime and uploaded files
+storage/
+uploads/
+*.log
+
+# Generated and minified assets
+*.min.js
+*.min.css
+*.map
+
+# Lock files
+package-lock.json
+composer.lock
+
+# Environment files
+.env
+.env.*
+
+# PHP се форматира с отделен PHP formatter
+**/*.php
