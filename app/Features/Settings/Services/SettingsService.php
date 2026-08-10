@@ -4,19 +4,16 @@ declare(strict_types=1);
 
 namespace Flex\Features\Settings\Services;
 
-use Flex\Features\Settings\Configuration\SettingsPageConfig;
 use Flex\Features\Settings\Data\SettingsPageData;
-use Flex\Features\Settings\Repositories\SettingRepositoryInterface;
 use Flex\Features\Settings\Exceptions\UnknownSettingsGroupException;
+use Flex\Features\Settings\Repositories\SettingRepositoryInterface;
+use Flex\Features\Settings\Support\SettingsOptions;
 use InvalidArgumentException;
 
 final class SettingsService
 {
-    public const DATABASE_GROUP = 'system';
+    public const DATABASE_GROUP = 'general';
 
-    /**
-     * @var array<string, array<string, array{type: string, default: mixed}>>
-     */
     private const DEFINITIONS = [
         'general' => [
             'site_name' => [
@@ -77,6 +74,7 @@ final class SettingsService
             'smtp_pass' => [
                 'type' => 'string',
                 'default' => '',
+                'preserve_on_empty' => true,
             ],
             'smtp_encryption' => [
                 'type' => 'string',
@@ -109,96 +107,134 @@ final class SettingsService
     ];
 
     public function __construct(
-        private readonly SettingRepositoryInterface $settings,
-        private readonly SettingsPageConfig $configuration
+        private readonly SettingRepositoryInterface $settings
     ) {
     }
 
-    public function pageData(string $pageGroup): SettingsPageData
-    {
-        $settings = $this->valuesForPage($pageGroup);
-        $label = $this->configuration->label($pageGroup);
-
-        $label ??= $pageGroup;
+    public function pageData(
+        string $pageGroup
+    ): SettingsPageData {
+        $this->ensurePageExists(
+            $pageGroup
+        );
 
         return new SettingsPageData(
-            title: 'Настройки: ' . $label,
-            currentGroup: $pageGroup,
-            definedGroups: $this->configuration->groups(),
-            settings: $settings,
-            languages: $this->configuration->languages(),
-            timezones: $this->configuration->timezones(),
-            dateFormats: $this->configuration->dateFormats()
+            group: $pageGroup,
+            storageGroup: self::DATABASE_GROUP,
+            title: $this->titleFor(
+                $pageGroup
+            ),
+            label: $this->labelFor(
+                $pageGroup
+            ),
+            description: null,
+            values: $this->valuesForPage(
+                $pageGroup
+            ),
+            languages:
+                SettingsOptions::languages(),
+            timezones:
+                SettingsOptions::timezones(),
+            dateFormats:
+                SettingsOptions::dateFormats()
         );
     }
 
-    /**
-     * @return array<string, mixed>
-     */
-    public function valuesForPage(string $pageGroup): array
-    {
-        $definitions = $this->definitionsFor($pageGroup);
-        $storedValues = $this->settings->valuesForGroup(
-            self::DATABASE_GROUP
-        );
+    public function valuesForPage(
+        string $pageGroup
+    ): array {
+        $definitions =
+            $this->definitionsFor(
+                $pageGroup
+            );
+
+        $storedValues =
+            $this->settings->valuesForGroup(
+                self::DATABASE_GROUP
+            );
 
         $values = [];
 
-        foreach ($definitions as $key => $definition) {
-            $values[$key] = array_key_exists($key, $storedValues)
-                ? $storedValues[$key]
-                : $definition['default'];
+        foreach (
+            $definitions
+            as $key => $definition
+        ) {
+            $values[$key] =
+                array_key_exists(
+                    $key,
+                    $storedValues
+                )
+                    ? $storedValues[$key]
+                    : $definition['default'];
         }
 
         return $values;
     }
 
-    /**
-     * @param array<string, mixed> $submittedSettings
-     */
     public function updatePage(
         string $pageGroup,
         array $submittedSettings
     ): void {
-        $definitions = $this->definitionsFor($pageGroup);
+        $definitions =
+            $this->definitionsFor(
+                $pageGroup
+            );
+
         $normalizedSettings = [];
 
-        foreach ($definitions as $key => $definition) {
-            $type = $definition['type'];
+        foreach (
+            $definitions
+            as $key => $definition
+        ) {
+            $type =
+                $definition['type'];
 
             if ($type === 'boolean') {
-                $normalizedSettings[$key] = $this->normalizeBoolean(
-                    $submittedSettings[$key] ?? false
-                );
+                $normalizedSettings[$key] =
+                    $this->normalizeBoolean(
+                        $submittedSettings[$key]
+                        ?? false
+                    );
 
                 continue;
             }
 
-            if (!array_key_exists($key, $submittedSettings)) {
-                continue;
-            }
-
-            /*
-             * Празна SMTP парола означава:
-             * запази съществуващата парола.
-             */
             if (
-                $pageGroup === 'mail'
-                && $key === 'smtp_pass'
-                && $submittedSettings[$key] === ''
+                !array_key_exists(
+                    $key,
+                    $submittedSettings
+                )
             ) {
                 continue;
             }
 
-            $normalizedSettings[$key] = $this->normalizeValue(
-                $submittedSettings[$key],
-                $type,
-                $key
-            );
+            if (
+                ($definition['preserve_on_empty']
+                    ?? false) === true
+                && (
+                    $submittedSettings[$key] === ''
+                    || $submittedSettings[$key] === null
+                )
+            ) {
+                continue;
+            }
+
+            $normalizedSettings[$key] =
+                $this->normalizeValue(
+                    $submittedSettings[$key],
+                    $type,
+                    $key
+                );
+        }
+
+        if ($normalizedSettings === []) {
+            return;
         }
 
         $this->settings->transaction(
-            function () use ($normalizedSettings): void {
+            function () use (
+                $normalizedSettings
+            ): void {
                 $this->settings->saveMany(
                     $normalizedSettings,
                     self::DATABASE_GROUP
@@ -207,27 +243,69 @@ final class SettingsService
         );
     }
 
-    /**
-     * @return array<string, array{type: string, default: mixed}>
-     */
-    private function definitionsFor(string $pageGroup): array
-    {
+    private function definitionsFor(
+        string $pageGroup
+    ): array {
         if (
-            !$this->configuration->hasGroup($pageGroup)
-            || !array_key_exists($pageGroup, self::DEFINITIONS)
+            !array_key_exists(
+                $pageGroup,
+                self::DEFINITIONS
+            )
         ) {
-            throw new UnknownSettingsGroupException($pageGroup);
+            throw new UnknownSettingsGroupException(
+                $pageGroup
+            );
         }
 
-        return self::DEFINITIONS[$pageGroup];
+        return self::DEFINITIONS[
+            $pageGroup
+        ];
+    }
+
+    private function ensurePageExists(
+        string $pageGroup
+    ): void {
+        $this->definitionsFor(
+            $pageGroup
+        );
+    }
+
+    private function labelFor(
+        string $pageGroup
+    ): string {
+        return match ($pageGroup) {
+            'general' =>
+                'Общи настройки',
+
+            'mail' =>
+                'Имейл настройки',
+
+            'media' =>
+                'Медийни настройки',
+
+            default =>
+                $pageGroup,
+        };
+    }
+
+    private function titleFor(
+        string $pageGroup
+    ): string {
+        return 'Настройки: '
+            . $this->labelFor(
+                $pageGroup
+            );
     }
 
     private function normalizeValue(
         mixed $value,
         string $type,
         string $key
-    ): string|int {
-        if (is_array($value) || is_object($value)) {
+    ): string|int|float {
+        if (
+            is_array($value)
+            || is_object($value)
+        ) {
             throw new InvalidArgumentException(
                 sprintf(
                     'The setting [%s] must contain a scalar value.',
@@ -237,23 +315,68 @@ final class SettingsService
         }
 
         return match ($type) {
-            'integer' => filter_var(
+            'integer' =>
+                $this->normalizeInteger(
+                    $value,
+                    $key
+                ),
+
+            'float' =>
+                $this->normalizeFloat(
+                    $value,
+                    $key
+                ),
+
+            default =>
+                (string) $value,
+        };
+    }
+
+    private function normalizeInteger(
+        mixed $value,
+        string $key
+    ): int {
+        $normalized =
+            filter_var(
                 $value,
                 FILTER_VALIDATE_INT,
                 FILTER_NULL_ON_FAILURE
-            ) ?? throw new InvalidArgumentException(
+            );
+
+        if ($normalized === null) {
+            throw new InvalidArgumentException(
                 sprintf(
                     'The setting [%s] must contain an integer.',
                     $key
                 )
-            ),
+            );
+        }
 
-            default => (string) $value,
-        };
+        return $normalized;
     }
 
-    private function normalizeBoolean(mixed $value): bool
-    {
+    private function normalizeFloat(
+        mixed $value,
+        string $key
+    ): float {
+        if (
+            !is_scalar($value)
+            || !is_numeric($value)
+        ) {
+            throw new InvalidArgumentException(
+                sprintf(
+                    'The setting [%s] must contain a numeric value.',
+                    $key
+                )
+            );
+        }
+
+        return (float) $value;
+    }
+
+    private function normalizeBoolean(
+        mixed $value
+    ): bool {
         if (is_bool($value)) {
             return $value;
         }

@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 
 final class Setting extends Model
 {
+    public const CORE_GROUP = 'general';
     public const TYPE_STRING = 'string';
     public const TYPE_BOOLEAN = 'boolean';
     public const TYPE_INTEGER = 'integer';

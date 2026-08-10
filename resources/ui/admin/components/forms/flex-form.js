@@ -1,6 +1,7 @@
 import { css, html } from "lit";
 
 import FlexElement from "@admin-ui/core/FlexElement.js";
+import { notificationManager } from "@admin-ui/core/NotificationManager";
 
 export class FlexForm extends FlexElement {
     static properties = {
@@ -141,12 +142,6 @@ export class FlexForm extends FlexElement {
             return;
         }
 
-        /*
-         * Server-side mode.
-         *
-         * Оставяме browser-а да изпрати
-         * нормалната заявка.
-         */
         if (this.mode !== "api") {
             this.emit("flex-form-submit", {
                 form,
@@ -156,9 +151,6 @@ export class FlexForm extends FlexElement {
             return;
         }
 
-        /*
-         * API mode.
-         */
         event.preventDefault();
 
         await this.#submitApi(form);
@@ -166,6 +158,12 @@ export class FlexForm extends FlexElement {
 
     async #submitApi(form) {
         this.loading = true;
+
+        const submitButtons = this.querySelectorAll('flex-button[type="submit"]');
+
+        for (const button of submitButtons) {
+            button.loading = true;
+        }
 
         const formData = this.#createFormData(form);
 
@@ -188,12 +186,16 @@ export class FlexForm extends FlexElement {
                 form.reset();
             }
 
+            this.#notifySuccess(data);
+
             this.emit("flex-form-success", {
                 form,
                 response,
                 data,
             });
         } catch (error) {
+            this.#notifyError(error);
+
             this.emit("flex-form-error", {
                 form,
                 error,
@@ -203,6 +205,10 @@ export class FlexForm extends FlexElement {
         } finally {
             this.loading = false;
 
+            for (const button of submitButtons) {
+                button.loading = false;
+            }
+
             this.emit("flex-form-complete", {
                 form,
             });
@@ -210,16 +216,8 @@ export class FlexForm extends FlexElement {
     }
 
     #createFormData(form) {
-        /*
-         * Първо взимаме стандартните
-         * HTML form controls.
-         */
         const formData = new FormData(form);
 
-        /*
-         * След това добавяме Flex form
-         * components от light DOM.
-         */
         const fields = this.querySelectorAll("[name]");
 
         for (const field of fields) {
@@ -227,10 +225,6 @@ export class FlexForm extends FlexElement {
                 continue;
             }
 
-            /*
-             * Native controls вече са
-             * обработени от FormData(form).
-             */
             if (
                 field instanceof HTMLInputElement ||
                 field instanceof HTMLSelectElement ||
@@ -239,9 +233,16 @@ export class FlexForm extends FlexElement {
                 continue;
             }
 
-            /*
-             * Custom Flex components.
-             */
+            if (field.tagName === "FLEX-CHECKBOX") {
+                formData.delete(field.name);
+
+                if (field.checked) {
+                    formData.append(field.name, String(field.value ?? "1"));
+                }
+
+                continue;
+            }
+
             if (!("value" in field)) {
                 continue;
             }
@@ -252,7 +253,7 @@ export class FlexForm extends FlexElement {
                 continue;
             }
 
-            formData.append(field.name, String(value));
+            formData.set(field.name, String(value));
         }
 
         return formData;
@@ -263,11 +264,6 @@ export class FlexForm extends FlexElement {
 
         const action = this.action || window.location.href;
 
-        /*
-         * GET / HEAD:
-         *
-         * FormData става query string.
-         */
         if (method === "GET" || method === "HEAD") {
             const url = new URL(action, window.location.href);
 
@@ -287,9 +283,6 @@ export class FlexForm extends FlexElement {
             });
         }
 
-        /*
-         * POST / PUT / PATCH / DELETE
-         */
         return fetch(action, {
             method,
 
@@ -319,6 +312,35 @@ export class FlexForm extends FlexElement {
             form: event.currentTarget,
         });
     };
+
+    #notifySuccess(data) {
+        if (!window.flexNotify) {
+            return;
+        }
+
+        const message =
+            typeof data === "object" && data !== null && typeof data.message === "string"
+                ? data.message
+                : "Данните бяха записани успешно.";
+
+        notificationManager.success(message);
+    }
+
+    #notifyError(error) {
+        if (!window.flexNotify) {
+            return;
+        }
+
+        const data = error?.data;
+
+        let message = "Възникна грешка при изпращането.";
+
+        if (typeof data === "object" && data !== null && typeof data.message === "string") {
+            message = data.message;
+        }
+
+        notificationManager.error(message);
+    }
 
     get form() {
         return this.renderRoot?.querySelector("form") ?? null;
