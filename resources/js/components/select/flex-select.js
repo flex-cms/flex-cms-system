@@ -62,9 +62,7 @@ export class FlexSelect extends FlexElement {
         event?.stopPropagation();
 
         if (this.multiple) {
-            let currentValues = Array.isArray(this.value)
-                ? [...this.value]
-                : [];
+            let currentValues = Array.isArray(this.value) ? [...this.value] : [];
             const index = currentValues.indexOf(option.value);
             if (index > -1) {
                 currentValues.splice(index, 1);
@@ -120,20 +118,27 @@ export class FlexSelect extends FlexElement {
 
         return html`
             <div class="flex-select-field relative">
-                ${this.label
-                    ? html`
-                          <label for=${id} class="mb-1.5 block font-medium">
-                              ${this.label}
-                              ${this.required
-                                  ? html`<span
-                                        class="text-red-600"
-                                        aria-hidden="true"
-                                        >*</span
-                                    >`
-                                  : nothing}
-                          </label>
-                      `
-                    : nothing}
+                ${
+                    this.label
+                        ? html`
+                              <label
+                                  for=${id}
+                                  class="mb-1.5 block font-medium"
+                              >
+                                  ${this.label}
+                                  ${
+                                  this.required
+                                      ? html`<span
+                                            class="text-red-600"
+                                            aria-hidden="true"
+                                            >*</span
+                                        >`
+                                      : nothing
+                              }
+                              </label>
+                          `
+                        : nothing
+                }
 
                 <button
                     type="button"
@@ -144,17 +149,18 @@ export class FlexSelect extends FlexElement {
                     @click=${this.toggleOpen}
                 >
                     <span
-                        class=${displayLabel
-                            ? "text-gray-900 dark:text-gray-100"
-                            : "text-gray-400 dark:text-gray-500"}
+                        class=${
+                            displayLabel
+                                ? "text-gray-900 dark:text-gray-100"
+                                : "text-gray-400 dark:text-gray-500"
+                        }
                     >
                         ${displayLabel || this.placeholder}
                     </span>
                     <svg
-                        class="h-4 w-4 text-gray-400 transition-transform duration-200 ${this
-                            .open
-                            ? "rotate-180"
-                            : ""}"
+                        class="h-4 w-4 text-gray-400 transition-transform duration-200 ${
+                            this.open ? "rotate-180" : ""
+                        }"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -168,73 +174,82 @@ export class FlexSelect extends FlexElement {
                     </svg>
                 </button>
 
-                ${this.open
-                    ? html`
-                          <div
-                              class="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md border border-gray-200 bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-none dark:border-gray-700 dark:bg-gray-800"
-                              role="listbox"
+                ${
+                    this.open
+                        ? html`
+                              <div
+                                  class="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md border border-gray-200 bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-none dark:border-gray-700 dark:bg-gray-800"
+                                  role="listbox"
+                              >
+                                  ${
+                                  (this.options || []).length === 0
+                                      ? html`<div
+                                            class="px-4 py-2.5 text-gray-500 dark:text-gray-400"
+                                        >
+                                            Няма налични опции
+                                        </div>`
+                                      : (this.options || []).map((opt) => {
+                                            const selected = this.isSelected(opt.value);
+                                            return html`
+                                                <div
+                                                    class="flex cursor-pointer items-center justify-between px-4 py-2.5 transition hover:bg-gray-100 dark:hover:bg-gray-700/50 ${
+                                                    selected
+                                                        ? "font-semibold text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/30"
+                                                        : "text-gray-700 dark:text-gray-200"
+                                                }"
+                                                    role="option"
+                                                    aria-selected=${selected}
+                                                    @click=${(e) => this.selectOption(opt, e)}
+                                                >
+                                                    <span>${opt.label}</span>
+                                                    ${
+                                                    selected
+                                                        ? html`
+                                                              <svg
+                                                                  class="h-4 w-4 text-blue-600 dark:text-blue-400"
+                                                                  fill="none"
+                                                                  stroke="currentColor"
+                                                                  viewBox="0 0 24 24"
+                                                              >
+                                                                  <path
+                                                                      stroke-linecap="round"
+                                                                      stroke-linejoin="round"
+                                                                      stroke-width="2"
+                                                                      d="M5 13l4 4L19 7"
+                                                                  />
+                                                              </svg>
+                                                          `
+                                                        : nothing
+                                                }
+                                                </div>
+                                            `;
+                                        })
+                              }
+                              </div>
+                          `
+                        : nothing
+                }
+                ${
+                    this.helpText
+                        ? html`<p
+                              id="${id}-help"
+                              class="mt-1.5 text-xs text-gray-500"
                           >
-                              ${(this.options || []).length === 0
-                                  ? html`<div
-                                        class="px-4 py-2.5 text-gray-500 dark:text-gray-400"
-                                    >
-                                        Няма налични опции
-                                    </div>`
-                                  : (this.options || []).map((opt) => {
-                                        const selected = this.isSelected(
-                                            opt.value,
-                                        );
-                                        return html`
-                                            <div
-                                                class="flex cursor-pointer items-center justify-between px-4 py-2.5 transition hover:bg-gray-100 dark:hover:bg-gray-700/50 ${selected
-                                                    ? "font-semibold text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/30"
-                                                    : "text-gray-700 dark:text-gray-200"}"
-                                                role="option"
-                                                aria-selected=${selected}
-                                                @click=${(e) =>
-                                                    this.selectOption(opt, e)}
-                                            >
-                                                <span>${opt.label}</span>
-                                                ${selected
-                                                    ? html`
-                                                          <svg
-                                                              class="h-4 w-4 text-blue-600 dark:text-blue-400"
-                                                              fill="none"
-                                                              stroke="currentColor"
-                                                              viewBox="0 0 24 24"
-                                                          >
-                                                              <path
-                                                                  stroke-linecap="round"
-                                                                  stroke-linejoin="round"
-                                                                  stroke-width="2"
-                                                                  d="M5 13l4 4L19 7"
-                                                              />
-                                                          </svg>
-                                                      `
-                                                    : nothing}
-                                            </div>
-                                        `;
-                                    })}
-                          </div>
-                      `
-                    : nothing}
-                ${this.helpText
-                    ? html`<p
-                          id="${id}-help"
-                          class="mt-1.5 text-xs text-gray-500"
-                      >
-                          ${this.helpText}
-                      </p>`
-                    : nothing}
-                ${this.error
-                    ? html`<p
-                          id="${id}-error"
-                          class="mt-1.5 text-red-600"
-                          role="alert"
-                      >
-                          ${this.error}
-                      </p>`
-                    : nothing}
+                              ${this.helpText}
+                          </p>`
+                        : nothing
+                }
+                ${
+                    this.error
+                        ? html`<p
+                              id="${id}-error"
+                              class="mt-1.5 text-red-600"
+                              role="alert"
+                          >
+                              ${this.error}
+                          </p>`
+                        : nothing
+                }
             </div>
         `;
     }

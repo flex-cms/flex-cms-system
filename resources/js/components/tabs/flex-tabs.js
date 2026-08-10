@@ -31,9 +31,7 @@ export class FlexTabs extends FlexElement {
     }
 
     syncPanels() {
-        const panelElements = Array.from(
-            this.querySelectorAll("flex-tab-panel"),
-        );
+        const panelElements = Array.from(this.querySelectorAll("flex-tab-panel"));
 
         this.panels = panelElements.map((panel) => ({
             key: panel.getAttribute("key") || "",
@@ -97,7 +95,10 @@ export class FlexTabs extends FlexElement {
 
             <!-- Навигация с табове (поставена най-отгоре чрез order: -1) -->
             <div class="flex-tabs-wrapper">
-                <div class="${this.getNavContainerClasses()}" role="tablist">
+                <div
+                    class="${this.getNavContainerClasses()}"
+                    role="tablist"
+                >
                     ${this.panels.map((panel) => this.renderTabButton(panel))}
                 </div>
             </div>
@@ -116,21 +117,25 @@ export class FlexTabs extends FlexElement {
                 class="${this.getButtonClasses(isActive, panel.disabled)}"
                 @click="${() => this.selectTab(panel)}"
             >
-                ${panel.icon
-                    ? html`<i
-                          class="${panel.icon} text-sm"
-                          aria-hidden="true"
-                      ></i>`
-                    : nothing}
+                ${
+                    panel.icon
+                        ? html`<i
+                              class="${panel.icon} text-sm"
+                              aria-hidden="true"
+                          ></i>`
+                        : nothing
+                }
                 <span>${panel.label}</span>
 
-                ${panel.badge !== null && panel.badge !== undefined
-                    ? html`
-                          <span class="${this.getBadgeClasses(isActive)}">
-                              ${panel.badge}
-                          </span>
-                      `
-                    : nothing}
+                ${
+                    panel.badge !== null && panel.badge !== undefined
+                        ? html`
+                              <span class="${this.getBadgeClasses(isActive)}">
+                                  ${panel.badge}
+                              </span>
+                          `
+                        : nothing
+                }
             </button>
         `;
     }

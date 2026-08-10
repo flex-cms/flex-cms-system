@@ -16,9 +16,7 @@ export default (url) => ({
 
                 const id = item.dataset.id;
 
-                const parent = item
-                    .closest(".menu-tree")
-                    ?.closest(".menu-item");
+                const parent = item.closest(".menu-tree")?.closest(".menu-item");
                 const parentId = parent ? parent.dataset.id : null;
 
                 const order = [...event.to.children].indexOf(item);

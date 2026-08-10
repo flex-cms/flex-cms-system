@@ -5,7 +5,7 @@ Lit Web Component за контекстни съобщения във Flex CMS. 
 ## Импорт
 
 ```js
-import './alert/flex-alert.js';
+import "./alert/flex-alert.js";
 ```
 
 ## Основен пример
@@ -21,33 +21,36 @@ import './alert/flex-alert.js';
 
 ## Типове
 
-| Тип | Предназначение | Икона по подразбиране |
-| --- | --- | --- |
-| `info` | Обща информация | `fa-circle-info` |
-| `success` | Успешна операция | `fa-circle-check` |
-| `warning` | Предупреждение | `fa-triangle-exclamation` |
-| `danger` | Грешка или опасно действие | `fa-circle-exclamation` |
+| Тип       | Предназначение             | Икона по подразбиране     |
+| --------- | -------------------------- | ------------------------- |
+| `info`    | Обща информация            | `fa-circle-info`          |
+| `success` | Успешна операция           | `fa-circle-check`         |
+| `warning` | Предупреждение             | `fa-triangle-exclamation` |
+| `danger`  | Грешка или опасно действие | `fa-circle-exclamation`   |
 
 Непозната стойност се визуализира като `info`.
 
 ## Атрибути и свойства
 
-| Атрибут | JS свойство | Тип | По подразбиране | Описание |
-| --- | --- | --- | --- | --- |
-| `type` | `type` | `String` | `info` | Типът на съобщението. |
-| `title` | `title` | `String` | празно | Незадължително заглавие. |
-| `message` | `message` | `String` | празно | Основният текст. |
-| `icon` | `icon` | `String` | автоматична | Собствени Font Awesome класове. |
-| `dismissible` | `dismissible` | `Boolean` | `false` | Показва бутон за затваряне. |
-| `duration` | `duration` | `Number` | `0` | Автоматично затваряне в милисекунди; `0` го изключва. |
-| `open` | `open` | `Boolean` | `true` | Определя дали alert-ът е видим. Отразява се в DOM. |
+| Атрибут       | JS свойство   | Тип       | По подразбиране | Описание                                              |
+| ------------- | ------------- | --------- | --------------- | ----------------------------------------------------- |
+| `type`        | `type`        | `String`  | `info`          | Типът на съобщението.                                 |
+| `title`       | `title`       | `String`  | празно          | Незадължително заглавие.                              |
+| `message`     | `message`     | `String`  | празно          | Основният текст.                                      |
+| `icon`        | `icon`        | `String`  | автоматична     | Собствени Font Awesome класове.                       |
+| `dismissible` | `dismissible` | `Boolean` | `false`         | Показва бутон за затваряне.                           |
+| `duration`    | `duration`    | `Number`  | `0`             | Автоматично затваряне в милисекунди; `0` го изключва. |
+| `open`        | `open`        | `Boolean` | `true`          | Определя дали alert-ът е видим. Отразява се в DOM.    |
 
 При boolean HTML атрибут самото наличие означава `true`. За промяна на `open` и `dismissible` към `false` използвай JavaScript свойствата.
 
 ## Примери
 
 ```html
-<flex-alert type="info" message="Попълнете всички задължителни полета."></flex-alert>
+<flex-alert
+    type="info"
+    message="Попълнете всички задължителни полета."
+></flex-alert>
 
 <flex-alert
     type="warning"
@@ -77,7 +80,7 @@ import './alert/flex-alert.js';
 Изпраща се при затваряне чрез бутона, таймера или публичния метод:
 
 ```js
-document.addEventListener('flex-alert-close', (event) => {
+document.addEventListener("flex-alert-close", (event) => {
     console.log(event.detail.reason); // button, timeout или api
     console.log(event.detail.type);
 });
@@ -88,7 +91,7 @@ document.addEventListener('flex-alert-close', (event) => {
 ## Публични методи
 
 ```js
-const alert = document.querySelector('flex-alert');
+const alert = document.querySelector("flex-alert");
 
 alert.close(); // reason: api
 alert.show();

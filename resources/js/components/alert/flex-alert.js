@@ -36,10 +36,7 @@ export class FlexAlert extends FlexElement {
     }
 
     updated(changedProperties) {
-        if (
-            changedProperties.has("duration") ||
-            changedProperties.has("open")
-        ) {
+        if (changedProperties.has("duration") || changedProperties.has("open")) {
             this.startCloseTimer();
         }
     }
@@ -80,13 +77,12 @@ export class FlexAlert extends FlexElement {
         return html`
             <div
                 class="flex w-full items-start gap-3 rounded-lg border p-4 ${variant.wrapper}"
-                role=${this.normalizedType === "danger" ||
-                this.normalizedType === "warning"
-                    ? "alert"
-                    : "status"}
-                aria-live=${this.normalizedType === "danger"
-                    ? "assertive"
-                    : "polite"}
+                role=${
+                    this.normalizedType === "danger" || this.normalizedType === "warning"
+                        ? "alert"
+                        : "status"
+                }
+                aria-live=${this.normalizedType === "danger" ? "assertive" : "polite"}
             >
                 <i
                     class="mt-0.5 shrink-0 ${iconClasses} ${variant.icon}"
@@ -94,67 +90,59 @@ export class FlexAlert extends FlexElement {
                 ></i>
 
                 <div class="min-w-0 flex-1">
-                    ${this.title
-                        ? html`<p class="font-semibold leading-5">
-                              ${this.title}
-                          </p>`
-                        : null}
-                    ${this.message
-                        ? html`<p
-                              class="${this.title
-                                  ? "mt-1 "
-                                  : ""}text-sm leading-5"
-                          >
-                              ${this.message}
-                          </p>`
-                        : null}
+                    ${
+                        this.title
+                            ? html`<p class="font-semibold leading-5">${this.title}</p>`
+                            : null
+                    }
+                    ${
+                        this.message
+                            ? html`<p class="${this.title ? "mt-1 " : ""}text-sm leading-5">
+                                  ${this.message}
+                              </p>`
+                            : null
+                    }
                 </div>
 
-                ${this.dismissible
-                    ? html`
-                          <button
-                              type="button"
-                              class="-m-1 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md
+                ${
+                    this.dismissible
+                        ? html`
+                              <button
+                                  type="button"
+                                  class="-m-1 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md
                                    transition-colors focus:outline-none focus:ring-2 ${variant.close}"
-                              aria-label="Затвори съобщението"
-                              @click=${() => this.close("button")}
-                          >
-                              <i
-                                  class="fa-solid fa-xmark"
-                                  aria-hidden="true"
-                              ></i>
-                          </button>
-                      `
-                    : null}
+                                  aria-label="Затвори съобщението"
+                                  @click=${() => this.close("button")}
+                              >
+                                  <i
+                                      class="fa-solid fa-xmark"
+                                      aria-hidden="true"
+                                  ></i>
+                              </button>
+                          `
+                        : null
+                }
             </div>
         `;
     }
 
     get normalizedType() {
-        return ["info", "success", "warning", "danger"].includes(this.type)
-            ? this.type
-            : "info";
+        return ["info", "success", "warning", "danger"].includes(this.type) ? this.type : "info";
     }
 
     get normalizedIconClasses() {
         return String(this.icon ?? "")
             .split(/\s+/)
-            .filter((className) =>
-                /^(fa[srlbdkt]?|fa-[a-z0-9-]+)$/.test(className),
-            )
+            .filter((className) => /^(fa[srlbdkt]?|fa-[a-z0-9-]+)$/.test(className))
             .join(" ");
     }
 
     startCloseTimer() {
         this.clearCloseTimer();
 
-        if (!this.open || !Number.isFinite(this.duration) || this.duration <= 0)
-            return;
+        if (!this.open || !Number.isFinite(this.duration) || this.duration <= 0) return;
 
-        this.closeTimer = window.setTimeout(
-            () => this.close("timeout"),
-            this.duration,
-        );
+        this.closeTimer = window.setTimeout(() => this.close("timeout"), this.duration);
     }
 
     clearCloseTimer() {

@@ -3,10 +3,7 @@ export default (config = {}) => ({
     wrap: config.wrap !== false,
 
     init() {
-        ace.config.set(
-            "workerPath",
-            "https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.3/",
-        );
+        ace.config.set("workerPath", "https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.3/");
         this.editor = ace.edit(this.$refs.editorContainer);
 
         const isDark = document.documentElement.classList.contains("dark");

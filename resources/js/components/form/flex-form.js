@@ -90,9 +90,7 @@ export class FlexForm extends FlexElement {
         }
 
         if (!this.form) {
-            console.warn(
-                "<flex-form> не можа да открие или създаде <form> елемент.",
-            );
+            console.warn("<flex-form> не можа да открие или създаде <form> елемент.");
             return;
         }
 
@@ -136,17 +134,12 @@ export class FlexForm extends FlexElement {
             const response = await axiosClient.request({
                 url: this.form.action || window.location.href,
                 method,
-                ...(method === "get"
-                    ? { params: formData }
-                    : { data: formData }),
+                ...(method === "get" ? { params: formData } : { data: formData }),
                 headers: { "X-Requested-With": "XMLHttpRequest" },
             });
 
             if (this.resetOnSuccess) this.form.reset();
-            this.showAlert(
-                "success",
-                this.responseMessage(response) || this.successMessage,
-            );
+            this.showAlert("success", this.responseMessage(response) || this.successMessage);
             this.form.dispatchEvent(
                 new CustomEvent("flex-submit-end", {
                     bubbles: true,
@@ -175,9 +168,7 @@ export class FlexForm extends FlexElement {
     }
 
     responseMessage(response) {
-        return typeof response?.data?.message === "string"
-            ? response.data.message
-            : "";
+        return typeof response?.data?.message === "string" ? response.data.message : "";
     }
 
     showAlert(type, message) {
@@ -196,9 +187,7 @@ export class FlexForm extends FlexElement {
     }
 
     emit(name, detail) {
-        this.dispatchEvent(
-            new CustomEvent(name, { bubbles: true, composed: true, detail }),
-        );
+        this.dispatchEvent(new CustomEvent(name, { bubbles: true, composed: true, detail }));
     }
 
     submit() {

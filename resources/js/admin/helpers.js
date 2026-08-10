@@ -15,7 +15,7 @@ window.notify = function (message, type = "error", onHidden = null) {
             if (typeof onHidden === "function") {
                 onHidden();
             }
-        }
+        },
     });
 };
 
@@ -35,7 +35,7 @@ window.removeRowWithAnimation = function (element, duration = 300) {
     }, duration);
 };
 
-window.checkTableEmptyAndReload = function(tbody) {
+window.checkTableEmptyAndReload = function (tbody) {
     if (tbody && tbody.querySelectorAll("tr").length === 0) {
         window.location.reload();
     }

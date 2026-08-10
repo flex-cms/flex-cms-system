@@ -1,28 +1,14 @@
 function resolveValue(value, row, ...args) {
-    return typeof value === "function"
-        ? value(row, ...args)
-        : value;
+    return typeof value === "function" ? value(row, ...args) : value;
 }
 
-async function postAction({
-    endpoint,
-    row,
-    table,
-    getPayload,
-    successMessage,
-}) {
-    await axios.post(
-        resolveValue(endpoint, row),
-        getPayload(row),
-    );
+async function postAction({ endpoint, row, table, getPayload, successMessage }) {
+    await axios.post(resolveValue(endpoint, row), getPayload(row));
 
     await table?.fetchData();
 
     if (successMessage) {
-        window.notify(
-            resolveValue(successMessage, row),
-            "success",
-        );
+        window.notify(resolveValue(successMessage, row), "success");
     }
 }
 
@@ -66,8 +52,7 @@ export function createResourceActions({
                         table,
                         getPayload,
                         successMessage:
-                            restoreSuccessMessage ??
-                            `${name} беше възстановен успешно.`,
+                            restoreSuccessMessage ?? `${name} беше възстановен успешно.`,
                     });
                 },
             },
@@ -95,8 +80,7 @@ export function createResourceActions({
                         table,
                         getPayload,
                         successMessage:
-                            forceDeleteSuccessMessage ??
-                            `${name} беше изтрит завинаги.`,
+                            forceDeleteSuccessMessage ?? `${name} беше изтрит завинаги.`,
                     });
                 },
             },
@@ -113,20 +97,13 @@ export function createResourceActions({
             icon: "fa-solid fa-pen-to-square",
 
             handler: (currentRow) => {
-                window.location.href = resolveValue(
-                    editUrl,
-                    currentRow,
-                );
+                window.location.href = resolveValue(editUrl, currentRow);
             },
         },
         {
             key: "toggle",
-            label: isActive
-                ? "Деактивиране"
-                : "Активиране",
-            icon: isActive
-                ? "fa-solid fa-times"
-                : "fa-solid fa-check",
+            label: isActive ? "Деактивиране" : "Активиране",
+            icon: isActive ? "fa-solid fa-times" : "fa-solid fa-check",
 
             handler: async (currentRow) => {
                 await postAction({
@@ -136,8 +113,7 @@ export function createResourceActions({
                     getPayload,
 
                     successMessage: toggleSuccessMessage
-                        ? (row) =>
-                              toggleSuccessMessage(row, isActive)
+                        ? (row) => toggleSuccessMessage(row, isActive)
                         : isActive
                           ? `${name} беше деактивиран успешно.`
                           : `${name} беше активиран успешно.`,
@@ -167,9 +143,7 @@ export function createResourceActions({
                     row: currentRow,
                     table,
                     getPayload,
-                    successMessage:
-                        trashSuccessMessage ??
-                        `${name} беше преместен в кошчето.`,
+                    successMessage: trashSuccessMessage ?? `${name} беше преместен в кошчето.`,
                 });
             },
         },

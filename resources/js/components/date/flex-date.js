@@ -37,7 +37,10 @@ export class FlexDate extends FlexElement {
 
         if (this.tooltip) {
             return html`
-                <span title="${exactDate}" class="cursor-help underline decoration-dotted decoration-gray-400">
+                <span
+                    title="${exactDate}"
+                    class="cursor-help underline decoration-dotted decoration-gray-400"
+                >
                     ${displayText}
                 </span>
             `;

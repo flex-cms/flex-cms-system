@@ -20,9 +20,7 @@ export function createToggleAction({
 
             handler: async (currentRow) => {
                 await axios.post(
-                    typeof endpoint === "function"
-                        ? endpoint(currentRow)
-                        : endpoint,
+                    typeof endpoint === "function" ? endpoint(currentRow) : endpoint,
                     getPayload(currentRow),
                 );
 

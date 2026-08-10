@@ -11,7 +11,7 @@
         "migrate:create": "php vendor/bin/phinx create",
         "migrate:status": "php vendor/bin/phinx status",
         "seed": "php vendor/bin/phinx seed:run -s DatabaseSeeder",
-        "dev:all": "concurrently \"php -S localhost:8000\" \"npm run dev\" \"cd themes/Basic && npm run dev\"",
+        "dev:all": "concurrently -k --names \"php,core-vite,theme-vite\" \"php -S localhost:8000\" \"npm run dev\" \"npm --prefix themes/Basic run dev\"",
         "format": "prettier . --write --ignore-unknown",
         "format:check": "prettier . --check --ignore-unknown"
     },

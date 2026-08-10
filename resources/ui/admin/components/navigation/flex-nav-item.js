@@ -1,6 +1,7 @@
 import { css, html } from "lit";
 
 import FlexElement from "@admin-ui/core/FlexElement.js";
+import { fontAwesomeStyles } from "@admin-ui/styles/font-awesome.styles.js";
 
 export class FlexNavItem extends FlexElement {
     static properties = {
@@ -17,6 +18,10 @@ export class FlexNavItem extends FlexElement {
         },
 
         badge: {
+            type: String,
+        },
+
+        target: {
             type: String,
         },
 
@@ -41,140 +46,163 @@ export class FlexNavItem extends FlexElement {
         },
     };
 
-    static styles = css`
-        :host {
-            display: block;
-            width: 100%;
-        }
+    static styles = [
+        fontAwesomeStyles,
+        css`
+            :host {
+                display: block;
+                width: 100%;
+            }
 
-        a {
-            position: relative;
-            display: flex;
-            min-height: 2.75rem;
-            align-items: center;
-            gap: var(--flex-space-3);
-            padding: var(--flex-space-2) var(--flex-space-3);
-            border: 1px solid transparent;
-            border-radius: var(--flex-radius-md);
-            color: var(--flex-color-text-muted);
-            font-size: var(--flex-font-size-sm);
-            font-weight: 550;
-            text-decoration: none;
-            transition:
-                color var(--flex-duration-fast) var(--flex-easing),
-                border-color var(--flex-duration-fast) var(--flex-easing),
-                background var(--flex-duration-fast) var(--flex-easing),
-                transform var(--flex-duration-fast) var(--flex-easing);
-        }
+            a {
+                position: relative;
+                display: flex;
+                padding: 0.375rem 0.75rem;
+                min-height: 1.7rem;
+                border: 1px solid transparent;
+                align-items: center;
+                gap: var(--flex-space-2);
+                border-radius: var(--flex-radius-md);
+                color: var(--flex-color-text-muted);
+                font-size: 0.9375rem;
+                font-weight: 550;
+                line-height: 1.25rem;
+                text-decoration: none;
+                transition:
+                    color var(--flex-duration-fast) var(--flex-easing),
+                    border-color var(--flex-duration-fast) var(--flex-easing),
+                    background var(--flex-duration-fast) var(--flex-easing),
+                    transform var(--flex-duration-fast) var(--flex-easing);
+            }
 
-        a:hover {
-            border-color: var(--flex-color-border);
-            background: var(--flex-color-surface-muted);
-            color: var(--flex-color-text);
-        }
+            a:hover {
+                background: var(--flex-color-surface-muted);
+                color: var(--flex-color-text);
+            }
 
-        a:active {
-            transform: scale(0.985);
-        }
+            a:active {
+                transform: scale(0.985);
+            }
 
-        a:focus-visible {
-            outline: 3px solid var(--flex-color-focus);
-            outline-offset: 2px;
-        }
+            a:focus-visible {
+                outline: 3px solid var(--flex-color-focus);
+                outline-offset: 2px;
+            }
 
-        a[aria-current="page"] {
-            border-color: var(--flex-color-primary-200);
-            background: var(--flex-color-primary-50);
-            color: var(--flex-color-primary-700);
-        }
+            a[aria-current="page"] {
+                background: var(--flex-color-surface-muted);
+                color: var(--flex-color-text);
+            }
 
-        :host-context(html[data-theme="dark"]) a[aria-current="page"] {
-            border-color: var(--flex-color-primary-800);
-            background: rgb(49 46 129 / 28%);
-            color: var(--flex-color-primary-300);
-        }
+            :host-context(html[data-theme="dark"]) a[aria-current="page"] {
+                color: var(--flex-color-primary-300);
+            }
 
-        .icon {
-            display: inline-flex;
-            width: 1.25rem;
-            flex: 0 0 1.25rem;
-            align-items: center;
-            justify-content: center;
-            font-size: 1rem;
-        }
+            .icon {
+                display: inline-flex;
+                width: 1.25rem;
+                flex: 0 0 1.25rem;
+                align-items: center;
+                justify-content: center;
+                font-size: 1rem;
+            }
 
-        .label {
-            min-width: 0;
-            flex: 1;
-            overflow: hidden;
-            opacity: 1;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            transition: opacity var(--flex-duration-fast) var(--flex-easing);
-        }
+            .label {
+                min-width: 0;
+                flex: 1;
+                overflow: hidden;
+                opacity: 1;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                transition: opacity var(--flex-duration-fast) var(--flex-easing);
+                font-size: inherit;
+            }
 
-        .badge {
-            display: inline-flex;
-            min-width: 1.25rem;
-            height: 1.25rem;
-            flex: 0 0 auto;
-            align-items: center;
-            justify-content: center;
-            padding-inline: var(--flex-space-1);
-            border-radius: var(--flex-radius-full);
-            background: var(--flex-color-surface-muted);
-            color: var(--flex-color-text-muted);
-            font-size: 0.625rem;
-            font-weight: 700;
-            line-height: 1;
-        }
+            :host-context(flex-nav-group) a {
+                font-size: 0.9rem;
+                font-weight: 500;
+            }
 
-        a[aria-current="page"] .badge {
-            background: var(--flex-color-primary-600);
-            color: #ffffff;
-        }
+            :host-context(flex-nav-group) .badge {
+                min-width: 1rem;
+                height: 1rem;
+                font-size: 0.55rem;
+            }
 
-        :host([collapsed]) a {
-            justify-content: center;
-            gap: 0;
-            padding-inline: var(--flex-space-2);
-        }
+            :host-context(flex-nav-group) .icon {
+                font-size: inherit;
+            }
 
-        :host([collapsed]) .label,
-        :host([collapsed]) .badge {
-            position: absolute;
-            width: 1px;
-            height: 1px;
-            padding: 0;
-            overflow: hidden;
-            clip: rect(0, 0, 0, 0);
-            opacity: 0;
-            white-space: nowrap;
-        }
+            .badge {
+                display: inline-flex;
+                min-width: 1.125rem;
+                height: 1.125rem;
+                flex: 0 0 auto;
+                align-items: center;
+                justify-content: center;
+                padding-inline: 0.25rem;
+                border-radius: var(--flex-radius-full);
+                background: var(--flex-color-surface-muted);
+                color: var(--flex-color-text-muted);
+                font-size: 0.6rem;
+                font-weight: 700;
+                line-height: 1;
+            }
 
-        @media (max-width: 1023px) {
+            a[aria-current="page"] .badge {
+                background: var(--flex-color-primary-800);
+                color: #ffffff;
+            }
+
             :host([collapsed]) a {
-                justify-content: flex-start;
-                gap: var(--flex-space-3);
-                padding: var(--flex-space-2) var(--flex-space-3);
+                justify-content: center;
+                gap: 0;
+                padding-inline: var(--flex-space-2);
             }
 
             :host([collapsed]) .label,
             :host([collapsed]) .badge {
-                position: static;
-                width: auto;
-                height: auto;
-                overflow: visible;
-                clip: auto;
-                opacity: 1;
+                position: absolute;
+                width: 1px;
+                height: 1px;
+                padding: 0;
+                overflow: hidden;
+                clip: rect(0, 0, 0, 0);
+                opacity: 0;
                 white-space: nowrap;
             }
 
-            :host([collapsed]) .label {
-                flex: 1;
+            @media (max-width: 1023px) {
+                :host([collapsed]) a {
+                    justify-content: flex-start;
+                    gap: var(--flex-space-2);
+                    padding: 0.375rem 0.625rem;
+                }
+
+                :host([collapsed]) .label,
+                :host([collapsed]) .badge {
+                    position: static;
+                    width: auto;
+                    height: auto;
+                    overflow: visible;
+                    clip: auto;
+                    opacity: 1;
+                    white-space: nowrap;
+                }
+
+                :host([collapsed]) .label {
+                    flex: 1;
+                }
             }
-        }
-    `;
+
+            @media (prefers-reduced-motion: reduce) {
+                a,
+                .label {
+                    transition: none;
+                }
+            }
+        `,
+    ];
 
     constructor() {
         super();
@@ -183,6 +211,7 @@ export class FlexNavItem extends FlexElement {
         this.label = "";
         this.icon = "fa-solid fa-circle";
         this.badge = "";
+        this.target = "_self";
         this.turbo = false;
         this.exact = false;
         this.active = false;
@@ -209,9 +238,13 @@ export class FlexNavItem extends FlexElement {
     render() {
         const turboEnabled = this.#usesTurbo();
 
+        const opensNewWindow = this.target === "_blank";
+
         return html`
             <a
                 href=${this.href}
+                target=${this.target || "_self"}
+                rel=${opensNewWindow ? "noopener noreferrer" : null}
                 data-turbo=${turboEnabled ? "true" : "false"}
                 aria-current=${this.active ? "page" : null}
                 title=${this.collapsed ? this.label : ""}
@@ -224,7 +257,7 @@ export class FlexNavItem extends FlexElement {
                 </span>
 
                 <span class="label">
-                    <slot> ${this.label} </slot>
+                    <slot>${this.label}</slot>
                 </span>
 
                 ${this.badge ? html` <span class="badge"> ${this.badge} </span> ` : null}
@@ -233,7 +266,7 @@ export class FlexNavItem extends FlexElement {
     }
 
     #usesTurbo() {
-        if (!this.turbo) {
+        if (!this.turbo || this.target !== "_self") {
             return false;
         }
 
@@ -249,6 +282,7 @@ export class FlexNavItem extends FlexElement {
     #syncActiveState() {
         if (!this.href || this.href === "#") {
             this.active = false;
+
             return;
         }
 
@@ -257,6 +291,7 @@ export class FlexNavItem extends FlexElement {
 
             if (target.origin !== window.location.origin) {
                 this.active = false;
+
                 return;
             }
 

@@ -8,6 +8,9 @@ use Flex\Core\Container\Container;
 use Flex\Core\Features\Contracts\FeatureServiceProviderInterface;
 use Flex\Core\View\Contracts\ViewRendererInterface;
 use Flex\Features\AdminUI\Configuration\AdminUIConfig;
+use Flex\Features\AdminUI\Navigation\DefaultAdminNavigation;
+use Flex\Features\AdminUI\Navigation\SidebarPosition;
+use Flex\Features\AdminUI\Navigation\SidebarRegistry;
 use Flex\Features\AdminUI\Providers\AdminUIServiceProvider;
 use Flex\Features\AdminUI\Services\AdminUIAssets;
 use Flex\Features\AdminUI\Services\AdminUIRenderer;
@@ -48,6 +51,18 @@ final class AdminUIServiceProviderTest extends TestCase
         self::assertTrue(
             $container->has(
                 AdminUIRenderer::class
+            )
+        );
+
+        self::assertTrue(
+            $container->has(
+                SidebarRegistry::class
+            )
+        );
+
+        self::assertTrue(
+            $container->has(
+                DefaultAdminNavigation::class
             )
         );
     }
@@ -109,6 +124,24 @@ final class AdminUIServiceProviderTest extends TestCase
                 AdminUIRenderer::class
             )
         );
+
+        self::assertSame(
+            $container->get(
+                SidebarRegistry::class
+            ),
+            $container->get(
+                SidebarRegistry::class
+            )
+        );
+
+        self::assertSame(
+            $container->get(
+                DefaultAdminNavigation::class
+            ),
+            $container->get(
+                DefaultAdminNavigation::class
+            )
+        );
     }
 
     public function testItBuildsAdminUIRenderer(): void
@@ -134,6 +167,54 @@ final class AdminUIServiceProviderTest extends TestCase
         self::assertInstanceOf(
             AdminUIRenderer::class,
             $renderer
+        );
+    }
+
+    public function testItCreatesTheDefaultSidebarAutomatically(): void
+    {
+        $container = new Container();
+
+        (new AdminUIServiceProvider())
+            ->register($container);
+
+        $registry = $container->get(
+            SidebarRegistry::class
+        );
+
+        self::assertTrue(
+            $registry->has(
+                SidebarRegistry::DEFAULT_SIDEBAR
+            )
+        );
+
+        $sidebarData = $registry
+            ->sidebar(
+                SidebarRegistry::DEFAULT_SIDEBAR
+            )
+            ->toArray();
+
+        self::assertSame(
+            SidebarRegistry::DEFAULT_SIDEBAR,
+            $sidebarData['id']
+        );
+
+        self::assertSame(
+            'Administration',
+            $sidebarData['label']
+        );
+
+        self::assertSame(
+            SidebarPosition::Left->value,
+            $sidebarData['position']
+        );
+
+        self::assertSame(
+            10,
+            $sidebarData['priority']
+        );
+
+        self::assertTrue(
+            $sidebarData['collapsible']
         );
     }
 }

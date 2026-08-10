@@ -80,10 +80,7 @@ export default (config = {}) => ({
                 this.statuses[slug] = !this.statuses[slug];
                 notify(response.data.message, "success");
             } else {
-                notify(
-                    response.data?.message ||
-                        "Възникна грешка при промяна на статуса.",
-                );
+                notify(response.data?.message || "Възникна грешка при промяна на статуса.");
             }
         } catch (error) {
             console.error(error);
@@ -97,9 +94,7 @@ export default (config = {}) => ({
         if (!this.deleteUrl || this.loading[id]) return;
         if (!confirm(this.confirmDeleteMessage)) return;
 
-        const dropTables = confirm(
-            "Желаете ли да премахнете и таблиците, свързани с този плъгин?",
-        );
+        const dropTables = confirm("Желаете ли да премахнете и таблиците, свързани с този плъгин?");
 
         this.loading[id] = true;
 
@@ -110,9 +105,7 @@ export default (config = {}) => ({
             });
 
             if (response.data?.success) {
-                const card = document.querySelector(
-                    `[data-plugin-card="${id}"]`,
-                );
+                const card = document.querySelector(`[data-plugin-card="${id}"]`);
 
                 if (card) {
                     card.style.transition = "all 0.3s ease";
@@ -122,24 +115,15 @@ export default (config = {}) => ({
                     setTimeout(() => {
                         card.remove();
 
-                        if (
-                            document.querySelectorAll("[data-plugin-card]")
-                                .length === 0
-                        ) {
+                        if (document.querySelectorAll("[data-plugin-card]").length === 0) {
                             window.location.reload();
                         }
                     }, 300);
                 }
 
-                notify(
-                    response.data.message || "Плъгинът беше премахнат успешно.",
-                );
+                notify(response.data.message || "Плъгинът беше премахнат успешно.");
             } else {
-                notify(
-                    response.data?.message ||
-                        "Възникна грешка при премахването.",
-                    "error",
-                );
+                notify(response.data?.message || "Възникна грешка при премахването.", "error");
             }
         } catch (error) {
             console.error(error);
@@ -158,16 +142,10 @@ export default (config = {}) => ({
             const response = await axios.post(this.updateUrl, { id });
 
             if (response.data?.success) {
-                notify(
-                    response.data.message || "Плъгинът беше обновен успешно.",
-                );
+                notify(response.data.message || "Плъгинът беше обновен успешно.");
                 window.location.reload();
             } else {
-                notify(
-                    response.data?.message ||
-                        "Възникна грешка при обновяването.",
-                    "error",
-                );
+                notify(response.data?.message || "Възникна грешка при обновяването.", "error");
             }
         } catch (error) {
             console.error(error);
@@ -215,9 +193,7 @@ export default (config = {}) => ({
             return;
         }
 
-        const confirmed = window.confirm(
-            "Сигурни ли сте, че искате да деинсталирате този плъгин?",
-        );
+        const confirmed = window.confirm("Сигурни ли сте, че искате да деинсталирате този плъгин?");
 
         if (!confirmed) {
             return;
@@ -239,9 +215,7 @@ export default (config = {}) => ({
             const data = response.data;
 
             if (!data.success) {
-                throw new Error(
-                    data.message || "Плъгинът не можа да бъде деинсталиран.",
-                );
+                throw new Error(data.message || "Плъгинът не можа да бъде деинсталиран.");
             }
 
             this.installed[slug] = false;

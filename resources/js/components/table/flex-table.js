@@ -157,9 +157,7 @@ export class FlexTable extends FlexElement {
                     page: this.page,
                     page_size: Number(this.pageSize),
                     sort_key: this.sortKey || undefined,
-                    sort_direction: this.sortKey
-                        ? this.normalizedSortDirection
-                        : undefined,
+                    sort_direction: this.sortKey ? this.normalizedSortDirection : undefined,
                     ...cleanFilters,
                 },
                 headers: {
@@ -173,17 +171,10 @@ export class FlexTable extends FlexElement {
                 payload = payload.data;
             }
 
-            if (
-                payload &&
-                typeof payload === "object" &&
-                !Array.isArray(payload)
-            ) {
+            if (payload && typeof payload === "object" && !Array.isArray(payload)) {
                 this.data = payload.data || payload.items || [];
                 this.totalItems = Number(
-                    payload.total ??
-                        payload.totalItems ??
-                        payload.total_items ??
-                        this.data.length,
+                    payload.total ?? payload.totalItems ?? payload.total_items ?? this.data.length,
                 );
             } else if (Array.isArray(payload)) {
                 this.data = payload;
@@ -198,10 +189,7 @@ export class FlexTable extends FlexElement {
                 }),
             );
         } catch (error) {
-            console.error(
-                "<flex-table> Грешка при зареждане на данните:",
-                error,
-            );
+            console.error("<flex-table> Грешка при зареждане на данните:", error);
             this.dispatchEvent(
                 new CustomEvent("flex-table-fetch-error", {
                     bubbles: true,
@@ -222,70 +210,68 @@ export class FlexTable extends FlexElement {
                 <!-- Слот за Филтри над таблицата -->
                 <slot name="filters"></slot>
 
-                ${this.loading && this.visibleRows.length > 0
-                    ? html`
-                          <div
-                              class="absolute inset-0 z-10 flex items-center justify-center bg-white/60 backdrop-blur-[1px] dark:bg-gray-900/60"
-                          >
+                ${
+                    this.loading && this.visibleRows.length > 0
+                        ? html`
                               <div
-                                  class="flex items-center gap-3 rounded-lg bg-white px-4 py-2.5 shadow-md dark:bg-gray-800 border border-gray-100 dark:border-gray-700"
+                                  class="absolute inset-0 z-10 flex items-center justify-center bg-white/60 backdrop-blur-[1px] dark:bg-gray-900/60"
                               >
-                                  <svg
-                                      class="h-5 w-5 animate-spin text-blue-600 dark:text-blue-400"
-                                      xmlns="http://www.w3.org/2000/svg"
-                                      fill="none"
-                                      viewBox="0 0 24 24"
+                                  <div
+                                      class="flex items-center gap-3 rounded-lg bg-white px-4 py-2.5 shadow-md dark:bg-gray-800 border border-gray-100 dark:border-gray-700"
                                   >
-                                      <circle
-                                          class="opacity-25"
-                                          cx="12"
-                                          cy="12"
-                                          r="10"
-                                          stroke="currentColor"
-                                          stroke-width="4"
-                                      ></circle>
-                                      <path
-                                          class="opacity-75"
-                                          fill="currentColor"
-                                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                      ></path>
-                                  </svg>
-                                  <span
-                                      class="font-medium text-gray-700 dark:text-gray-200"
-                                  >
-                                      Зареждане…
-                                  </span>
+                                      <svg
+                                          class="h-5 w-5 animate-spin text-blue-600 dark:text-blue-400"
+                                          xmlns="http://www.w3.org/2000/svg"
+                                          fill="none"
+                                          viewBox="0 0 24 24"
+                                      >
+                                          <circle
+                                              class="opacity-25"
+                                              cx="12"
+                                              cy="12"
+                                              r="10"
+                                              stroke="currentColor"
+                                              stroke-width="4"
+                                          ></circle>
+                                          <path
+                                              class="opacity-75"
+                                              fill="currentColor"
+                                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                          ></path>
+                                      </svg>
+                                      <span class="font-medium text-gray-700 dark:text-gray-200">
+                                          Зареждане…
+                                      </span>
+                                  </div>
                               </div>
-                          </div>
-                      `
-                    : nothing}
+                          `
+                        : nothing
+                }
 
                 <div class="overflow-x-auto">
                     <table class="min-w-full border-collapse text-left">
-                        ${this.caption
-                            ? html`<caption class="sr-only">
-                                  ${this.caption}
-                              </caption>`
-                            : nothing}
-                        <thead
-                            class="bg-gray-50 text-gray-600 dark:bg-gray-800 dark:text-gray-300"
-                        >
+                        ${
+                            this.caption
+                                ? html`<caption class="sr-only">
+                                      ${this.caption}
+                                  </caption>`
+                                : nothing
+                        }
+                        <thead class="bg-gray-50 text-gray-600 dark:bg-gray-800 dark:text-gray-300">
                             <tr>
-                                ${this.columns.map((column) =>
-                                    this.renderHeader(column),
-                                )}
+                                ${this.columns.map((column) => this.renderHeader(column))}
                             </tr>
                         </thead>
-                        <tbody
-                            class="divide-y divide-gray-200 dark:divide-gray-800"
-                        >
-                            ${this.loading && this.visibleRows.length === 0
-                                ? this.renderSkeletonRows()
-                                : this.visibleRows.length === 0
-                                  ? this.renderMessageRow(this.emptyText)
-                                  : this.visibleRows.map((row, index) =>
-                                        this.renderRow(row, index),
-                                    )}
+                        <tbody class="divide-y divide-gray-200 dark:divide-gray-800">
+                            ${
+                                this.loading && this.visibleRows.length === 0
+                                    ? this.renderSkeletonRows()
+                                    : this.visibleRows.length === 0
+                                      ? this.renderMessageRow(this.emptyText)
+                                      : this.visibleRows.map((row, index) =>
+                                            this.renderRow(row, index),
+                                        )
+                            }
                         </tbody>
                     </table>
                 </div>
@@ -311,31 +297,31 @@ export class FlexTable extends FlexElement {
                 class=${column.headerClass ?? "px-5 py-3"}
                 style=${column.width ? `width: ${column.width}` : nothing}
             >
-                ${sortable
-                    ? html`
-                          <button
-                              type="button"
-                              class="flex w-full items-center gap-2 text-left font-semibold hover:text-blue-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-                              @click=${() => this.toggleSort(column.key)}
-                          >
-                              <span>${column.label ?? column.key}</span>
-                              <span
-                                  aria-hidden="true"
-                                  class=${active
-                                      ? "text-blue-600"
-                                      : "text-gray-400"}
+                ${
+                    sortable
+                        ? html`
+                              <button
+                                  type="button"
+                                  class="flex w-full items-center gap-2 text-left font-semibold hover:text-blue-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                                  @click=${() => this.toggleSort(column.key)}
                               >
-                                  ${active
-                                      ? this.normalizedSortDirection === "asc"
-                                          ? "▲"
-                                          : "▼"
-                                      : "⇅"}
-                              </span>
-                          </button>
-                      `
-                    : html`<span class="font-semibold"
-                          >${column.label ?? column.key}</span
-                      >`}
+                                  <span>${column.label ?? column.key}</span>
+                                  <span
+                                      aria-hidden="true"
+                                      class=${active ? "text-blue-600" : "text-gray-400"}
+                                  >
+                                      ${
+                                      active
+                                          ? this.normalizedSortDirection === "asc"
+                                              ? "▲"
+                                              : "▼"
+                                          : "⇅"
+                                  }
+                                  </span>
+                              </button>
+                          `
+                        : html`<span class="font-semibold">${column.label ?? column.key}</span>`
+                }
             </th>
         `;
     }
@@ -391,9 +377,7 @@ export class FlexTable extends FlexElement {
                     ${Array.from({ length: colCount }).map(
                         () => html`
                             <td class="px-5 py-4">
-                                <div
-                                    class="h-4 rounded bg-gray-200 dark:bg-gray-700"
-                                ></div>
+                                <div class="h-4 rounded bg-gray-200 dark:bg-gray-700"></div>
                             </td>
                         `,
                     )}
@@ -407,9 +391,7 @@ export class FlexTable extends FlexElement {
             <div
                 class="flex flex-col gap-3 border-t border-gray-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between dark:border-gray-800"
             >
-                <div
-                    class="flex items-center gap-2 text-gray-600 dark:text-gray-400"
-                >
+                <div class="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                     <span>Показване</span>
                     <select
                         class="rounded-md border border-gray-300 bg-white px-2 py-1.5 dark:border-gray-700 dark:bg-gray-800"
@@ -418,14 +400,16 @@ export class FlexTable extends FlexElement {
                         @change=${this.handlePageSizeChange}
                     >
                         ${this.normalizedPageSizes.map(
-                            (size) =>
-                                html`<option value=${size}>${size}</option>`,
+                            (size) => html`<option value=${size}>${size}</option>`,
                         )}
                     </select>
                     <span>от ${this.totalCount}</span>
                 </div>
 
-                <nav class="flex items-center gap-1" aria-label="Страници">
+                <nav
+                    class="flex items-center gap-1"
+                    aria-label="Страници"
+                >
                     <button
                         type="button"
                         class=${this.paginationButtonClass(this.page === 1)}
@@ -445,13 +429,8 @@ export class FlexTable extends FlexElement {
                             : html`
                                   <button
                                       type="button"
-                                      class=${this.paginationButtonClass(
-                                          false,
-                                          item === this.page,
-                                      )}
-                                      aria-current=${item === this.page
-                                          ? "page"
-                                          : nothing}
+                                      class=${this.paginationButtonClass(false, item === this.page)}
+                                      aria-current=${item === this.page ? "page" : nothing}
                                       @click=${() => this.setPage(item)}
                                   >
                                       ${item}
@@ -461,9 +440,7 @@ export class FlexTable extends FlexElement {
 
                     <button
                         type="button"
-                        class=${this.paginationButtonClass(
-                            this.page === this.totalPages,
-                        )}
+                        class=${this.paginationButtonClass(this.page === this.totalPages)}
                         ?disabled=${this.page === this.totalPages}
                         @click=${() => this.setPage(this.page + 1)}
                     >
@@ -485,8 +462,7 @@ export class FlexTable extends FlexElement {
 
     toggleSort(key) {
         if (this.sortKey === key) {
-            this.sortDirection =
-                this.normalizedSortDirection === "asc" ? "desc" : "asc";
+            this.sortDirection = this.normalizedSortDirection === "asc" ? "desc" : "asc";
         } else {
             this.sortKey = key;
             this.sortDirection = "asc";
@@ -501,10 +477,7 @@ export class FlexTable extends FlexElement {
     }
 
     setPage(page) {
-        const nextPage = Math.min(
-            Math.max(1, Number(page) || 1),
-            this.totalPages,
-        );
+        const nextPage = Math.min(Math.max(1, Number(page) || 1), this.totalPages);
         if (nextPage === this.page) return;
         this.page = nextPage;
         this.emitStateChange("page");
@@ -549,15 +522,12 @@ export class FlexTable extends FlexElement {
 
         return rows.filter((row) => {
             return Object.entries(this.filters).every(([key, value]) => {
-                if (value === "" || value === null || value === undefined)
-                    return true;
+                if (value === "" || value === null || value === undefined) return true;
 
                 if (key === "search" || key === "q") {
                     const searchStr = String(value).toLowerCase();
                     return Object.values(row).some(
-                        (val) =>
-                            val != null &&
-                            String(val).toLowerCase().includes(searchStr),
+                        (val) => val != null && String(val).toLowerCase().includes(searchStr),
                     );
                 }
 
@@ -601,8 +571,7 @@ export class FlexTable extends FlexElement {
         if (b == null) return -1;
 
         if (type === "number") return Number(a) - Number(b);
-        if (type === "date")
-            return new Date(a).getTime() - new Date(b).getTime();
+        if (type === "date") return new Date(a).getTime() - new Date(b).getTime();
 
         return String(a).localeCompare(String(b), "bg", {
             numeric: true,
@@ -623,10 +592,7 @@ export class FlexTable extends FlexElement {
     }
 
     get totalPages() {
-        return Math.max(
-            1,
-            Math.ceil(this.totalCount / Math.max(1, this.pageSize)),
-        );
+        return Math.max(1, Math.ceil(this.totalCount / Math.max(1, this.pageSize)));
     }
 
     get normalizedSortDirection() {
@@ -643,24 +609,16 @@ export class FlexTable extends FlexElement {
 
     get paginationItems() {
         const total = this.totalPages;
-        if (total <= 7)
-            return Array.from({ length: total }, (_, index) => index + 1);
+        if (total <= 7) return Array.from({ length: total }, (_, index) => index + 1);
 
-        const pages = new Set([
-            1,
-            total,
-            this.page - 1,
-            this.page,
-            this.page + 1,
-        ]);
+        const pages = new Set([1, total, this.page - 1, this.page, this.page + 1]);
         const validPages = [...pages]
             .filter((page) => page >= 1 && page <= total)
             .sort((a, b) => a - b);
         const items = [];
 
         validPages.forEach((page, index) => {
-            if (index > 0 && page - validPages[index - 1] > 1)
-                items.push("ellipsis");
+            if (index > 0 && page - validPages[index - 1] > 1) items.push("ellipsis");
             items.push(page);
         });
 
@@ -755,13 +713,14 @@ export class FlexTableActions extends FlexElement {
                     </svg>
                 </button>
 
-                ${this.open
-                    ? html`
-                          <div
-                              class="absolute right-0 z-1000 mt-1 w-48 origin-top-right rounded-md border border-gray-200 bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none dark:border-gray-700 dark:bg-gray-800"
-                              role="menu"
-                          >
-                              ${this.actions.map((action) => {
+                ${
+                    this.open
+                        ? html`
+                              <div
+                                  class="absolute right-0 z-1000 mt-1 w-48 origin-top-right rounded-md border border-gray-200 bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none dark:border-gray-700 dark:bg-gray-800"
+                                  role="menu"
+                              >
+                                  ${this.actions.map((action) => {
                                   if (action.divider) {
                                       return html`<div
                                           class="my-1 border-t border-gray-100 dark:border-gray-700"
@@ -778,21 +737,23 @@ export class FlexTableActions extends FlexElement {
                                           type="button"
                                           class="flex w-full items-center gap-2 px-4 py-2 text-left transition ${textClass}"
                                           role="menuitem"
-                                          @click=${(e) =>
-                                              this.handleActionClick(action, e)}
+                                          @click=${(e) => this.handleActionClick(action, e)}
                                       >
-                                          ${action.icon
-                                              ? html`<i
-                                                    class="${action.icon} w-4 text-center"
-                                                ></i>`
-                                              : nothing}
+                                          ${
+                                              action.icon
+                                                  ? html`<i
+                                                        class="${action.icon} w-4 text-center"
+                                                    ></i>`
+                                                  : nothing
+                                          }
                                           <span>${action.label}</span>
                                       </button>
                                   `;
                               })}
-                          </div>
-                      `
-                    : nothing}
+                              </div>
+                          `
+                        : nothing
+                }
             </div>
         `;
     }

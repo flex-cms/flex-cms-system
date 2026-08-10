@@ -62,115 +62,124 @@ export class FlexInput extends FlexElement {
 
         return html`
             <div class="flex-input-field">
-                ${this.label
-                    ? html`
-                          <label
-                              for=${id}
-                              class="mb-1.5 block font-medium"
-                          >
-                              ${this.label}
-                              ${this.required
-                                  ? html`<span
-                                        class="text-red-600"
-                                        aria-hidden="true"
-                                        >*</span
-                                    >`
-                                  : nothing}
-                          </label>
-                      `
-                    : nothing}
-                ${this.normalizedType === "textarea"
-                    ? html`
-                          <textarea
-                              id=${id}
-                              class=${controlClasses}
-                              name=${this.name || nothing}
-                              .value=${this.value ?? ""}
-                              placeholder=${this.placeholder || nothing}
-                              rows=${Math.max(1, this.rows || 4)}
-                              minlength=${this.minlength >= 0
-                                  ? this.minlength
-                                  : nothing}
-                              maxlength=${this.maxlength >= 0
-                                  ? this.maxlength
-                                  : nothing}
-                              autocomplete=${this.autocomplete || nothing}
-                              ?required=${this.required}
-                              ?disabled=${this.disabled}
-                              ?readonly=${this.readonly}
-                              aria-invalid=${this.error ? "true" : "false"}
-                              aria-describedby=${describedBy}
-                              @input=${this.handleInput}
-                              @change=${this.handleChange}
-                          ></textarea>
-                      `
-                    : html`
-                          <input
-                              id=${id}
-                              class=${controlClasses}
-                              type=${this.normalizedType}
-                              name=${this.name || nothing}
-                              .value=${this.value ?? ""}
-                              placeholder=${this.placeholder || nothing}
-                              min=${this.normalizedType === "number" &&
-                              this.min !== ""
-                                  ? this.min
-                                  : nothing}
-                              max=${this.normalizedType === "number" &&
-                              this.max !== ""
-                                  ? this.max
-                                  : nothing}
-                              step=${this.normalizedType === "number" &&
-                              this.step !== ""
-                                  ? this.step
-                                  : nothing}
-                              minlength=${this.normalizedType === "text" &&
-                              this.minlength >= 0
-                                  ? this.minlength
-                                  : nothing}
-                              maxlength=${this.normalizedType === "text" &&
-                              this.maxlength >= 0
-                                  ? this.maxlength
-                                  : nothing}
-                              autocomplete=${this.autocomplete || nothing}
-                              ?required=${this.required}
-                              ?disabled=${this.disabled}
-                              ?readonly=${this.readonly}
-                              aria-invalid=${this.error ? "true" : "false"}
-                              aria-describedby=${describedBy}
-                              @input=${this.handleInput}
-                              @change=${this.handleChange}
-                          />
-                      `}
-                ${this.helpText
-                    ? html`
-                          <p
-                              id="${id}-help"
-                              class="mt-1.5 text-xs text-gray-500"
-                          >
-                              ${this.helpText}
-                          </p>
-                      `
-                    : nothing}
-                ${this.error
-                    ? html`
-                          <p
-                              id="${id}-error"
-                              class="mt-1.5 text-sm text-red-600"
-                              role="alert"
-                          >
-                              ${this.error}
-                          </p>
-                      `
-                    : nothing}
+                ${
+                    this.label
+                        ? html`
+                              <label
+                                  for=${id}
+                                  class="mb-1.5 block font-medium"
+                              >
+                                  ${this.label}
+                                  ${
+                                  this.required
+                                      ? html`<span
+                                            class="text-red-600"
+                                            aria-hidden="true"
+                                            >*</span
+                                        >`
+                                      : nothing
+                              }
+                              </label>
+                          `
+                        : nothing
+                }
+                ${
+                    this.normalizedType === "textarea"
+                        ? html`
+                              <textarea
+                                  id=${id}
+                                  class=${controlClasses}
+                                  name=${this.name || nothing}
+                                  .value=${this.value ?? ""}
+                                  placeholder=${this.placeholder || nothing}
+                                  rows=${Math.max(1, this.rows || 4)}
+                                  minlength=${this.minlength >= 0 ? this.minlength : nothing}
+                                  maxlength=${this.maxlength >= 0 ? this.maxlength : nothing}
+                                  autocomplete=${this.autocomplete || nothing}
+                                  ?required=${this.required}
+                                  ?disabled=${this.disabled}
+                                  ?readonly=${this.readonly}
+                                  aria-invalid=${this.error ? "true" : "false"}
+                                  aria-describedby=${describedBy}
+                                  @input=${this.handleInput}
+                                  @change=${this.handleChange}
+                              ></textarea>
+                          `
+                        : html`
+                              <input
+                                  id=${id}
+                                  class=${controlClasses}
+                                  type=${this.normalizedType}
+                                  name=${this.name || nothing}
+                                  .value=${this.value ?? ""}
+                                  placeholder=${this.placeholder || nothing}
+                                  min=${
+                                  this.normalizedType === "number" && this.min !== ""
+                                      ? this.min
+                                      : nothing
+                              }
+                                  max=${
+                                  this.normalizedType === "number" && this.max !== ""
+                                      ? this.max
+                                      : nothing
+                              }
+                                  step=${
+                                  this.normalizedType === "number" && this.step !== ""
+                                      ? this.step
+                                      : nothing
+                              }
+                                  minlength=${
+                                  this.normalizedType === "text" && this.minlength >= 0
+                                      ? this.minlength
+                                      : nothing
+                              }
+                                  maxlength=${
+                                  this.normalizedType === "text" && this.maxlength >= 0
+                                      ? this.maxlength
+                                      : nothing
+                              }
+                                  autocomplete=${this.autocomplete || nothing}
+                                  ?required=${this.required}
+                                  ?disabled=${this.disabled}
+                                  ?readonly=${this.readonly}
+                                  aria-invalid=${this.error ? "true" : "false"}
+                                  aria-describedby=${describedBy}
+                                  @input=${this.handleInput}
+                                  @change=${this.handleChange}
+                              />
+                          `
+                }
+                ${
+                    this.helpText
+                        ? html`
+                              <p
+                                  id="${id}-help"
+                                  class="mt-1.5 text-xs text-gray-500"
+                              >
+                                  ${this.helpText}
+                              </p>
+                          `
+                        : nothing
+                }
+                ${
+                    this.error
+                        ? html`
+                              <p
+                                  id="${id}-error"
+                                  class="mt-1.5 text-sm text-red-600"
+                                  role="alert"
+                              >
+                                  ${this.error}
+                              </p>
+                          `
+                        : nothing
+                }
             </div>
         `;
     }
 
     get normalizedType() {
-        return ["text", "number", "textarea"].includes(this.type)
-            ? this.type
-            : "text";
+        return ["text", "number", "textarea"].includes(this.type) ? this.type : "text";
     }
 
     get inputElement() {

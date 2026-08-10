@@ -1,12 +1,7 @@
 import axios from "axios";
 import Sortable from "sortablejs";
 
-export default (
-    initialItems = [],
-    titleField = "",
-    loadUrl = null,
-    saveUrl = null,
-) => ({
+export default (initialItems = [], titleField = "", loadUrl = null, saveUrl = null) => ({
     items: [],
     titleField,
     loadUrl,
@@ -40,10 +35,7 @@ export default (
             const response = await axios.get(this.loadUrl);
 
             if (!response.data?.success) {
-                throw new Error(
-                    response.data?.message ??
-                        "Неуспешно зареждане на елементите.",
-                );
+                throw new Error(response.data?.message ?? "Неуспешно зареждане на елементите.");
             }
 
             this.items = this.prepareItems(
@@ -134,11 +126,7 @@ export default (
 
             return {
                 ...item,
-                children: this.updateItem(
-                    item.children ?? [],
-                    itemKey,
-                    callback,
-                ),
+                children: this.updateItem(item.children ?? [], itemKey, callback),
             };
         });
     },
@@ -272,8 +260,7 @@ export default (
         const persistedId = Number(element.dataset.id);
         const persistedParentId = parentId ? Number(parentId) : null;
         const canPersistParent =
-            !parentId ||
-            (Number.isInteger(persistedParentId) && persistedParentId > 0);
+            !parentId || (Number.isInteger(persistedParentId) && persistedParentId > 0);
 
         // Sortable moves nodes owned by Alpine's x-for. Restore the DOM first,
         // then let Alpine render the new keyed tree from the data state.
@@ -298,10 +285,7 @@ export default (
             });
 
             if (!response.data?.success) {
-                throw new Error(
-                    response.data?.message ??
-                        "Неуспешно преместване на елемента.",
-                );
+                throw new Error(response.data?.message ?? "Неуспешно преместване на елемента.");
             }
         } catch (error) {
             console.error("Tree update error:", error);

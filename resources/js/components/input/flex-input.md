@@ -8,7 +8,7 @@
 
 ## Основен пример
 
-```html
+````html
 <flex-form
     action="/admin/pages/store"
     method="POST"
@@ -17,7 +17,12 @@
     reset-on-success
 >
     <div class="flex flex-col gap-5">
-        <flex-input type="text" name="name" label="Име на страницата" required></flex-input>
+        <flex-input
+            type="text"
+            name="name"
+            label="Име на страницата"
+            required
+        ></flex-input>
     </div>
 
     <flex-button
@@ -27,10 +32,12 @@
     ></flex-button>
 </flex-form>
 
-## Типове
-
-```html
-<flex-input type="text" name="name" label="Име"></flex-input>
+## Типове ```html
+<flex-input
+    type="text"
+    name="name"
+    label="Име"
+></flex-input>
 
 <flex-input
     type="number"
@@ -49,29 +56,29 @@
     rows="6"
     maxlength="500"
 ></flex-input>
-```
+````
 
 Непознат `type` се преобразува автоматично до `text`.
 
 ## Атрибути и свойства
 
-| Атрибут | Тип | По подразбиране | Предназначение |
-| --- | --- | --- | --- |
-| `type` | string | `text` | `text`, `number` или `textarea` |
-| `name` | string | празно | Име на полето, изпращано към PHP |
-| `label` | string | празно | Етикет над контролата |
-| `value` | string | празно | Текуща стойност |
-| `placeholder` | string | празно | Placeholder текст |
-| `help-text` | string | празно | Помощен текст под полето |
-| `error` | string | празно | Грешка и червен невалиден стил |
-| `required` | boolean | `false` | Задължително поле |
-| `disabled` | boolean | `false` | Забранено поле; не влиза във `FormData` |
-| `readonly` | boolean | `false` | Само за четене |
-| `autocomplete` | string | празно | Стандартна autocomplete стойност |
-| `input-id` | string | генериран | Собствено `id` за контролата |
-| `min`, `max`, `step` | string | празно | Ограничения за `number` |
-| `minlength`, `maxlength` | number | няма | Ограничения за `text` и `textarea` |
-| `rows` | number | `4` | Височина на `textarea` в редове |
+| Атрибут                  | Тип     | По подразбиране | Предназначение                          |
+| ------------------------ | ------- | --------------- | --------------------------------------- |
+| `type`                   | string  | `text`          | `text`, `number` или `textarea`         |
+| `name`                   | string  | празно          | Име на полето, изпращано към PHP        |
+| `label`                  | string  | празно          | Етикет над контролата                   |
+| `value`                  | string  | празно          | Текуща стойност                         |
+| `placeholder`            | string  | празно          | Placeholder текст                       |
+| `help-text`              | string  | празно          | Помощен текст под полето                |
+| `error`                  | string  | празно          | Грешка и червен невалиден стил          |
+| `required`               | boolean | `false`         | Задължително поле                       |
+| `disabled`               | boolean | `false`         | Забранено поле; не влиза във `FormData` |
+| `readonly`               | boolean | `false`         | Само за четене                          |
+| `autocomplete`           | string  | празно          | Стандартна autocomplete стойност        |
+| `input-id`               | string  | генериран       | Собствено `id` за контролата            |
+| `min`, `max`, `step`     | string  | празно          | Ограничения за `number`                 |
+| `minlength`, `maxlength` | number  | няма            | Ограничения за `text` и `textarea`      |
+| `rows`                   | number  | `4`             | Височина на `textarea` в редове         |
 
 Boolean атрибутите се изключват чрез премахването им, а не чрез стойност `"false"`.
 
@@ -79,10 +86,25 @@ Boolean атрибутите се изключват чрез премахван
 
 ```html
 <flex-form ajax>
-    <form action="/admin/pages/store" method="POST">
-        <flex-input type="text" name="name" label="Име" required></flex-input>
-        <flex-input type="textarea" name="description" label="Описание"></flex-input>
-        <flex-button type="submit" label="Запази"></flex-button>
+    <form
+        action="/admin/pages/store"
+        method="POST"
+    >
+        <flex-input
+            type="text"
+            name="name"
+            label="Име"
+            required
+        ></flex-input>
+        <flex-input
+            type="textarea"
+            name="description"
+            label="Описание"
+        ></flex-input>
+        <flex-button
+            type="submit"
+            label="Запази"
+        ></flex-button>
     </form>
 </flex-form>
 ```
@@ -106,13 +128,13 @@ $description = $_POST['description'] ?? '';
 
 ## Събития
 
-| Събитие | Кога се изпраща | `event.detail` |
-| --- | --- | --- |
-| `flex-input` | При всяка промяна по време на писане | `value`, `name`, `originalEvent` |
-| `flex-change` | При native `change` | `value`, `name`, `originalEvent` |
+| Събитие       | Кога се изпраща                      | `event.detail`                   |
+| ------------- | ------------------------------------ | -------------------------------- |
+| `flex-input`  | При всяка промяна по време на писане | `value`, `name`, `originalEvent` |
+| `flex-change` | При native `change`                  | `value`, `name`, `originalEvent` |
 
 ```js
-document.addEventListener('flex-input', (event) => {
+document.addEventListener("flex-input", (event) => {
     console.log(event.detail.name, event.detail.value);
 });
 ```
@@ -122,8 +144,8 @@ document.addEventListener('flex-input', (event) => {
 ```js
 const field = document.querySelector('flex-input[name="name"]');
 
-field.value = 'Ново име';
-field.error = 'Това име вече съществува.';
+field.value = "Ново име";
+field.error = "Това име вече съществува.";
 field.focus();
 
 field.checkValidity();
@@ -137,7 +159,7 @@ field.reportValidity();
 При validation response грешката може да се зададе директно:
 
 ```js
-document.addEventListener('flex-form-error', (event) => {
+document.addEventListener("flex-form-error", (event) => {
     const errors = event.detail.error?.response?.data?.errors ?? {};
 
     for (const [name, messages] of Object.entries(errors)) {

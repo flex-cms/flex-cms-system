@@ -5,9 +5,18 @@
 ## Основен пример
 
 ```html
-<flex-form ajax reset-on-success>
-    <form action="/admin/pages/store" method="POST">
-        <input name="name" required>
+<flex-form
+    ajax
+    reset-on-success
+>
+    <form
+        action="/admin/pages/store"
+        method="POST"
+    >
+        <input
+            name="name"
+            required
+        />
 
         <flex-button
             type="submit"
@@ -22,31 +31,31 @@
 
 ## Атрибути
 
-| Атрибут | Тип | По подразбиране | Описание |
-| --- | --- | --- | --- |
-| `ajax` | boolean | `false` | Изпраща формата чрез глобалния `window.axios`. Без него се изпълнява стандартен браузърен submit. |
-| `reset-on-success` | boolean | `false` | Изчиства формата след успешна заявка. |
-| `success-message` | string | `Промените са запазени успешно.` | Резервен текст при успех. `response.data.message` има предимство. |
-| `error-message` | string | `Възникна грешка...` | Резервен текст при грешка. `error.response.data.message` има предимство. |
-| `show-alerts` | boolean | `true` | Показва автоматичен `<flex-alert>` пред формата. За изключване използвайте DOM свойството `showAlerts = false`. |
-| `form-selector` | string | празно | CSS selector за формата, когато тя не е директно дете. |
-| `submitting` | boolean | `false` | Отразено read-only състояние по време на заявката. |
+| Атрибут            | Тип     | По подразбиране                  | Описание                                                                                                        |
+| ------------------ | ------- | -------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `ajax`             | boolean | `false`                          | Изпраща формата чрез глобалния `window.axios`. Без него се изпълнява стандартен браузърен submit.               |
+| `reset-on-success` | boolean | `false`                          | Изчиства формата след успешна заявка.                                                                           |
+| `success-message`  | string  | `Промените са запазени успешно.` | Резервен текст при успех. `response.data.message` има предимство.                                               |
+| `error-message`    | string  | `Възникна грешка...`             | Резервен текст при грешка. `error.response.data.message` има предимство.                                        |
+| `show-alerts`      | boolean | `true`                           | Показва автоматичен `<flex-alert>` пред формата. За изключване използвайте DOM свойството `showAlerts = false`. |
+| `form-selector`    | string  | празно                           | CSS selector за формата, когато тя не е директно дете.                                                          |
+| `submitting`       | boolean | `false`                          | Отразено read-only състояние по време на заявката.                                                              |
 
 Boolean атрибутите са включени чрез присъствието си. Например `ajax="false"` пак означава включено; за изключване атрибутът трябва да липсва.
 
 ## Събития
 
-| Събитие | `detail` | Кога се изпраща |
-| --- | --- | --- |
-| `flex-form-submit` | `form`, `submitter` | Преди Axios заявката. |
-| `flex-form-success` | `form`, `response` | След успешен отговор. |
-| `flex-form-error` | `form`, `error` | При Axios или конфигурационна грешка. |
-| `flex-form-invalid` | `form` | При невалидни HTML полета. |
+| Събитие             | `detail`            | Кога се изпраща                       |
+| ------------------- | ------------------- | ------------------------------------- |
+| `flex-form-submit`  | `form`, `submitter` | Преди Axios заявката.                 |
+| `flex-form-success` | `form`, `response`  | След успешен отговор.                 |
+| `flex-form-error`   | `form`, `error`     | При Axios или конфигурационна грешка. |
+| `flex-form-invalid` | `form`              | При невалидни HTML полета.            |
 
 Компонентът изпраща и `flex-submit-end` или `flex-submit-error` върху самия `<form>`. Така `<flex-button type="submit">` автоматично прекратява своето loading състояние.
 
 ```js
-document.addEventListener('flex-form-success', (event) => {
+document.addEventListener("flex-form-success", (event) => {
     console.log(event.detail.response.data);
 });
 ```
@@ -62,13 +71,13 @@ document.addEventListener('flex-form-success', (event) => {
 Препоръчителен JSON при успех:
 
 ```json
-{"message":"Страницата беше създадена успешно."}
+{ "message": "Страницата беше създадена успешно." }
 ```
 
 При грешка endpoint-ът трябва да върне подходящ HTTP статус, например `422`, и може да подаде общо съобщение:
 
 ```json
-{"message":"Моля, проверете въведените данни."}
+{ "message": "Моля, проверете въведените данни." }
 ```
 
 ## Файлове и CSRF

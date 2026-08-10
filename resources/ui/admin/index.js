@@ -1,3 +1,5 @@
+import "@fortawesome/fontawesome-free/css/all.min.css";
+
 import { themeManager } from "@admin-ui/core/ThemeManager.js";
 import { turboManager } from "@admin-ui/core/TurboManager.js";
 
@@ -6,7 +8,11 @@ import "@admin-ui/layouts/flex-admin-shell.js";
 
 import "@admin-ui/components/feedback/flex-theme-toggle.js";
 import "@admin-ui/components/navigation/flex-sidebar.js";
+import "@admin-ui/components/navigation/flex-nav-group.js";
 import "@admin-ui/components/navigation/flex-nav-item.js";
+import "@admin-ui/components/actions/flex-button.js";
+import "@admin-ui/components/forms/flex-dropdown.js";
+import "@admin-ui/components/forms/flex-form.js";
 
 const FLEX_ADMIN_STATE = Symbol.for("flex.admin.ui.state");
 

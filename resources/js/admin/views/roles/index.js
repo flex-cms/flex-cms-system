@@ -45,19 +45,23 @@ if (table) {
             sortable: true,
             render: (value, row) => html`
                 <div class="flex items-center gap-2">
-                    ${row.color
-                        ? html`<span
-                              class="h-3 w-3 rounded-full"
-                              style="background-color: ${row.color}"
-                          ></span>`
-                        : ""}
+                    ${
+                        row.color
+                            ? html`<span
+                                  class="h-3 w-3 rounded-full"
+                                  style="background-color: ${row.color}"
+                              ></span>`
+                            : ""
+                    }
                     <span class="font-medium">${value}</span>
-                    ${row.is_default
-                        ? html`<span
-                              class="rounded bg-blue-100 px-2 py-0.5 text-xs text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"
-                              >По подразбиране</span
-                          >`
-                        : ""}
+                    ${
+                        row.is_default
+                            ? html`<span
+                                  class="rounded bg-blue-100 px-2 py-0.5 text-xs text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"
+                                  >По подразбиране</span
+                              >`
+                            : ""
+                    }
                 </div>
             `,
         },
@@ -126,15 +130,16 @@ if (table) {
                         {
                             key: "toggle",
                             label: row.is_active ? "Деактивирай" : "Активирай",
-                            icon: row.is_active
-                                ? "fa-solid fa-times"
-                                : "fa-solid fa-check",
+                            icon: row.is_active ? "fa-solid fa-times" : "fa-solid fa-check",
                             handler: async (row) => {
                                 await axios.post("/admin/users/roles/toggle", {
                                     id: row.id,
                                 });
                                 table.fetchData();
-                                window.notify(`Ролята ${row.name} е ${row.is_active ? 'деактивирана' : 'активирана'} успешно.`, 'success');
+                                window.notify(
+                                    `Ролята ${row.name} е ${row.is_active ? "деактивирана" : "активирана"} успешно.`,
+                                    "success",
+                                );
                             },
                         },
                         { divider: true },
@@ -149,14 +154,14 @@ if (table) {
                                         `Сигурни ли сте, че искате да изтриете ролята "${row.name}"?`,
                                     )
                                 ) {
-                                    await axios.post(
-                                        "/admin/users/roles/delete",
-                                        {
-                                            id: row.id,
-                                        },
-                                    );
+                                    await axios.post("/admin/users/roles/delete", {
+                                        id: row.id,
+                                    });
                                     table.fetchData();
-                                    window.notify(`Ролята ${row.name} е изтрита успешно.`, 'success');
+                                    window.notify(
+                                        `Ролята ${row.name} е изтрита успешно.`,
+                                        "success",
+                                    );
                                 }
                             },
                         },

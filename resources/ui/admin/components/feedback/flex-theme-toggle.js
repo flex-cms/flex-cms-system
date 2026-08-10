@@ -1,6 +1,7 @@
 import { css, html } from "lit";
 
 import FlexElement from "@admin-ui/core/FlexElement.js";
+import { fontAwesomeStyles } from "@admin-ui/styles/font-awesome.styles.js";
 
 import {
     themeManager,
@@ -21,79 +22,6 @@ export class FlexThemeToggle extends FlexElement {
             reflect: true,
         },
     };
-
-    static styles = css`
-        :host {
-            display: inline-flex;
-        }
-
-        button {
-            position: relative;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 2.5rem;
-            height: 2.5rem;
-            padding: 0;
-            border: 1px solid var(--flex-color-border);
-            border-radius: var(--flex-radius-md);
-            background: var(--flex-color-surface);
-            color: var(--flex-color-text-muted);
-            cursor: pointer;
-            transition:
-                color var(--flex-duration-fast) var(--flex-easing),
-                border-color var(--flex-duration-fast) var(--flex-easing),
-                background var(--flex-duration-fast) var(--flex-easing),
-                transform var(--flex-duration-fast) var(--flex-easing);
-        }
-
-        button:hover {
-            border-color: var(--flex-color-border-strong);
-            background: var(--flex-color-surface-hover);
-            color: var(--flex-color-primary-600);
-        }
-
-        button:active {
-            transform: scale(0.96);
-        }
-
-        button:focus-visible {
-            outline: 3px solid var(--flex-color-focus);
-            outline-offset: 2px;
-        }
-
-        i {
-            font-size: 1rem;
-            pointer-events: none;
-        }
-
-        .preference {
-            position: absolute;
-            right: -0.125rem;
-            bottom: -0.125rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 0.875rem;
-            height: 0.875rem;
-            border: 2px solid var(--flex-color-surface);
-            border-radius: var(--flex-radius-full);
-            background: var(--flex-color-primary-600);
-            color: #ffffff;
-            font-size: 0.45rem;
-        }
-
-        .visually-hidden {
-            position: absolute;
-            width: 1px;
-            height: 1px;
-            padding: 0;
-            overflow: hidden;
-            clip: rect(0, 0, 0, 0);
-            white-space: nowrap;
-            border: 0;
-        }
-    `;
 
     constructor() {
         super();
@@ -119,18 +47,18 @@ export class FlexThemeToggle extends FlexElement {
         const label = isDark ? "Премини към светла тема" : "Премини към тъмна тема";
 
         return html`
-            <button
+            <flex-button
+                icon-only
+                icon="fa-solid fa-bars"
+                variant="secondary"
+                tooltip="Редактиране"
+                tooltip-position="bottom"
                 type="button"
                 title=${label}
                 aria-label=${label}
                 aria-pressed=${String(isDark)}
                 @click=${this.#toggleTheme}
             >
-                <i
-                    class=${isDark ? "fa-solid fa-sun" : "fa-solid fa-moon"}
-                    aria-hidden="true"
-                ></i>
-
                 ${
                     this.preference === THEME_SYSTEM
                         ? html`
@@ -146,7 +74,7 @@ export class FlexThemeToggle extends FlexElement {
                 }
 
                 <span class="visually-hidden"> ${label} </span>
-            </button>
+            </flex-button>
         `;
     }
 

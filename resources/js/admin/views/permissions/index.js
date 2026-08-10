@@ -64,16 +64,14 @@ if (table) {
             sortable: true,
             render: (value, row) => html`
                 <div>
-                    <div class="font-medium text-gray-900 dark:text-gray-100">
-                        ${value}
-                    </div>
-                    ${row.description
-                        ? html`<div
-                              class="text-xs text-gray-500 dark:text-gray-400"
-                          >
-                              ${row.description}
-                          </div>`
-                        : ""}
+                    <div class="font-medium text-gray-900 dark:text-gray-100">${value}</div>
+                    ${
+                        row.description
+                            ? html`<div class="text-xs text-gray-500 dark:text-gray-400">
+                                  ${row.description}
+                              </div>`
+                            : ""
+                    }
                 </div>
             `,
         },
@@ -154,16 +152,11 @@ if (table) {
                         {
                             key: "toggle",
                             label: row.is_active ? "Деактивирай" : "Активирай",
-                            icon: row.is_active
-                                ? "fa-solid fa-times"
-                                : "fa-solid fa-check",
+                            icon: row.is_active ? "fa-solid fa-times" : "fa-solid fa-check",
                             handler: async (row) => {
-                                await axios.post(
-                                    "/admin/users/permissions/toggle",
-                                    {
-                                        id: row.id,
-                                    },
-                                );
+                                await axios.post("/admin/users/permissions/toggle", {
+                                    id: row.id,
+                                });
                                 table.fetchData();
                                 window.notify(
                                     `Разрешението ${row.name} е ${row.is_active ? "деактивирано" : "активирано"} успешно.`,
@@ -183,12 +176,9 @@ if (table) {
                                         `Сигурни ли сте, че искате да изтриете разрешението "${row.name}"?`,
                                     )
                                 ) {
-                                    await axios.post(
-                                        "/admin/users/permissions/delete",
-                                        {
-                                            id: row.id,
-                                        },
-                                    );
+                                    await axios.post("/admin/users/permissions/delete", {
+                                        id: row.id,
+                                    });
                                     table.fetchData();
                                     window.notify(
                                         `Разрешението ${row.name} е изтрито успешно.`,

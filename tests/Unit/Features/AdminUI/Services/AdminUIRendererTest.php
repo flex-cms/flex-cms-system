@@ -7,6 +7,8 @@ namespace Tests\Unit\Features\AdminUI\Services;
 use Flex\Core\View\Contracts\ViewRendererInterface;
 use Flex\Core\View\ViewResponse;
 use Flex\Features\AdminUI\Configuration\AdminUIConfig;
+use Flex\Features\AdminUI\Navigation\DefaultAdminNavigation;
+use Flex\Features\AdminUI\Navigation\SidebarRegistry;
 use Flex\Features\AdminUI\Services\AdminUIAssets;
 use Flex\Features\AdminUI\Services\AdminUIRenderer;
 use PHPUnit\Framework\TestCase;
@@ -21,11 +23,13 @@ final class AdminUIRendererTest extends TestCase
 
         $config = $this->config();
         $assets = new AdminUIAssets($config);
+        $sidebars = $this->sidebars();
 
         $renderer = new AdminUIRenderer(
             $views,
             $assets,
-            $config
+            $config,
+            $sidebars
         );
 
         $views
@@ -34,7 +38,9 @@ final class AdminUIRendererTest extends TestCase
             ->with(
                 'Settings::show',
                 self::callback(
-                    static function (array $data) use ($assets): bool {
+                    static function (
+                        array $data
+                    ) use ($assets): bool {
                         return $data['title']
                             === 'Настройки'
                             && $data['adminUIAssets']
@@ -53,7 +59,12 @@ final class AdminUIRendererTest extends TestCase
                                 'turboPaths' => [
                                     '/admin/settings',
                                 ],
-                            ];
+                            ]
+                            && $data['adminUISidebar']['id']
+                            === SidebarRegistry::DEFAULT_SIDEBAR
+                            && count(
+                                $data['adminUISidebars']
+                            ) === 1;
                     }
                 ),
                 AdminUIRenderer::LAYOUT
@@ -83,11 +94,13 @@ final class AdminUIRendererTest extends TestCase
 
         $config = $this->config();
         $assets = new AdminUIAssets($config);
+        $sidebars = $this->sidebars();
 
         $renderer = new AdminUIRenderer(
             $views,
             $assets,
-            $config
+            $config,
+            $sidebars
         );
 
         $expectedResponse = new ViewResponse(
@@ -101,13 +114,20 @@ final class AdminUIRendererTest extends TestCase
             ->with(
                 'Settings::show',
                 self::callback(
-                    static function (array $data) use ($assets): bool {
+                    static function (
+                        array $data
+                    ) use ($assets): bool {
                         return $data['title']
                             === 'Настройки'
                             && $data['adminUIAssets']
                             === $assets
                             && $data['adminUIConfig']['name']
-                            === 'Flex Admin';
+                            === 'Flex Admin'
+                            && $data['adminUISidebar']['id']
+                            === SidebarRegistry::DEFAULT_SIDEBAR
+                            && count(
+                                $data['adminUISidebars']
+                            ) === 1;
                     }
                 ),
                 AdminUIRenderer::LAYOUT,
@@ -137,11 +157,13 @@ final class AdminUIRendererTest extends TestCase
 
         $config = $this->config();
         $assets = new AdminUIAssets($config);
+        $sidebars = $this->sidebars();
 
         $renderer = new AdminUIRenderer(
             $views,
             $assets,
-            $config
+            $config,
+            $sidebars
         );
 
         $views
@@ -150,11 +172,17 @@ final class AdminUIRendererTest extends TestCase
             ->with(
                 'Settings::show',
                 self::callback(
-                    static function (array $data) use ($assets): bool {
+                    static function (
+                        array $data
+                    ) use ($assets): bool {
                         return $data['adminUIAssets']
                             === $assets
                             && $data['adminUIConfig']['name']
-                            === 'Flex Admin';
+                            === 'Flex Admin'
+                            && $data['adminUISidebar']['id']
+                            === SidebarRegistry::DEFAULT_SIDEBAR
+                            && $data['adminUISidebars'][0]['id']
+                            === SidebarRegistry::DEFAULT_SIDEBAR;
                     }
                 ),
                 AdminUIRenderer::LAYOUT
@@ -170,8 +198,28 @@ final class AdminUIRendererTest extends TestCase
                 'adminUIConfig' => [
                     'name' => 'Invalid',
                 ],
+
+                'adminUISidebar' => [
+                    'id' => 'invalid-sidebar',
+                ],
+
+                'adminUISidebars' => [
+                    [
+                        'id' => 'invalid-sidebar',
+                    ],
+                ],
             ]
         );
+    }
+
+    private function sidebars(): SidebarRegistry
+    {
+        $registry = new SidebarRegistry();
+
+        (new DefaultAdminNavigation($registry))
+            ->register();
+
+        return $registry;
     }
 
     private function config(): AdminUIConfig
@@ -192,11 +240,11 @@ final class AdminUIRendererTest extends TestCase
         ];
 
         return new AdminUIConfig(
-            static fn(
-            string $path,
-            mixed $default = null
-        ): mixed =>
-            $values[$path] ?? $default
+            static fn (
+                string $path,
+                mixed $default = null
+            ): mixed =>
+                $values[$path] ?? $default
         );
     }
 }

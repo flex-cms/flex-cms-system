@@ -52,10 +52,7 @@ export class FlexButton extends FlexElement {
 
         this.form.addEventListener("submit", this.handleFormSubmit);
         this.form.addEventListener("flex-submit-end", this.handleFormComplete);
-        this.form.addEventListener(
-            "flex-submit-error",
-            this.handleFormComplete,
-        );
+        this.form.addEventListener("flex-submit-error", this.handleFormComplete);
         this.form.addEventListener("reset", this.handleFormComplete);
     }
 
@@ -63,14 +60,8 @@ export class FlexButton extends FlexElement {
         if (!this.form) return;
 
         this.form.removeEventListener("submit", this.handleFormSubmit);
-        this.form.removeEventListener(
-            "flex-submit-end",
-            this.handleFormComplete,
-        );
-        this.form.removeEventListener(
-            "flex-submit-error",
-            this.handleFormComplete,
-        );
+        this.form.removeEventListener("flex-submit-end", this.handleFormComplete);
+        this.form.removeEventListener("flex-submit-error", this.handleFormComplete);
         this.form.removeEventListener("reset", this.handleFormComplete);
         this.form = null;
     }
@@ -97,20 +88,24 @@ export class FlexButton extends FlexElement {
 
     render() {
         const variants = {
-            primary:
-                "bg-blue-600 hover:bg-blue-700 focus:ring-blue-300 text-white",
+            primary: "bg-blue-600 hover:bg-blue-700 focus:ring-blue-300 text-white",
             danger: "bg-red-600 hover:bg-red-700 focus:ring-red-300 text-white",
-            secondary:
-                "bg-gray-200 hover:bg-gray-300 focus:ring-gray-300 text-gray-800",
+            secondary: "bg-gray-200 hover:bg-gray-300 focus:ring-gray-300 text-gray-800",
         };
 
         const isDisabled = this.disabled || this.loading;
         const iconClasses = this.normalizedIconClasses;
         const icon = iconClasses
-            ? html`<i class="${iconClasses}" aria-hidden="true"></i>`
+            ? html`<i
+                  class="${iconClasses}"
+                  aria-hidden="true"
+              ></i>`
             : null;
         const spinner = html`
-            <i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i>
+            <i
+                class="fa-solid fa-spinner fa-spin"
+                aria-hidden="true"
+            ></i>
         `;
 
         return html`
@@ -124,29 +119,27 @@ export class FlexButton extends FlexElement {
                 aria-busy=${this.loading ? "true" : "false"}
                 @click=${this.handleClick}
             >
-                ${this.loading
-                    ? html`${spinner}<span>${this.loadingText}</span>`
-                    : html`
-                          ${this.iconPosition !== "right" ? icon : null}
-                          <span>${this.label}</span>
-                          ${this.iconPosition === "right" ? icon : null}
-                      `}
+                ${
+                    this.loading
+                        ? html`${spinner}<span>${this.loadingText}</span>`
+                        : html`
+                              ${this.iconPosition !== "right" ? icon : null}
+                              <span>${this.label}</span>
+                              ${this.iconPosition === "right" ? icon : null}
+                          `
+                }
             </button>
         `;
     }
 
     get normalizedType() {
-        return ["button", "submit", "reset"].includes(this.type)
-            ? this.type
-            : "button";
+        return ["button", "submit", "reset"].includes(this.type) ? this.type : "button";
     }
 
     get normalizedIconClasses() {
         return String(this.icon ?? "")
             .split(/\s+/)
-            .filter((className) =>
-                /^(fa[srlbdkt]?|fa-[a-z0-9-]+)$/.test(className),
-            )
+            .filter((className) => /^(fa[srlbdkt]?|fa-[a-z0-9-]+)$/.test(className))
             .join(" ");
     }
 

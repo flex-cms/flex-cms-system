@@ -44,10 +44,7 @@ export default (id, initialState, initialStateDarkMode) => ({
                 darkMode: this.darkMode,
             })
             .catch((err) => {
-                console.error(
-                    "Theme sync error:",
-                    err.response?.data || err.message,
-                );
+                console.error("Theme sync error:", err.response?.data || err.message);
             });
     },
 
@@ -58,10 +55,7 @@ export default (id, initialState, initialStateDarkMode) => ({
                 sidebarOpen: this.isOpen,
             })
             .catch((err) => {
-                console.error(
-                    "Error toggling sidebar:",
-                    err.response?.data || err.message,
-                );
+                console.error("Error toggling sidebar:", err.response?.data || err.message);
             });
     },
 

@@ -7,6 +7,7 @@ namespace Flex\Features\Settings\Providers;
 use Flex\Core\Container\Container;
 use Flex\Core\Features\Contracts\FeatureServiceProviderInterface;
 use Flex\Features\Settings\Configuration\SettingsPageConfig;
+use Flex\Features\Settings\Navigation\SettingsNavigation;
 use Flex\Features\Settings\Repositories\EloquentSettingRepository;
 use Flex\Features\Settings\Repositories\SettingRepositoryInterface;
 use Flex\Features\Settings\Services\SettingsService;
@@ -14,8 +15,9 @@ use Flex\Features\Settings\Services\SettingsService;
 final class SettingsServiceProvider implements
     FeatureServiceProviderInterface
 {
-    public function register(Container $container): void
-    {
+    public function register(
+        Container $container
+    ): void {
         $container->singleton(
             SettingsPageConfig::class
         );
@@ -28,5 +30,13 @@ final class SettingsServiceProvider implements
         $container->singleton(
             SettingsService::class
         );
+
+        $container->singleton(
+            SettingsNavigation::class
+        );
+
+        $container
+            ->make(SettingsNavigation::class)
+            ->register();
     }
 }

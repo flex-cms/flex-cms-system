@@ -17,11 +17,9 @@ export class TurboManager {
         this.#started = true;
         this.#lifecycleController = new AbortController();
 
-        Turbo.start();
+        Turbo.config.drive.progressBarDelay = this.progressBarDelay;
 
-        if (typeof Turbo.setProgressBarDelay === "function") {
-            Turbo.setProgressBarDelay(this.progressBarDelay);
-        }
+        Turbo.start();
 
         this.#listen("turbo:before-visit", this.#handleNavigationStart);
 

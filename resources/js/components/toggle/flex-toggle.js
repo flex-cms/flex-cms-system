@@ -58,44 +58,51 @@ export class FlexToggle extends FlexElement {
 
         return html`
             <div
-                class="flex items-center justify-between gap-4 select-none ${this.width ? this.width : 'w-full'} ${this
-                    .disabled
-                    ? "opacity-50 cursor-not-allowed"
-                    : "cursor-pointer"}"
+                class="flex items-center justify-between gap-4 select-none ${this.width ? this.width : "w-full"} ${
+                    this.disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                }"
                 @click=${this.toggle}
             >
                 <!-- Етикет и описание -->
-                ${this.label || this.description
-                    ? html`
-                          <div class="flex-1">
-                              ${this.label
-                                  ? html`<label
-                                        for=${toggleId}
-                                        class="font-medium text-gray-900 dark:text-gray-100 cursor-pointer block"
-                                    >
-                                        ${this.label}
-                                    </label>`
-                                  : ""}
-                              ${this.description
-                                  ? html`<p
-                                        class="text-sm text-gray-500 dark:text-gray-400 mt-0.5"
-                                    >
-                                        ${this.description}
-                                    </p>`
-                                  : ""}
-                          </div>
-                      `
-                    : ""}
+                ${
+                    this.label || this.description
+                        ? html`
+                              <div class="flex-1">
+                                  ${
+                                  this.label
+                                      ? html`<label
+                                            for=${toggleId}
+                                            class="font-medium text-gray-900 dark:text-gray-100 cursor-pointer block"
+                                        >
+                                            ${this.label}
+                                        </label>`
+                                      : ""
+                              }
+                                  ${
+                                  this.description
+                                      ? html`<p
+                                            class="text-sm text-gray-500 dark:text-gray-400 mt-0.5"
+                                        >
+                                            ${this.description}
+                                        </p>`
+                                      : ""
+                              }
+                              </div>
+                          `
+                        : ""
+                }
 
                 <!-- Скрит инпут, който ВИНАГИ присъства във формата и изпраща "0" или "1" -->
-                ${this.name
-                    ? html`<input
-                          type="hidden"
-                          name=${this.name}
-                          .value=${fieldValue}
-                          ?disabled=${this.disabled}
-                      />`
-                    : ""}
+                ${
+                    this.name
+                        ? html`<input
+                              type="hidden"
+                              name=${this.name}
+                              .value=${fieldValue}
+                              ?disabled=${this.disabled}
+                          />`
+                        : ""
+                }
 
                 <!-- Визуален суич (Switch) -->
                 <div
@@ -104,16 +111,14 @@ export class FlexToggle extends FlexElement {
                     tabindex=${this.disabled ? "-1" : "0"}
                     aria-checked=${this.checked ? "true" : "false"}
                     @keydown=${this.handleKeyDown}
-                    class="relative inline-flex h-6 w-11 shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${this
-                        .checked
-                        ? "bg-blue-600"
-                        : "bg-gray-300 dark:bg-gray-700"}"
+                    class="relative inline-flex h-6 w-11 shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                        this.checked ? "bg-blue-600" : "bg-gray-300 dark:bg-gray-700"
+                    }"
                 >
                     <span
-                        class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${this
-                            .checked
-                            ? "translate-x-5"
-                            : "translate-x-0"}"
+                        class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                            this.checked ? "translate-x-5" : "translate-x-0"
+                        }"
                     ></span>
                 </div>
             </div>

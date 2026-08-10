@@ -43,8 +43,7 @@ export default () => ({
             }
         } else {
             for (let i = 0; i < length; i++) {
-                generated +=
-                    charset[Math.floor(Math.random() * charset.length)];
+                generated += charset[Math.floor(Math.random() * charset.length)];
             }
         }
 

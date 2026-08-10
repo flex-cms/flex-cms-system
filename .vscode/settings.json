@@ -51,6 +51,7 @@
     },
 
     "[php]": {
-        "editor.formatOnSave": false
+        "editor.formatOnSave": false,
+        "editor.defaultFormatter": "DEVSENSE.phptools-vscode"
     }
 }

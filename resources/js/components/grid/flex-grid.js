@@ -16,10 +16,7 @@ export class FlexGrid extends LitElement {
         :host {
             display: grid;
             box-sizing: border-box;
-            grid-template-columns: repeat(
-                var(--flex-grid-cols, 1),
-                minmax(0, 1fr)
-            );
+            grid-template-columns: repeat(var(--flex-grid-cols, 1), minmax(0, 1fr));
             column-gap: var(--flex-grid-gap-x, var(--flex-grid-gap, 0));
             row-gap: var(--flex-grid-gap-y, var(--flex-grid-gap, 0));
         }
@@ -40,10 +37,7 @@ export class FlexGrid extends LitElement {
         @media (min-width: 768px) {
             :host {
                 grid-template-columns: repeat(
-                    var(
-                        --flex-grid-md-cols,
-                        var(--flex-grid-sm-cols, var(--flex-grid-cols, 1))
-                    ),
+                    var(--flex-grid-md-cols, var(--flex-grid-sm-cols, var(--flex-grid-cols, 1))),
                     minmax(0, 1fr)
                 );
             }
@@ -54,10 +48,7 @@ export class FlexGrid extends LitElement {
                 grid-template-columns: repeat(
                     var(
                         --flex-grid-lg-cols,
-                        var(
-                            --flex-grid-md-cols,
-                            var(--flex-grid-sm-cols, var(--flex-grid-cols, 1))
-                        )
+                        var(--flex-grid-md-cols, var(--flex-grid-sm-cols, var(--flex-grid-cols, 1)))
                     ),
                     minmax(0, 1fr)
                 );
@@ -73,10 +64,7 @@ export class FlexGrid extends LitElement {
                             --flex-grid-lg-cols,
                             var(
                                 --flex-grid-md-cols,
-                                var(
-                                    --flex-grid-sm-cols,
-                                    var(--flex-grid-cols, 1)
-                                )
+                                var(--flex-grid-sm-cols, var(--flex-grid-cols, 1))
                             )
                         )
                     ),
@@ -99,10 +87,7 @@ export class FlexGrid extends LitElement {
     }
 
     updated() {
-        this.setCssVariable(
-            "--flex-grid-cols",
-            this.normalizeColumns(this.cols, 1),
-        );
+        this.setCssVariable("--flex-grid-cols", this.normalizeColumns(this.cols, 1));
         this.setResponsiveColumns("--flex-grid-sm-cols", this.smCols);
         this.setResponsiveColumns("--flex-grid-md-cols", this.mdCols);
         this.setResponsiveColumns("--flex-grid-lg-cols", this.lgCols);
@@ -118,9 +103,7 @@ export class FlexGrid extends LitElement {
 
     normalizeColumns(value, fallback = 0) {
         const columns = Number.parseInt(value, 10);
-        return Number.isFinite(columns) && columns >= 1 && columns <= 12
-            ? columns
-            : fallback;
+        return Number.isFinite(columns) && columns >= 1 && columns <= 12 ? columns : fallback;
     }
 
     normalizeSpacing(value) {
@@ -162,9 +145,7 @@ export class FlexGrid extends LitElement {
 
     setResponsiveColumns(name, value) {
         const columns = this.normalizeColumns(value);
-        columns
-            ? this.setCssVariable(name, columns)
-            : this.style.removeProperty(name);
+        columns ? this.setCssVariable(name, columns) : this.style.removeProperty(name);
     }
 
     setOptionalSpacing(name, value) {

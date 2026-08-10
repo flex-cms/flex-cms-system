@@ -14,9 +14,7 @@ export class DateHelper {
         return {
             locale: config.locale || "bg",
             timezone: config.timezone || "Europe/Sofia",
-            dateFormat: this.convertPhpToDayjsFormat(
-                config.dateFormat || "d.m.Y",
-            ),
+            dateFormat: this.convertPhpToDayjsFormat(config.dateFormat || "d.m.Y"),
             timeFormat: "HH:mm",
         };
     }
@@ -31,10 +29,7 @@ export class DateHelper {
             i: "mm",
             s: "ss",
         };
-        return phpFormat.replace(
-            /[dmyHis]/g,
-            (match) => replacements[match] || match,
-        );
+        return phpFormat.replace(/[dmyHis]/g, (match) => replacements[match] || match);
     }
 
     static createDayjs(date = null) {

@@ -7,6 +7,7 @@ namespace Flex\Features\AdminUI\Services;
 use Flex\Core\View\Contracts\ViewRendererInterface;
 use Flex\Core\View\ViewResponse;
 use Flex\Features\AdminUI\Configuration\AdminUIConfig;
+use Flex\Features\AdminUI\Navigation\SidebarRegistry;
 
 final readonly class AdminUIRenderer
 {
@@ -15,7 +16,8 @@ final readonly class AdminUIRenderer
     public function __construct(
         private ViewRendererInterface $views,
         private AdminUIAssets $assets,
-        private AdminUIConfig $config
+        private AdminUIConfig $config,
+        private SidebarRegistry $sidebars
     ) {
     }
 
@@ -56,6 +58,15 @@ final readonly class AdminUIRenderer
     private function withAdminUIData(
         array $data
     ): array {
+        $navigationContext =
+            $data['navigationContext'] ?? null;
+
+        $primarySidebar = $this->sidebars
+            ->sidebar(
+                SidebarRegistry::DEFAULT_SIDEBAR
+            )
+            ->toArray($navigationContext);
+
         return array_replace(
             $data,
             [
@@ -77,6 +88,14 @@ final readonly class AdminUIRenderer
                         $this->config
                             ->turboPaths(),
                 ],
+
+                'adminUISidebar' =>
+                    $primarySidebar,
+
+                'adminUISidebars' =>
+                    $this->sidebars->toArray(
+                        $navigationContext
+                    ),
             ]
         );
     }

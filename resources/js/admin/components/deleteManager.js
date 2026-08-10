@@ -23,9 +23,7 @@ export default (deleteUrl = "") => ({
                     alert(res.data.message);
                     window.location.reload();
                 } else {
-                    alert(
-                        res.data.message || "Възникна грешка при изтриването.",
-                    );
+                    alert(res.data.message || "Възникна грешка при изтриването.");
                 }
             })
             .catch(() => {
