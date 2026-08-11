@@ -33,7 +33,7 @@ final class DashboardNavigation
         $item = NavigationItem::make(
             self::ITEM_ID,
             'Табло',
-            '/admin/dashboard-preview'
+            '/admin/dashboard'
         )
             ->icon(
                 'fa-solid fa-gauge'

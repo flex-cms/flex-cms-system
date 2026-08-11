@@ -37,7 +37,7 @@ final class DashboardNavigationTest extends TestCase
         );
 
         self::assertSame(
-            '/admin/dashboard-preview',
+            '/admin/dashboard',
             $itemData['url']
         );
 

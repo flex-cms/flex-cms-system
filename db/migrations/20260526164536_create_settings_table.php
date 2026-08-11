@@ -16,7 +16,13 @@ class CreateSettingsTable extends AbstractMigration
             ->addColumn('options', 'json', ['null' => true])
             ->addColumn('created_at', 'timestamp', ['default' => 'CURRENT_TIMESTAMP'])
             ->addColumn('updated_at', 'timestamp', ['null' => true, 'update' => 'CURRENT_TIMESTAMP'])
-            ->addIndex(['key'], ['unique' => true])
+            ->addIndex(
+                ['key', 'group'],
+                [
+                    'unique' => true,
+                    'name' => 'settings_key_group_unique',
+                ]
+            )
             ->addIndex(['group'])
             ->create();
     }

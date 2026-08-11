@@ -35,7 +35,7 @@ final class DashboardRoutesTest extends TestCase
         self::assertSame(['auth', 'admin'], $route->getMiddleware());
 
         $result = (new RouteMatcher($this->routes))
-            ->matchMethodAndPath('GET', '/admin/dashboard-preview');
+            ->matchMethodAndPath('GET', '/admin/dashboard');
 
         self::assertTrue($result->isFound());
         self::assertSame('admin.dashboard.preview', $result->route()->getName());

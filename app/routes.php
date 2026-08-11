@@ -3,7 +3,6 @@
 global $router;
 
 use Flex\Core\Controllers\AuthController;
-use Flex\Core\Controllers\AdminController;
 use Flex\Core\Controllers\UserController;
 use Flex\Core\Controllers\RoleController;
 use Flex\Core\Controllers\PermissionController;
@@ -12,7 +11,6 @@ use Flex\Core\Controllers\PluginController;
 use Flex\Core\Middlewares\AuthMiddleware;
 use Flex\Core\Controllers\FileStructureController;
 use Flex\Core\Middlewares\AdminMiddleware;
-use Flex\Core\Controllers\SettingsController;
 use Flex\Core\Controllers\PageController;
 use Flex\Core\Controllers\ThemeController;
 use Flex\Core\Controllers\EmailTemplateController;
@@ -30,12 +28,6 @@ $router->get('/password/forgot', [AuthController::class, 'showForgotPassword']);
 $router->post('/password/forgot', [AuthController::class, 'forgotPassword']);
 $router->get('/password/reset', [AuthController::class, 'showResetPassword']);
 $router->post('/password/reset', [AuthController::class, 'resetPassword']);
-
-// Dashboard & UI
-$router->get('/admin/dashboard', [AdminController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]);
-$router->post('/admin/sidebar-toggle', [AdminController::class, 'toggleSidebar'], [AuthMiddleware::class, AdminMiddleware::class]);
-$router->post('/admin/theme-toggle', [AdminController::class, 'toggleTheme'], [AuthMiddleware::class, AdminMiddleware::class]);
-$router->post('/admin/ui/save-state', [AdminController::class, 'saveUiState'], [AuthMiddleware::class, AdminMiddleware::class]);
 
 // Users
 $router->get('/api/admin/users', [UserApiController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]);

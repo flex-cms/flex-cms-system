@@ -19,29 +19,6 @@ final readonly class SettingsPageData
     ) {
     }
 
-    public function value(
-        string $key,
-        mixed $default = null
-    ): mixed {
-        return array_key_exists(
-            $key,
-            $this->values
-        )
-            ? $this->values[$key]
-            : $default;
-    }
-
-    public function field(
-        string $key
-    ): ?array {
-        $field = $this->fields[$key]
-            ?? null;
-
-        return is_array($field)
-            ? $field
-            : null;
-    }
-
     public function toArray(): array
     {
         return [
