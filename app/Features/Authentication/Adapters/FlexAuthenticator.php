@@ -10,5 +10,9 @@ use Flex\Features\Authentication\Contracts\AuthenticatorInterface;
 final class FlexAuthenticator implements AuthenticatorInterface
 {
     public function check(): bool { return Auth::check(); }
-    public function isAdmin(): bool { return Auth::isAdmin(); }
+    public function isAdmin(): bool
+    {
+        $user = Auth::user();
+        return $user !== null && ($user->is_super_admin || Auth::isAdmin());
+    }
 }

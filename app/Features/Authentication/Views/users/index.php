@@ -1,0 +1,7 @@
+<?php $e = static fn (mixed $v): string => htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8'); ?>
+<div class="space-y-6">
+  <div class="flex items-center justify-between"><div><h1 class="text-2xl font-bold text-slate-900 dark:text-white">Потребители</h1><p class="text-sm text-slate-500">Управление на профили и роли.</p></div><a href="/admin/authentication/users/create" class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white">Нов потребител</a></div>
+  <div class="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800"><table class="w-full text-left text-sm"><thead class="bg-slate-50 dark:bg-slate-900/40"><tr><th class="p-4">Потребител</th><th class="p-4">Роли</th><th class="p-4">Статус</th><th class="p-4"></th></tr></thead><tbody class="divide-y dark:divide-slate-700">
+  <?php foreach ($users as $user): ?><tr><td class="p-4"><strong><?= $e($user->fullname ?: 'Без име') ?></strong><div class="text-xs text-slate-500"><?= $e($user->email) ?></div></td><td class="p-4"><?php if ($user->is_super_admin): ?><span class="rounded bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-800">Супер администратор</span><?php else: ?><?= $e($user->roles->pluck('name')->implode(', ') ?: 'Без роля') ?><?php endif; ?></td><td class="p-4"><?= $user->is_active ? 'Активен' : 'Неактивен' ?></td><td class="p-4 text-right"><a class="font-semibold text-indigo-600" href="/admin/authentication/users/<?= (int) $user->id ?>/edit">Редактиране</a></td></tr><?php endforeach; ?>
+  </tbody></table></div>
+</div>

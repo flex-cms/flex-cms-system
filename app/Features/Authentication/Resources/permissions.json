@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "users.view": {"name": "Преглед на потребители", "module": "authentication"},
+    "users.create": {"name": "Създаване на потребители", "module": "authentication"},
+    "users.update": {"name": "Редактиране на потребители", "module": "authentication"},
+    "users.delete": {"name": "Изтриване на потребители", "module": "authentication"},
+    "roles.view": {"name": "Преглед на роли", "module": "authentication"},
+    "roles.create": {"name": "Създаване на роли", "module": "authentication"},
+    "roles.update": {"name": "Редактиране на роли", "module": "authentication"},
+    "roles.delete": {"name": "Изтриване на роли", "module": "authentication"},
+    "permissions.view": {"name": "Преглед на разрешения", "module": "authentication"}
+  }
+}

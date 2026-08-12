@@ -13,27 +13,12 @@ use Flex\Features\Authentication\Contracts\LoginUrlResolverInterface;
 
 final readonly class Authenticate implements MiddlewareInterface
 {
-    public function __construct(
-        private AuthenticatorInterface $auth,
-        private LoginUrlResolverInterface $loginUrls,
-    ) {
-    }
-
+    public function __construct(private AuthenticatorInterface $auth, private LoginUrlResolverInterface $loginUrls) {}
     public function process(Request $request, RequestHandlerInterface $next, string ...$parameters): Response
     {
-        if ($this->auth->check()) {
-            return $next->handle($request);
-        }
-
-        if ($request->expectsJson()) {
-            return Response::json([
-                'status' => 'error',
-                'message' => 'Unauthenticated.',
-            ], 401);
-        }
-
+        if ($this->auth->check()) { return $next->handle($request); }
+        if ($request->expectsJson()) { return Response::json(['status' => 'error', 'message' => 'Unauthenticated.'], 401); }
         $_SESSION['redirect_url'] = $request->uri();
-
         return Response::redirect($this->loginUrls->loginUrl());
     }
 }

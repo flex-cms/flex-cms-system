@@ -2,10 +2,6 @@
 
 global $router;
 
-use Flex\Core\Controllers\AuthController;
-use Flex\Core\Controllers\UserController;
-use Flex\Core\Controllers\RoleController;
-use Flex\Core\Controllers\PermissionController;
 use Flex\Core\Controllers\UpdateController;
 use Flex\Core\Controllers\PluginController;
 use Flex\Core\Middlewares\AuthMiddleware;
@@ -16,31 +12,28 @@ use Flex\Core\Controllers\ThemeController;
 use Flex\Core\Controllers\EmailTemplateController;
 use Flex\Core\Controllers\InstallController;
 use Flex\Core\Controllers\MenuController;
-use Flex\Core\Controllers\Api\UserApiController;
-use Flex\Core\Controllers\Api\RoleApiController;
-use Flex\Core\Controllers\Api\PermissionApiController;
 
 // Auth Routes
-$router->get('/login', [AuthController::class, 'showLogin']);
-$router->post('/login', [AuthController::class, 'login']);
-$router->get('/logout', [AuthController::class, 'logout']);
-$router->get('/password/forgot', [AuthController::class, 'showForgotPassword']);
-$router->post('/password/forgot', [AuthController::class, 'forgotPassword']);
-$router->get('/password/reset', [AuthController::class, 'showResetPassword']);
-$router->post('/password/reset', [AuthController::class, 'resetPassword']);
+// $router->get('/login', [AuthController::class, 'showLogin']);
+// $router->post('/login', [AuthController::class, 'login']);
+// $router->get('/logout', [AuthController::class, 'logout']);
+// $router->get('/password/forgot', [AuthController::class, 'showForgotPassword']);
+// $router->post('/password/forgot', [AuthController::class, 'forgotPassword']);
+// $router->get('/password/reset', [AuthController::class, 'showResetPassword']);
+// $router->post('/password/reset', [AuthController::class, 'resetPassword']);
 
 // Users
-$router->get('/api/admin/users', [UserApiController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]);
+// $router->get('/api/admin/users', [UserApiController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]);
 
-$router->get('/admin/users/index', [UserController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]);
-$router->get('/admin/users/create', [UserController::class, 'create'], [AuthMiddleware::class, AdminMiddleware::class]);
-$router->post('/admin/users/store', [UserController::class, 'store'], [AuthMiddleware::class, AdminMiddleware::class]);
-$router->get('/admin/users/edit/{id}', [UserController::class, 'edit'], [AuthMiddleware::class, AdminMiddleware::class]);
-$router->post('/admin/users/update/{id}', [UserController::class, 'update'], [AuthMiddleware::class, AdminMiddleware::class]);
-$router->post('/admin/users/delete/{id}', [UserController::class, 'delete'], [AuthMiddleware::class, AdminMiddleware::class]);
-$router->post('/admin/users/force-delete', [UserController::class, 'forceDelete'], [AuthMiddleware::class, AdminMiddleware::class]);
-$router->post('/admin/users/toggle', [UserController::class, 'toggle'], [AuthMiddleware::class, AdminMiddleware::class]);
-$router->post('/admin/users/update-position', [UserController::class, 'updatePosition'], [AuthMiddleware::class, AdminMiddleware::class]);
+// $router->get('/admin/users/index', [UserController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]);
+// $router->get('/admin/users/create', [UserController::class, 'create'], [AuthMiddleware::class, AdminMiddleware::class]);
+// $router->post('/admin/users/store', [UserController::class, 'store'], [AuthMiddleware::class, AdminMiddleware::class]);
+// $router->get('/admin/users/edit/{id}', [UserController::class, 'edit'], [AuthMiddleware::class, AdminMiddleware::class]);
+// $router->post('/admin/users/update/{id}', [UserController::class, 'update'], [AuthMiddleware::class, AdminMiddleware::class]);
+// $router->post('/admin/users/delete/{id}', [UserController::class, 'delete'], [AuthMiddleware::class, AdminMiddleware::class]);
+// $router->post('/admin/users/force-delete', [UserController::class, 'forceDelete'], [AuthMiddleware::class, AdminMiddleware::class]);
+// $router->post('/admin/users/toggle', [UserController::class, 'toggle'], [AuthMiddleware::class, AdminMiddleware::class]);
+// $router->post('/admin/users/update-position', [UserController::class, 'updatePosition'], [AuthMiddleware::class, AdminMiddleware::class]);
 
 // Menus
 $router->get('/admin/menus', [MenuController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]);
@@ -56,36 +49,32 @@ $router->post('/admin/menus/toggle', [MenuController::class, 'toggle'], [AuthMid
 $router->post('/admin/menus/items/{id}/tree-update', [MenuController::class, 'updateTreePosition'], [AuthMiddleware::class, AdminMiddleware::class]);
 
 // Roles
-$router->get('/api/admin/users/roles', [RoleApiController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]);
+// $router->get('/api/admin/users/roles', [RoleApiController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]);
 
-$router->get('/admin/users/roles', [RoleController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]);
-$router->get('/admin/users/roles/create', [RoleController::class, 'create'], [AuthMiddleware::class, AdminMiddleware::class]);
-$router->post('/admin/users/roles/create', [RoleController::class, 'store'], [AuthMiddleware::class, AdminMiddleware::class]);
-$router->get('/admin/users/roles/edit/{id}', [RoleController::class, 'edit'], [AuthMiddleware::class, AdminMiddleware::class]);
-$router->post('/admin/users/roles/edit/{id}', [RoleController::class, 'update'], [AuthMiddleware::class, AdminMiddleware::class]);
-$router->post('/admin/users/roles/toggle', [RoleController::class, 'toggle'], [AuthMiddleware::class, AdminMiddleware::class]);
-$router->post('/admin/users/roles/delete', [RoleController::class, 'delete'], [AuthMiddleware::class, AdminMiddleware::class]);
-$router->post('/admin/users/roles/force-delete', [RoleController::class, 'forceDelete'], [AuthMiddleware::class, AdminMiddleware::class]);
-$router->post('/admin/users/roles/restore', [RoleController::class, 'restore'], [AuthMiddleware::class, AdminMiddleware::class]);
-$router->post('/admin/users/roles/update-position', [RoleController::class, 'updatePosition'], [AuthMiddleware::class, AdminMiddleware::class]);
+// $router->get('/admin/users/roles', [RoleController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]);
+// $router->get('/admin/users/roles/create', [RoleController::class, 'create'], [AuthMiddleware::class, AdminMiddleware::class]);
+// $router->post('/admin/users/roles/create', [RoleController::class, 'store'], [AuthMiddleware::class, AdminMiddleware::class]);
+// $router->get('/admin/users/roles/edit/{id}', [RoleController::class, 'edit'], [AuthMiddleware::class, AdminMiddleware::class]);
+// $router->post('/admin/users/roles/edit/{id}', [RoleController::class, 'update'], [AuthMiddleware::class, AdminMiddleware::class]);
+// $router->post('/admin/users/roles/toggle', [RoleController::class, 'toggle'], [AuthMiddleware::class, AdminMiddleware::class]);
+// $router->post('/admin/users/roles/delete', [RoleController::class, 'delete'], [AuthMiddleware::class, AdminMiddleware::class]);
+// $router->post('/admin/users/roles/force-delete', [RoleController::class, 'forceDelete'], [AuthMiddleware::class, AdminMiddleware::class]);
+// $router->post('/admin/users/roles/restore', [RoleController::class, 'restore'], [AuthMiddleware::class, AdminMiddleware::class]);
+// $router->post('/admin/users/roles/update-position', [RoleController::class, 'updatePosition'], [AuthMiddleware::class, AdminMiddleware::class]);
 
-// Permissions
-$router->get('/api/admin/users/permissions', [PermissionApiController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]);
+// // Permissions
+// $router->get('/api/admin/users/permissions', [PermissionApiController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]);
 
-$router->get('/admin/users/permissions', [PermissionController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]);
-$router->get('/admin/users/permissions/create', [PermissionController::class, 'create'], [AuthMiddleware::class, AdminMiddleware::class]);
-$router->post('/admin/users/permissions/store', [PermissionController::class, 'store'], [AuthMiddleware::class, AdminMiddleware::class]);
-$router->get('/admin/users/permissions/edit/{id}', [PermissionController::class, 'edit'], [AuthMiddleware::class, AdminMiddleware::class]);
-$router->post('/admin/users/permissions/update/{id}', [PermissionController::class, 'update'], [AuthMiddleware::class, AdminMiddleware::class]);
-$router->post('/admin/users/permissions/delete', [PermissionController::class, 'delete'], [AuthMiddleware::class, AdminMiddleware::class]);
-$router->post('/admin/users/permissions/force-delete', [PermissionController::class, 'forceDelete'], [AuthMiddleware::class, AdminMiddleware::class]);
-$router->post('/admin/users/permissions/restore', [PermissionController::class, 'restore'], [AuthMiddleware::class, AdminMiddleware::class]);
-$router->post('/admin/users/permissions/toggle', [PermissionController::class, 'toggle'], [AuthMiddleware::class, AdminMiddleware::class]);
-$router->post('/admin/users/permissions/update-position', [PermissionController::class, 'updatePosition'], [AuthMiddleware::class, AdminMiddleware::class]);
-
-// Settings
-// $router->get('/admin/settings/{group}', [SettingsController::class, 'show'], [AuthMiddleware::class, AdminMiddleware::class]);
-// $router->post('/admin/settings/{group}/update', [SettingsController::class, 'update'], [AuthMiddleware::class, AdminMiddleware::class]);
+// $router->get('/admin/users/permissions', [PermissionController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]);
+// $router->get('/admin/users/permissions/create', [PermissionController::class, 'create'], [AuthMiddleware::class, AdminMiddleware::class]);
+// $router->post('/admin/users/permissions/store', [PermissionController::class, 'store'], [AuthMiddleware::class, AdminMiddleware::class]);
+// $router->get('/admin/users/permissions/edit/{id}', [PermissionController::class, 'edit'], [AuthMiddleware::class, AdminMiddleware::class]);
+// $router->post('/admin/users/permissions/update/{id}', [PermissionController::class, 'update'], [AuthMiddleware::class, AdminMiddleware::class]);
+// $router->post('/admin/users/permissions/delete', [PermissionController::class, 'delete'], [AuthMiddleware::class, AdminMiddleware::class]);
+// $router->post('/admin/users/permissions/force-delete', [PermissionController::class, 'forceDelete'], [AuthMiddleware::class, AdminMiddleware::class]);
+// $router->post('/admin/users/permissions/restore', [PermissionController::class, 'restore'], [AuthMiddleware::class, AdminMiddleware::class]);
+// $router->post('/admin/users/permissions/toggle', [PermissionController::class, 'toggle'], [AuthMiddleware::class, AdminMiddleware::class]);
+// $router->post('/admin/users/permissions/update-position', [PermissionController::class, 'updatePosition'], [AuthMiddleware::class, AdminMiddleware::class]);
 
 // Updates
 $router->get('/admin/update', [UpdateController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]);
