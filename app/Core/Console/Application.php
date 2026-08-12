@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Flex\Core\Console;
 
+use Flex\Core\Console\Commands\CreateSuperAdministratorCommand;
 use Flex\Core\Console\Commands\FeatureFreshCommand;
 use Flex\Core\Console\Commands\FeatureRollbackCommand;
 use Flex\Core\Console\Commands\FeatureMakeMigrationCommand;
@@ -80,6 +81,10 @@ final class Application
 
     private function registerDefaultCommands(): void
     {
+        $this->register(
+            new CreateSuperAdministratorCommand()
+        );
+
         $this->register(
             new PluginMigrateCommand(
                 projectPath: $this->projectPath
