@@ -12,6 +12,7 @@ use Flex\Features\Authentication\Repositories\EloquentUserRepository;
 use Flex\Features\Authentication\Repositories\RoleRepositoryInterface;
 use Flex\Features\Authentication\Repositories\UserRepositoryInterface;
 use Flex\Features\Authentication\Services\AuthorizationService;
+use Flex\Features\Authentication\Services\AuthenticationService;
 use Flex\Features\Authentication\Services\PermissionRegistry;
 use Flex\Features\Authentication\Services\RoleService;
 use Flex\Features\Authentication\Services\UserService;
@@ -23,6 +24,7 @@ final class AuthenticationServiceProvider implements FeatureServiceProviderInter
         $container->singleton(UserRepositoryInterface::class, EloquentUserRepository::class);
         $container->singleton(RoleRepositoryInterface::class, EloquentRoleRepository::class);
         $container->singleton(AuthorizationService::class);
+        $container->singleton(AuthenticationService::class);
         $container->singleton(UserService::class);
         $container->singleton(RoleService::class);
         $container->singleton(PermissionRegistry::class);

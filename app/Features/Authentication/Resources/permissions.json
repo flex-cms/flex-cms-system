@@ -1,5 +1,6 @@
 {
   "permissions": {
+    "admin.access": {"name": "Достъп до администрацията", "module": "authentication"},
     "users.view": {"name": "Преглед на потребители", "module": "authentication"},
     "users.create": {"name": "Създаване на потребители", "module": "authentication"},
     "users.update": {"name": "Редактиране на потребители", "module": "authentication"},

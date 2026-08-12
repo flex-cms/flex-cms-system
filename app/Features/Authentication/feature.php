@@ -8,5 +8,8 @@ return [
     'enabled' => true,
     'priority' => 5,
     'providers' => [AuthenticationServiceProvider::class],
-    'routes' => ['admin' => 'Routes/admin.php'],
+    'routes' => [
+        'web' => 'Routes/web.php',
+        'admin' => 'Routes/admin.php',
+    ],
 ];
