@@ -42,6 +42,10 @@ final class AuthProvider
 
         self::clearRememberCookie();
 
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_regenerate_id(true);
+        }
+
         self::login($user);
 
         if ($remember) {
@@ -88,7 +92,6 @@ final class AuthProvider
                 return true;
             }
 
-
             self::logout();
 
             return false;
@@ -108,6 +111,10 @@ final class AuthProvider
             self::clearRememberCookie();
 
             return false;
+        }
+
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_regenerate_id(true);
         }
 
         self::login($user);
@@ -218,12 +225,12 @@ final class AuthProvider
         $permissions = $user->roles()
             ->where(AuthenticationTables::roles() . '.is_active', true)
             ->with([
-                'permissions' => static fn($query) => $query
+                'permissions' => static fn ($query) => $query
                     ->where(AuthenticationTables::permissions() . '.is_active', true),
             ])
             ->get()
             ->flatMap(
-                static fn($role): Collection => $role->permissions
+                static fn ($role): Collection => $role->permissions
                     ->pluck('slug')
             )
             ->unique()

@@ -56,7 +56,6 @@ export class FlexDataTable extends FlexElement {
             position: relative;
             overflow: visible;
             border: 1px solid var(--flex-table-border, rgb(226 232 240));
-            border-radius: 0.875rem;
             background: var(--flex-table-bg, rgb(255 255 255));
             color: var(--flex-table-text, rgb(71 85 105));
         }

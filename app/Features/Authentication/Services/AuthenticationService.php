@@ -36,6 +36,10 @@ final class AuthenticationService
             return false;
         }
 
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_regenerate_id(true);
+        }
+
         return true;
     }
 

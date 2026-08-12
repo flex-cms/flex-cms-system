@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Flex\Features\Settings\Providers;
 
+use Flex\Core\Assets\AdminAssetRegistry;
 use Flex\Core\Container\Container;
 use Flex\Core\Features\Contracts\FeatureServiceProviderInterface;
 use Flex\Features\Settings\Navigation\SettingsNavigation;
@@ -33,5 +34,12 @@ final class SettingsServiceProvider implements
         $container
             ->make(SettingsNavigation::class)
             ->register();
+
+        $container
+            ->make(AdminAssetRegistry::class)
+            ->script(
+                'Settings',
+                'settings'
+            );
     }
 }

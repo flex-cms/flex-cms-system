@@ -10,6 +10,11 @@ FlexRouter::prefix('/admin/settings')
     ->middleware(['auth', 'admin'])
     ->group(static function (): void {
         FlexRouter::get(
+            '/runtime/date',
+            [SettingsController::class, 'dateRuntimeConfig']
+        )->name('runtime.date');
+
+        FlexRouter::get(
             '/{group}',
             [SettingsController::class, 'show']
         )

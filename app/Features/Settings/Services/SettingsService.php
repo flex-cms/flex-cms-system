@@ -171,6 +171,48 @@ final class SettingsService
         return $values;
     }
 
+    public function dateRuntimeConfig(): array
+    {
+        $storedValues =
+            $this->settings->valuesForGroup(
+                self::DATABASE_GROUP
+            );
+
+        $dateFormat = (string) (
+            $storedValues['date_format']
+            ?? SettingsOptions::defaultDateFormat()
+        );
+
+        if (!SettingsOptions::hasDateFormat($dateFormat)) {
+            $dateFormat = SettingsOptions::defaultDateFormat();
+        }
+
+        $timezone = (string) (
+            $storedValues['timezone']
+            ?? SettingsOptions::defaultTimezone()
+        );
+
+        if (!SettingsOptions::hasTimezone($timezone)) {
+            $timezone = SettingsOptions::defaultTimezone();
+        }
+
+        $locale = (string) (
+            $storedValues['admin_default_lang']
+            ?? SettingsOptions::defaultLocale()
+        );
+
+        if (!SettingsOptions::hasLanguage($locale)) {
+            $locale = SettingsOptions::defaultLocale();
+        }
+
+        return [
+            'date_format' => $dateFormat,
+            'time_format' => SettingsOptions::defaultTimeFormat(),
+            'timezone' => $timezone,
+            'locale' => $locale,
+        ];
+    }
+
     public function updatePage(
         string $pageGroup,
         array $submittedSettings
@@ -220,10 +262,13 @@ final class SettingsService
             }
 
             $normalizedSettings[$key] =
-                $this->normalizeValue(
+                $this->validateOption(
+                    $key,
+                    $this->normalizeValue(
                     $submittedSettings[$key],
                     $type,
                     $key
+                    )
                 );
         }
 
@@ -385,5 +430,41 @@ final class SettingsService
             $value,
             FILTER_VALIDATE_BOOLEAN
         );
+    }
+
+    private function validateOption(
+        string $key,
+        string|int|float $value
+    ): string|int|float {
+        $valid = match ($key) {
+            'date_format' =>
+                SettingsOptions::hasDateFormat(
+                    (string) $value
+                ),
+
+            'timezone' =>
+                SettingsOptions::hasTimezone(
+                    (string) $value
+                ),
+
+            'site_default_lang',
+            'admin_default_lang' =>
+                SettingsOptions::hasLanguage(
+                    (string) $value
+                ),
+
+            default => true,
+        };
+
+        if (!$valid) {
+            throw new InvalidArgumentException(
+                sprintf(
+                    'The setting [%s] contains an unsupported value.',
+                    $key
+                )
+            );
+        }
+
+        return $value;
     }
 }
