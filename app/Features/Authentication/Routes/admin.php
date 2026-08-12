@@ -104,7 +104,7 @@ FlexRouter::prefix('/admin/authentication')
             ->name('roles.create');
 
         FlexRouter::post(
-            '/roles',
+            '/roles/store',
             [RoleController::class, 'store']
         )
             ->middleware($permission('roles.create'))
@@ -119,12 +119,20 @@ FlexRouter::prefix('/admin/authentication')
             ->name('roles.edit');
 
         FlexRouter::post(
-            '/roles/{id}',
+            '/roles/{id}/update',
             [RoleController::class, 'update']
         )
             ->whereNumber('id')
             ->middleware($permission('roles.update'))
             ->name('roles.update');
+
+        FlexRouter::post(
+            '/roles/{id}/toggle',
+            [RoleController::class, 'toggle']
+        )
+            ->whereNumber('id')
+            ->middleware($permission('roles.update'))
+            ->name('roles.toggle');
 
         FlexRouter::post(
             '/roles/{id}/delete',
@@ -133,6 +141,22 @@ FlexRouter::prefix('/admin/authentication')
             ->whereNumber('id')
             ->middleware($permission('roles.delete'))
             ->name('roles.delete');
+
+        FlexRouter::post(
+            '/roles/{id}/restore',
+            [RoleController::class, 'restore']
+        )
+            ->whereNumber('id')
+            ->middleware($permission('roles.delete'))
+            ->name('roles.restore');
+
+        FlexRouter::post(
+            '/roles/{id}/force-delete',
+            [RoleController::class, 'forceDelete']
+        )
+            ->whereNumber('id')
+            ->middleware($permission('roles.delete'))
+            ->name('roles.force-delete');
 
         FlexRouter::get(
             '/permissions',

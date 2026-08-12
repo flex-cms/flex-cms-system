@@ -1,2 +1,25 @@
-<?php $e = static fn (mixed $v): string => htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8'); ?>
-<div class="space-y-6"><div class="flex justify-between"><h1 class="text-2xl font-bold">Роли</h1><a href="/admin/authentication/roles/create" class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white">Нова роля</a></div><div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3"><?php foreach ($roles as $role): ?><a href="/admin/authentication/roles/<?= (int) $role->id ?>/edit" class="rounded-xl border bg-white p-5 dark:border-slate-700 dark:bg-slate-800"><div class="flex justify-between"><strong><?= $e($role->name) ?></strong><code><?= $e($role->slug) ?></code></div><p class="mt-2 text-sm text-slate-500"><?= $e($role->description) ?></p><p class="mt-3 text-xs"><?= $role->permissions->count() ?> разрешения</p></a><?php endforeach; ?></div></div>
+<?php
+
+declare(strict_types=1);
+?>
+
+<div class="space-y-5">
+    <div class="flex gap-5">
+        <flex-button
+            href="/admin/authentication/roles/create"
+            variant="primary"
+            label="Нова роля"
+            icon="fa-solid fa-user-shield"
+            turbo
+        ></flex-button>
+    </div>
+
+    <flex-data-table
+        id="authentication-roles-table"
+        row-key="id"
+        empty-title="Няма роли"
+        empty-description="Все още няма създадени роли."
+        hoverable
+        paginated
+    ></flex-data-table>
+</div>

@@ -1,6 +1,9 @@
 import { html } from "lit";
 
-import { ApiTableDataSource, TableColumn } from "@admin-ui/components/table/index.js";
+import {
+    ApiTableDataSource,
+    TableColumn,
+} from "@admin-ui/components/table/index.js";
 import { dateFormatter } from "../../../Settings/Resources/js/date-formatter.js";
 
 async function initializeAuthenticationUsersTable() {
@@ -67,7 +70,8 @@ async function initializeAuthenticationUsersTable() {
         ],
 
         emptyTitle: "Няма потребители",
-        emptyDescription: "Няма потребители, които отговарят на текущите условия.",
+        emptyDescription:
+            "Няма потребители, които отговарят на текущите условия.",
 
         columns: [
             createTableColumn({
@@ -76,8 +80,14 @@ async function initializeAuthenticationUsersTable() {
                 sortable: true,
                 render: (value, row) => html`
                     <div class="space-y-0.5">
-                        <div class="font-semibold text-slate-900 dark:text-white">${value}</div>
-                        <div class="text-xs text-slate-500 dark:text-slate-400">${row.email}</div>
+                        <div
+                            class="font-semibold text-slate-900 dark:text-white"
+                        >
+                            ${value}
+                        </div>
+                        <div class="text-xs text-slate-500 dark:text-slate-400">
+                            ${row.email}
+                        </div>
                     </div>
                 `,
             }),
@@ -175,14 +185,20 @@ async function initializeAuthenticationUsersTable() {
 
             await table.load();
         } catch (error) {
-            console.error("Грешка при групово действие върху потребители:", error);
+            console.error(
+                "Грешка при групово действие върху потребители:",
+                error,
+            );
 
             notifyError(error.message);
         }
     });
 
     table.addEventListener("flex-table-load-error", (event) => {
-        console.error("Грешка при зареждане на потребителите:", event.detail.error);
+        console.error(
+            "Грешка при зареждане на потребителите:",
+            event.detail.error,
+        );
 
         notifyError("Потребителите не можаха да бъдат заредени.");
     });
@@ -299,17 +315,16 @@ function renderRoles(value, row) {
             <span
                 class="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700 dark:bg-amber-950/50 dark:text-amber-300"
             >
-                <i
-                    class="fa-solid fa-shield-halved"
-                    aria-hidden="true"
-                ></i>
+                <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
                 Супер администратор
             </span>
         `;
     }
 
     if (!value) {
-        return html` <span class="text-slate-400 dark:text-slate-500"> Без роля </span> `;
+        return html`
+            <span class="text-slate-400 dark:text-slate-500"> Без роля </span>
+        `;
     }
 
     return html`<span>${value}</span>`;
@@ -317,7 +332,9 @@ function renderRoles(value, row) {
 
 function renderLastLogin(value) {
     if (!value) {
-        return html` <span class="text-slate-400 dark:text-slate-500"> Няма вход </span> `;
+        return html`
+            <span class="text-slate-400 dark:text-slate-500"> Няма вход </span>
+        `;
     }
 
     return dateFormatter.formatDateTime(value);
@@ -329,10 +346,7 @@ function renderUserStatus(isActive, row) {
             <span
                 class="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700 dark:bg-red-950/50 dark:text-red-300"
             >
-                <i
-                    class="fa-solid fa-trash"
-                    aria-hidden="true"
-                ></i>
+                <i class="fa-solid fa-trash" aria-hidden="true"></i>
                 В кошчето
             </span>
         `;
@@ -343,10 +357,7 @@ function renderUserStatus(isActive, row) {
               <span
                   class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300"
               >
-                  <i
-                      class="fa-solid fa-circle-check"
-                      aria-hidden="true"
-                  ></i>
+                  <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
                   Активен
               </span>
           `
@@ -354,10 +365,7 @@ function renderUserStatus(isActive, row) {
               <span
                   class="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300"
               >
-                  <i
-                      class="fa-solid fa-circle-xmark"
-                      aria-hidden="true"
-                  ></i>
+                  <i class="fa-solid fa-circle-xmark" aria-hidden="true"></i>
                   Неактивен
               </span>
           `;
@@ -365,7 +373,9 @@ function renderUserStatus(isActive, row) {
 
 function confirmRowAction(action) {
     if (action === "trash") {
-        return window.confirm("Сигурни ли сте, че искате да преместите потребителя в кошчето?");
+        return window.confirm(
+            "Сигурни ли сте, че искате да преместите потребителя в кошчето?",
+        );
     }
 
     if (action === "force-delete") {
@@ -418,6 +428,289 @@ async function post(endpoint, payload = null) {
     return data;
 }
 
+function initializeAuthenticationRolesTable() {
+    const table = document.querySelector("#authentication-roles-table");
+
+    if (!table || table.dataset.initialized === "true") {
+        return;
+    }
+
+    table.dataset.initialized = "true";
+
+    table.configure({
+        rowKey: "id",
+        hoverable: true,
+        paginated: true,
+        searchable: true,
+        selectable: true,
+        searchPlaceholder: "Търсене по име, ключ или разрешение...",
+        searchDebounce: 400,
+        pageSize: 25,
+        pageSizeOptions: [10, 20, 25, 50, 100],
+        sortBy: "priority",
+        sortDirection: "asc",
+        bulkActions: (currentTable) => getRoleBulkActions(currentTable),
+        rowActions: (row) => getRoleRowActions(row),
+        filterDefinitions: [
+            {
+                key: "status",
+                label: "Статус",
+                type: "select",
+                options: [
+                    { value: "", label: "Всички" },
+                    { value: "active", label: "Активни" },
+                    { value: "inactive", label: "Неактивни" },
+                    { value: "deleted", label: "В кошчето" },
+                ],
+            },
+        ],
+        emptyTitle: "Няма роли",
+        emptyDescription: "Няма роли, които отговарят на текущите условия.",
+        columns: [
+            createTableColumn({
+                key: "name",
+                label: "Роля",
+                sortable: true,
+                render: (value, row) => html`
+                    <div class="space-y-0.5">
+                        <div
+                            class="flex items-center gap-2 font-semibold text-slate-900 dark:text-white"
+                        >
+                            <span
+                                class="h-2.5 w-2.5 rounded-full"
+                                style=${`background-color: ${row.color}`}
+                            ></span>
+                            ${value}
+                        </div>
+                        <code
+                            class="text-xs text-slate-500 dark:text-slate-400"
+                        >
+                            ${row.slug}
+                        </code>
+                    </div>
+                `,
+            }),
+            createTableColumn({
+                key: "permissions_count",
+                label: "Разрешения",
+                sortable: false,
+                align: "center",
+            }),
+            createTableColumn({
+                key: "users_count",
+                label: "Потребители",
+                sortable: false,
+                align: "center",
+            }),
+            createTableColumn({
+                key: "priority",
+                label: "Приоритет",
+                sortable: true,
+                align: "center",
+            }),
+            createTableColumn({
+                key: "is_active",
+                label: "Статус",
+                sortable: true,
+                align: "center",
+                render: (value, row) => renderRoleStatus(value, row),
+            }),
+        ],
+    });
+
+    table.setDataSource(
+        new ApiTableDataSource({
+            endpoint: "/api/admin/authentication/roles",
+        }),
+    );
+
+    table.addEventListener("flex-table-row-action", async (event) => {
+        const { action, row } = event.detail;
+
+        if (!row?.id) {
+            return;
+        }
+
+        if (action === "edit") {
+            visit(`/admin/authentication/roles/${row.id}/edit`);
+
+            return;
+        }
+
+        if (!confirmRoleAction(action)) {
+            return;
+        }
+
+        const endpoint = {
+            toggle: `/api/admin/authentication/roles/${row.id}/toggle`,
+            trash: `/api/admin/authentication/roles/${row.id}/delete`,
+            restore: `/api/admin/authentication/roles/${row.id}/restore`,
+            "force-delete": `/api/admin/authentication/roles/${row.id}/force-delete`,
+        }[action];
+
+        if (!endpoint) {
+            return;
+        }
+
+        try {
+            const data = await post(endpoint);
+            notifySuccess(data.message);
+            await table.load();
+        } catch (error) {
+            notifyError(error.message);
+        }
+    });
+
+    table.addEventListener("flex-table-bulk-action", async (event) => {
+        const { action, ids } = event.detail;
+
+        if (!Array.isArray(ids) || ids.length === 0) {
+            return;
+        }
+
+        if (!confirmRoleBulkAction(action, ids.length)) {
+            return;
+        }
+
+        try {
+            const data = await post("/api/admin/authentication/roles/bulk", {
+                action,
+                ids,
+            });
+
+            notifySuccess(data.message);
+            table.clearSelection();
+            await table.load();
+        } catch (error) {
+            notifyError(error.message);
+        }
+    });
+
+    table.load();
+}
+
+function getRoleRowActions(row) {
+    if (row.deleted_at) {
+        return [
+            {
+                key: "restore",
+                label: "Възстановяване",
+                icon: "fa-solid fa-rotate-left",
+            },
+            ...(row.users_count === 0
+                ? [
+                      {
+                          key: "force-delete",
+                          label: "Изтриване завинаги",
+                          icon: "fa-solid fa-trash-can",
+                          destructive: true,
+                          separatorBefore: true,
+                      },
+                  ]
+                : []),
+        ];
+    }
+
+    return [
+        {
+            key: "edit",
+            label: "Редактиране",
+            icon: "fa-solid fa-pen",
+        },
+        {
+            key: "toggle",
+            label: row.is_active ? "Деактивирай" : "Активирай",
+            icon: row.is_active ? "fa-solid fa-ban" : "fa-solid fa-check",
+        },
+        ...(row.users_count === 0
+            ? [
+                  {
+                      key: "trash",
+                      label: "Премести в кошчето",
+                      icon: "fa-solid fa-trash",
+                      destructive: true,
+                      separatorBefore: true,
+                  },
+              ]
+            : []),
+    ];
+}
+
+function getRoleBulkActions(table) {
+    if ((table.filters?.status ?? "") === "deleted") {
+        return [
+            {
+                key: "restore",
+                label: "Възстанови",
+                icon: "fa-solid fa-rotate-left",
+            },
+            {
+                key: "force-delete",
+                label: "Изтрий завинаги",
+                icon: "fa-solid fa-trash-can",
+                destructive: true,
+            },
+        ];
+    }
+
+    return [
+        { key: "activate", label: "Активирай", icon: "fa-solid fa-check" },
+        {
+            key: "deactivate",
+            label: "Деактивирай",
+            icon: "fa-solid fa-ban",
+        },
+        {
+            key: "trash",
+            label: "Премести в кошчето",
+            icon: "fa-solid fa-trash",
+            destructive: true,
+        },
+    ];
+}
+
+function renderRoleStatus(isActive, row) {
+    if (row.deleted_at) {
+        return html`<span
+            class="text-xs font-medium text-red-700 dark:text-red-300"
+            >В кошчето</span
+        >`;
+    }
+
+    return isActive
+        ? html`<span
+              class="text-xs font-medium text-emerald-700 dark:text-emerald-300"
+              >Активна</span
+          >`
+        : html`<span class="text-xs font-medium text-slate-500"
+              >Неактивна</span
+          >`;
+}
+
+function confirmRoleAction(action) {
+    if (action === "trash") {
+        return window.confirm(
+            "Сигурни ли сте, че искате да преместите ролята в кошчето?",
+        );
+    }
+
+    if (action === "force-delete") {
+        return window.confirm("Сигурни ли сте? Това действие е необратимо.");
+    }
+
+    return true;
+}
+
+function confirmRoleBulkAction(action, count) {
+    if (action === "trash" || action === "force-delete") {
+        return window.confirm(
+            `Сигурни ли сте, че искате да обработите ${count} роли?`,
+        );
+    }
+
+    return true;
+}
+
 function visit(url) {
     if (window.Turbo?.visit) {
         window.Turbo.visit(url);
@@ -440,6 +733,7 @@ function notifyError(message) {
 
 function initializeAuthentication() {
     initializeAuthenticationUsersTable();
+    initializeAuthenticationRolesTable();
 }
 
 document.addEventListener("turbo:load", initializeAuthentication);
