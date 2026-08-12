@@ -1,0 +1,19 @@
+<?php
+
+declare(strict_types=1);
+
+use Flex\Core\Features\Migrations\FeatureMigration;
+use Illuminate\Database\Schema\Blueprint;
+
+final class {{ class }} extends FeatureMigration
+{
+    public function up(): void
+    {
+        //
+    }
+
+    public function down(): void
+    {
+        //
+    }
+}

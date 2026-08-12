@@ -66,9 +66,13 @@ export class FlexForm extends FlexElement {
         super();
 
         this.action = "";
-        this.method = "POST";
+
+        /** @type {"get" | "post" | "dialog"} */
+        this.method = "post";
+
         this.mode = "server";
 
+        /** @type {"application/x-www-form-urlencoded" | "multipart/form-data" | "text/plain"} */
         this.enctype = "application/x-www-form-urlencoded";
 
         this.loading = false;
@@ -193,6 +197,8 @@ export class FlexForm extends FlexElement {
                 response,
                 data,
             });
+
+            this.#handleRedirect(data);
         } catch (error) {
             this.#notifyError(error);
 
@@ -340,6 +346,27 @@ export class FlexForm extends FlexElement {
         }
 
         notificationManager.error(message);
+    }
+
+    #handleRedirect(data) {
+        if (
+            typeof data !== "object" ||
+            data === null ||
+            typeof data.redirect !== "string" ||
+            data.redirect.trim() === ""
+        ) {
+            return;
+        }
+
+        const url = data.redirect.trim();
+
+        if (window.Turbo?.visit) {
+            window.Turbo.visit(url);
+
+            return;
+        }
+
+        window.location.href = url;
     }
 
     get form() {

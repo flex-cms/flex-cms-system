@@ -249,10 +249,10 @@ export class FlexCheckbox extends FlexElement {
                                       >
                                           ${this.label}
                                           ${
-                                          this.required
-                                              ? html` <span class="required"> * </span> `
-                                              : nothing
-                                      }
+                                              this.required
+                                                  ? html` <span class="required"> * </span> `
+                                                  : nothing
+                                          }
                                       </div>
                                   `
                                 : nothing

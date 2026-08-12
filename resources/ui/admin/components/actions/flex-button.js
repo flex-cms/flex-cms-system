@@ -91,7 +91,6 @@ export class FlexButton extends FlexElement {
             .button {
                 position: relative;
                 display: inline-flex;
-                min-height: 2.5rem;
                 align-items: center;
                 justify-content: center;
                 gap: var(--flex-space-2);
@@ -386,6 +385,7 @@ export class FlexButton extends FlexElement {
         this.icon = "";
         this.variant = "primary";
         this.size = "md";
+        /** @type {"button" | "submit" | "reset" | "menu"} */
         this.type = "button";
         this.href = "";
         this.target = "_self";

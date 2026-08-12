@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 namespace Flex\Core\Console;
 
+use Flex\Core\Console\Commands\FeatureFreshCommand;
+use Flex\Core\Console\Commands\FeatureRollbackCommand;
+use Flex\Core\Console\Commands\FeatureMakeMigrationCommand;
+use Flex\Core\Console\Commands\FeatureMigrateCommand;
+use Flex\Core\Console\Commands\FeatureStatusCommand;
 use Flex\Core\Console\Commands\PluginFreshCommand;
 use Flex\Core\Console\Commands\PluginMigrateCommand;
 use Flex\Core\Console\Commands\PluginRollbackCommand;
@@ -86,15 +91,48 @@ final class Application
                 projectPath: $this->projectPath
             )
         );
-        
+
         $this->register(
             new PluginStatusCommand(
                 projectPath: $this->projectPath
             )
         );
-        
+
         $this->register(
             new PluginFreshCommand(
+                projectPath: $this->projectPath
+            )
+        );
+
+
+        $this->register(
+            new FeatureMakeMigrationCommand(
+                projectPath: $this->projectPath
+            )
+        );
+
+        $this->register(
+            new FeatureMigrateCommand(
+                projectPath: $this->projectPath
+            )
+        );
+
+        $this->register(
+            new FeatureStatusCommand(
+                projectPath: $this->projectPath
+            )
+        );
+
+
+        $this->register(
+            new FeatureRollbackCommand(
+                projectPath: $this->projectPath
+            )
+        );
+
+
+        $this->register(
+            new FeatureFreshCommand(
                 projectPath: $this->projectPath
             )
         );
