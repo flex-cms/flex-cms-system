@@ -38,6 +38,16 @@ export class FlexDropdown extends FlexElement {
         options: {
             state: true,
         },
+
+        minWidth: {
+            type: String,
+            attribute: "min-width",
+        },
+
+        labelPosition: {
+            type: String,
+            attribute: "label-position",
+        },
     };
 
     static styles = [
@@ -58,8 +68,41 @@ export class FlexDropdown extends FlexElement {
                 position: relative;
                 display: flex;
                 width: 100%;
-                flex-direction: column;
                 gap: 0.4rem;
+            }
+
+            .field.label-top {
+                flex-direction: column;
+            }
+
+            .field.label-bottom {
+                flex-direction: column-reverse;
+            }
+
+            .field.label-left {
+                flex-direction: row;
+                align-items: center;
+            }
+
+            .field.label-right {
+                flex-direction: row-reverse;
+                align-items: center;
+            }
+
+            .field.label-left .label,
+            .field.label-right .label {
+                flex: 0 0 auto;
+                white-space: nowrap;
+            }
+
+            .field.label-left .control,
+            .field.label-right .control {
+                min-width: 0;
+                flex: 1;
+            }
+
+            .control {
+                position: relative;
             }
 
             .label {
@@ -318,6 +361,9 @@ export class FlexDropdown extends FlexElement {
         this.options = [];
 
         this.internals = this.attachInternals();
+
+        this.minWidth = "";
+        this.labelPosition = "top";
     }
 
     connectedCallback() {
@@ -356,6 +402,14 @@ export class FlexDropdown extends FlexElement {
         if (changedProperties.has("error")) {
             this.toggleAttribute("invalid", Boolean(this.error));
         }
+
+        if (changedProperties.has("minWidth")) {
+            if (this.minWidth) {
+                this.style.minWidth = this.minWidth;
+            } else {
+                this.style.removeProperty("min-width");
+            }
+        }
     }
 
     checkValidity() {
@@ -389,22 +443,22 @@ export class FlexDropdown extends FlexElement {
             (option) => String(option.value) === String(this.value),
         );
 
+        const labelPosition = ["top", "left", "bottom", "right"].includes(this.labelPosition)
+            ? this.labelPosition
+            : "top";
+
         return html`
-            <div class="field">
+            <div class="field label-${labelPosition}">
                 ${
-                    this.label
-                        ? html`
-                              <div class="label">
-                                  ${this.label}
-                                  ${
-                                      this.required
-                                          ? html` <span class="required"> * </span> `
-                                          : nothing
-                                  }
-                              </div>
-                          `
-                        : nothing
-                }
+                this.label
+                    ? html`
+                          <div class="label">
+                              ${this.label}
+                              ${this.required ? html` <span class="required">*</span> ` : nothing}
+                          </div>
+                      `
+                    : nothing
+            }
 
                 <div class="control">
                     <button
@@ -415,10 +469,7 @@ export class FlexDropdown extends FlexElement {
                         aria-expanded=${this.open ? "true" : "false"}
                         @click=${this.#toggle}
                     >
-                        <span
-                            class="selected
-                            ${selectedOption ? "" : "placeholder"}"
-                        >
+                        <span class="selected ${selectedOption ? "" : "placeholder"}">
                             ${selectedOption ? selectedOption.label : this.placeholder}
                         </span>
 
@@ -426,10 +477,7 @@ export class FlexDropdown extends FlexElement {
                             class="chevron"
                             aria-hidden="true"
                         >
-                            <i
-                                class="fa-solid
-                                    fa-chevron-down"
-                            ></i>
+                            <i class="fa-solid fa-chevron-down"></i>
                         </span>
                     </button>
 
@@ -442,10 +490,10 @@ export class FlexDropdown extends FlexElement {
                 </div>
 
                 ${
-                    this.error || this.helper
-                        ? html` <div class="message">${this.error || this.helper}</div> `
-                        : nothing
-                }
+                this.error || this.helper
+                    ? html` <div class="message">${this.error || this.helper}</div> `
+                    : nothing
+            }
             </div>
         `;
     }
