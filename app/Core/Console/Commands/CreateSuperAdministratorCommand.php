@@ -113,12 +113,12 @@ final class CreateSuperAdministratorCommand implements CommandInterface
     {
         $schema = Capsule::schema();
 
-        if (!$schema->hasTable('users')) {
-            throw new RuntimeException('Таблицата users не съществува. Изпълнете миграциите.');
+        if (!$schema->hasTable('authentication_users')) {
+            throw new RuntimeException('Таблицата authentication_users не съществува. Изпълнете миграциите.');
         }
 
         foreach (['is_super_admin', 'super_admin_slot'] as $column) {
-            if (!$schema->hasColumn('users', $column)) {
+            if (!$schema->hasColumn('authentication_users', $column)) {
                 throw new RuntimeException(
                     sprintf(
                         'Колоната users.%s липсва. Изпълнете Authentication миграциите.',

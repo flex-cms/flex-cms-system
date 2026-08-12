@@ -4,15 +4,14 @@ declare(strict_types=1);
 
 namespace Flex\Features\Authentication\Services;
 
-use Flex\Core\Auth;
 use Flex\Features\Authentication\Models\User;
+use Flex\Features\Authentication\Providers\AuthProvider;
 
 final class AuthorizationService
 {
     public function currentUser(): ?User
     {
-        $legacyUser = Auth::user();
-        return $legacyUser === null ? null : User::query()->find((int) $legacyUser->id);
+        return AuthProvider::user();
     }
 
     public function allows(?User $user, string $permission): bool

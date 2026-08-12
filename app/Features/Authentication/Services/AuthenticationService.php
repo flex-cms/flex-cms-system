@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace Flex\Features\Authentication\Services;
 
-use Flex\Core\Auth;
 use Flex\Features\Authentication\Models\User;
+use Flex\Features\Authentication\Providers\AuthProvider;
+use Flex\Features\Authentication\Support\AuthenticationTables;
 
 final class AuthenticationService
 {
@@ -20,7 +21,7 @@ final class AuthenticationService
             return false;
         }
 
-        if (!Auth::attempt($email, $password, $remember)) {
+        if (!AuthProvider::attempt($email, $password, $remember)) {
             return false;
         }
 
@@ -30,13 +31,9 @@ final class AuthenticationService
             ->first();
 
         if ($user === null || !$this->canAccessAdministration($user)) {
-            Auth::logout();
+            AuthProvider::logout();
 
             return false;
-        }
-
-        if (session_status() === PHP_SESSION_ACTIVE) {
-            session_regenerate_id(true);
         }
 
         return true;
@@ -53,18 +50,18 @@ final class AuthenticationService
         }
 
         return $user->roles()
-            ->where('roles.is_active', true)
+            ->where(AuthenticationTables::roles() . '.is_active', true)
             ->whereHas(
                 'permissions',
                 static fn ($query) => $query
-                    ->where('permissions.slug', 'admin.access')
-                    ->where('permissions.is_active', true)
+                    ->where(AuthenticationTables::permissions() . '.slug', 'admin.access')
+                    ->where(AuthenticationTables::permissions() . '.is_active', true)
             )
             ->exists();
     }
 
     public function logout(): void
     {
-        Auth::logout();
+        AuthProvider::logout();
     }
 }

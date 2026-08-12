@@ -1,7 +1,7 @@
 <?php
 
 declare(strict_types=1);
-use Flex\Core\Auth;
+use Flex\Features\Authentication\Providers\AuthProvider;
 
 $sidebarItems = isset($adminUISidebar['items']) && is_array($adminUISidebar['items']) ? $adminUISidebar['items'] : [];
 
@@ -9,7 +9,7 @@ $sidebarPosition = in_array($adminUISidebar['position'] ?? null, ['left', 'right
     ? $adminUISidebar['position']
     : 'left';
 
-$currentUser = Auth::user();
+$currentUser = AuthProvider::user();
 
 $userName = is_string($currentUser?->fullname ?? null) ? $currentUser->fullname : 'Гост';
 $userEmail = is_string($currentUser?->email ?? null) ? $currentUser->email : '';
@@ -33,4 +33,4 @@ $userInitial = function_exists('mb_substr')
 $adminName = is_string($adminUIConfig['name'] ?? null) ? $adminUIConfig['name'] : 'Flex CMS';
 $turboEnabled = ($adminUIConfig['turboEnabled'] ?? true) === true;
 
-$escape = static fn (mixed $value): string => htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
+$escape = static fn(mixed $value): string => htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');

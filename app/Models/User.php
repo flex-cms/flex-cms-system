@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class User extends Model
 {
-    protected $table = 'users';
+    protected $table = 'authentication_users';
 
     protected ?array $permissionsCache = null;
 
@@ -42,7 +42,7 @@ class User extends Model
 
     public function roles(): BelongsToMany
     {
-        return $this->belongsToMany(Role::class, 'user_role');
+        return $this->belongsToMany(Role::class, 'authentication_user_role');
     }
 
     public function hasPermission(string $permissionSlug): bool
@@ -71,9 +71,9 @@ class User extends Model
         }
 
         $this->permissionsCache = $this->roles()
-            ->with('permissions')
+            ->with('authentication_permissions')
             ->get()
-            ->pluck('permissions')
+            ->pluck('authentication_permissions')
             ->collapse()
             ->pluck('slug')
             ->unique()

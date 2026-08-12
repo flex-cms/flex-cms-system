@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Flex\Features\Authentication\Controllers;
 
-use Flex\Core\Auth;
 use Flex\Core\Http\RedirectResponse;
 use Flex\Core\Http\Request;
 use Flex\Core\View\Contracts\ViewRendererInterface;
 use Flex\Core\View\ViewResponse;
 use Flex\Features\Authentication\Services\AuthenticationService;
+use Flex\Features\Authentication\Providers\AuthProvider;
 
 final readonly class LoginController
 {
@@ -24,7 +24,7 @@ final readonly class LoginController
 
     public function show(): ViewResponse|RedirectResponse
     {
-        if (Auth::check()) {
+        if (AuthProvider::check()) {
             return new RedirectResponse('/admin/dashboard');
         }
 
@@ -69,6 +69,10 @@ final readonly class LoginController
 
         if (!is_string($redirect) || !str_starts_with($redirect, '/admin')) {
             $redirect = '/admin/dashboard';
+        }
+
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_write_close();
         }
 
         return new RedirectResponse($redirect);
