@@ -9,7 +9,10 @@ use Flex\Core\Features\Contracts\FeatureServiceProviderInterface;
 use Flex\Features\Shopping\Navigation\ShoppingNavigation;
 use Flex\Features\Shopping\Repositories\CategoryRepositoryInterface;
 use Flex\Features\Shopping\Repositories\EloquentCategoryRepository;
+use Flex\Features\Shopping\Repositories\EloquentProductRepository;
+use Flex\Features\Shopping\Repositories\ProductRepositoryInterface;
 use Flex\Features\Shopping\Services\CategoryService;
+use Flex\Features\Shopping\Services\ProductService;
 
 final class ShoppingServiceProvider implements
     FeatureServiceProviderInterface
@@ -25,6 +28,13 @@ final class ShoppingServiceProvider implements
         $container->singleton(
             CategoryService::class
         );
+
+        $container->singleton(
+            ProductRepositoryInterface::class,
+            EloquentProductRepository::class
+        );
+
+        $container->singleton(ProductService::class);
 
         $container->singleton(
             ShoppingNavigation::class

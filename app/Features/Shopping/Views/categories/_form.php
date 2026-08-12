@@ -34,7 +34,6 @@ $action = $isEdit
             value="<?= $escape($category?->name ?? '') ?>"
             placeholder="Напр. Компютри и лаптопи"
             helper="Името ще се показва на клиентите в менюта, категории и други части на магазина."
-            required
             full-width
         ></flex-input>
 
