@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use Flex\Features\Pages\Data\PageElementNode;
 use Flex\Features\Pages\Data\PageTreeItem;
 use Flex\Features\Pages\Models\Page;
 
@@ -12,31 +11,12 @@ $page = isset($page) && $page instanceof Page ? $page : null;
 $parentPages = isset($parentPages) && is_array($parentPages) ? $parentPages : [];
 /** @var array<string, mixed> $options */
 $options = isset($options) && is_array($options) ? $options : [];
-/** @var list<PageElementNode> $elements */
-$elements = isset($elements) && is_array($elements) ? $elements : [];
 /** @var array<string, string> $templates */
 $templates = isset($templates) && is_array($templates) ? $templates : [];
 $escape = static fn (mixed $value): string => htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 $isEdit = $page !== null;
 $action = $isEdit ? '/admin/pages/update/' . (int) $page->id : '/admin/pages/store';
 
-$elementDefinition = static function (PageElementNode $node) use (&$elementDefinition): array {
-    $settings = $node->element->settings;
-
-    return [
-        'id' => (int) $node->element->id,
-        'type' => $node->element->element_type,
-        'position' => (int) $node->element->position,
-        'settings' => $settings instanceof ArrayObject
-            ? $settings->getArrayCopy()
-            : (is_array($settings) ? $settings : []),
-        'children' => array_map($elementDefinition, $node->children),
-    ];
-};
-$elementJson = json_encode(
-    array_map($elementDefinition, $elements),
-    JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
-) ?: '[]';
 ?>
 
 <flex-form
@@ -171,26 +151,6 @@ $elementJson = json_encode(
         ></flex-checkbox>
 
         <?php /* TODO: Добавяне на flex-image-upload компонент за featured, tablet и mobile изображения. */ ?>
-
-        <div class="lg:col-span-2 mt-2 border-t border-slate-200 pt-5 dark:border-slate-700">
-            <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Структура на съдържанието</h2>
-            <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                Временен JSON редактор до добавянето на специализиран page builder компонент.
-            </p>
-        </div>
-
-        <div class="lg:col-span-2">
-            <flex-input
-                type="textarea"
-                name="elements_json"
-                label="Елементи"
-                value="<?= $escape($elementJson) ?>"
-                helper="TODO: Това поле ще бъде заменено от визуален компонент за управление на елементите."
-                rows="14"
-                icon="fa-solid fa-code"
-                full-width
-            ></flex-input>
-        </div>
 
         <div class="lg:col-span-2 flex items-center gap-3">
             <flex-button

@@ -22,4 +22,9 @@ final class PagesTables
     {
         return self::PREFIX . 'elements';
     }
+
+    public static function fields(): string
+    {
+        return self::PREFIX . 'fields';
+    }
 }

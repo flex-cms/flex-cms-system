@@ -26,6 +26,7 @@ import "@admin-ui/components/feedback/flex-modal.js";
 
 import "@admin-ui/components/navigation/flex-tabs.js";
 import "@admin-ui/components/navigation/flex-tab.js";
+import "@admin-ui/components/builder/flex-page-builder.js";
 
 const FLEX_ADMIN_STATE = Symbol.for("flex.admin.ui.state");
 

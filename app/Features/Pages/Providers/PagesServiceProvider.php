@@ -8,12 +8,15 @@ use Flex\Core\Container\Container;
 use Flex\Core\Features\Contracts\FeatureServiceProviderInterface;
 use Flex\Features\Pages\Navigation\PagesNavigation;
 use Flex\Features\Pages\Repositories\EloquentPageElementRepository;
+use Flex\Features\Pages\Repositories\EloquentPageFieldRepository;
 use Flex\Features\Pages\Repositories\EloquentPageOptionRepository;
 use Flex\Features\Pages\Repositories\EloquentPageRepository;
 use Flex\Features\Pages\Repositories\PageElementRepositoryInterface;
+use Flex\Features\Pages\Repositories\PageFieldRepositoryInterface;
 use Flex\Features\Pages\Repositories\PageOptionRepositoryInterface;
 use Flex\Features\Pages\Repositories\PageRepositoryInterface;
 use Flex\Features\Pages\Services\PageElementService;
+use Flex\Features\Pages\Services\PageFieldService;
 use Flex\Features\Pages\Services\PageOptionService;
 use Flex\Features\Pages\Services\PageService;
 use Flex\Features\Pages\Services\PageTreeService;
@@ -38,10 +41,16 @@ final class PagesServiceProvider implements
             EloquentPageElementRepository::class
         );
 
+        $container->singleton(
+            PageFieldRepositoryInterface::class,
+            EloquentPageFieldRepository::class
+        );
+
         $container->singleton(PageTreeService::class);
         $container->singleton(PageService::class);
         $container->singleton(PageOptionService::class);
         $container->singleton(PageElementService::class);
+        $container->singleton(PageFieldService::class);
         $container->singleton(PagesNavigation::class);
 
         $container

@@ -161,6 +161,10 @@ final class EloquentPageRepositoryTest extends TestCase
     public function testItPaginatesAndFiltersPagesByStatus(): void
     {
         $active = $this->createPage('Active', 'active', 'active', null, 2);
+        $active->pageOptions()->create([
+            'option_key' => 'is_with_page_options',
+            'option_value' => 'true',
+        ]);
         $inactive = $this->createPage('Inactive', 'inactive', 'inactive', null, 1, false);
         $deleted = $this->createPage('Deleted', 'deleted', 'deleted');
         $this->repository->delete($deleted);
@@ -185,7 +189,9 @@ final class EloquentPageRepositoryTest extends TestCase
         );
 
         self::assertSame([$active->id], array_column($activeResult['data'], 'id'));
+        self::assertTrue($activeResult['data'][0]['is_with_page_options']);
         self::assertSame([$inactive->id], array_column($inactiveResult['data'], 'id'));
+        self::assertFalse($inactiveResult['data'][0]['is_with_page_options']);
         self::assertSame([$deleted->id], array_column($deletedResult['data'], 'id'));
         self::assertSame('deleted', $deletedResult['data'][0]['status']);
         self::assertSame(1, $deletedResult['pagination']['total']);

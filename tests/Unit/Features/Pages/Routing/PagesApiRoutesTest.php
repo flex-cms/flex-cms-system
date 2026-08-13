@@ -9,6 +9,8 @@ use Flex\Core\Routing\RouteCollection;
 use Flex\Core\Routing\RouteMatcher;
 use Flex\Core\Routing\RouteRegistrar;
 use Flex\Features\Pages\Controllers\PagesController;
+use Flex\Features\Pages\Controllers\PageContentController;
+use Flex\Features\Pages\Controllers\PageFieldsController;
 use PHPUnit\Framework\TestCase;
 
 final class PagesApiRoutesTest extends TestCase
@@ -67,6 +69,39 @@ final class PagesApiRoutesTest extends TestCase
                     $actionRoute->action()
                 );
             }
+
+            $showElements = $routes->named('api.admin.pages.elements.show');
+            self::assertNotNull($showElements);
+            self::assertSame(
+                [PageContentController::class, 'show'],
+                $showElements->action()
+            );
+            self::assertSame(['GET', 'HEAD'], $showElements->methods());
+            self::assertSame(['id' => '[0-9]+'], $showElements->constraints());
+
+            $updateElements = $routes->named('api.admin.pages.elements.update');
+            self::assertNotNull($updateElements);
+            self::assertSame(
+                [PageContentController::class, 'update'],
+                $updateElements->action()
+            );
+            self::assertSame(['PUT'], $updateElements->methods());
+            self::assertSame(['auth', 'admin'], $updateElements->getMiddleware());
+
+            $fields = $routes->named('api.admin.pages.fields.index');
+            self::assertNotNull($fields);
+            self::assertSame('/api/admin/pages/{pageId}/fields', $fields->uri());
+            self::assertSame([PageFieldsController::class, 'apiIndex'], $fields->action());
+            self::assertSame(['pageId' => '[0-9]+'], $fields->constraints());
+
+            $deleteField = $routes->named('api.admin.pages.fields.delete');
+            self::assertNotNull($deleteField);
+            self::assertSame(['POST'], $deleteField->methods());
+            self::assertSame([PageFieldsController::class, 'delete'], $deleteField->action());
+            self::assertSame(
+                ['pageId' => '[0-9]+', 'fieldId' => '[0-9]+'],
+                $deleteField->constraints()
+            );
         } finally {
             FlexRouter::reset();
         }

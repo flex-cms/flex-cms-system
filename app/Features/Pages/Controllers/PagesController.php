@@ -7,13 +7,11 @@ namespace Flex\Features\Pages\Controllers;
 use Flex\Core\Assets\AdminAssetRegistry;
 use Flex\Core\Http\JsonResponse;
 use Flex\Core\Http\Request;
+use Flex\Core\Helpers\Flash;
 use Flex\Core\View\ViewResponse;
 use Flex\Features\AdminUI\Services\AdminUIRenderer;
-use Flex\Features\Pages\Exceptions\InvalidPageElementException;
-use Flex\Features\Pages\Services\PageElementService;
 use Flex\Features\Pages\Services\PageOptionService;
 use Flex\Features\Pages\Services\PageService;
-use JsonException;
 
 final readonly class PagesController
 {
@@ -31,7 +29,6 @@ final readonly class PagesController
     public function __construct(
         private PageService $pages,
         private PageOptionService $options,
-        private PageElementService $elements,
         private AdminUIRenderer $adminUI,
         private AdminAssetRegistry $assets
     ) {
@@ -95,6 +92,8 @@ final readonly class PagesController
     {
         $page = $this->pages->create($this->pageData($request));
         $this->syncRelatedData($request, $page);
+
+        Flash::success('Страницата беше създадена успешно.');
 
         return new JsonResponse([
             'success' => true,
@@ -184,7 +183,6 @@ final readonly class PagesController
             'page' => $page,
             'parentPages' => $this->pages->tree(),
             'options' => $page === null ? [] : $this->options->values($page),
-            'elements' => $page === null ? [] : $this->elements->tree($page),
             'templates' => [],
         ]);
     }
@@ -217,35 +215,6 @@ final readonly class PagesController
 
         // Omitted values (notably existing media paths) must survive a form save.
         $this->options->saveMany($page, $options, self::OPTION_KEYS);
-        $this->elements->replace($page, $this->elementDefinitions($request));
-    }
-
-    /** @return list<array<string, mixed>> */
-    private function elementDefinitions(Request $request): array
-    {
-        $json = trim($request->string('elements_json', '[]'));
-
-        try {
-            $elements = json_decode(
-                $json === '' ? '[]' : $json,
-                true,
-                512,
-                JSON_THROW_ON_ERROR
-            );
-        } catch (JsonException $exception) {
-            throw new InvalidPageElementException(
-                'Page elements must contain valid JSON.',
-                previous: $exception
-            );
-        }
-
-        if (!is_array($elements) || !array_is_list($elements)) {
-            throw new InvalidPageElementException(
-                'Page elements must be a JSON list.'
-            );
-        }
-
-        return $elements;
     }
 
     /** @param array<string, mixed> $data */

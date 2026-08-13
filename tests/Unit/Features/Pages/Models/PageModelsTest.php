@@ -6,7 +6,9 @@ namespace Tests\Unit\Features\Pages\Models;
 
 use Flex\Features\Pages\Models\Page;
 use Flex\Features\Pages\Models\PageElement;
+use Flex\Features\Pages\Models\PageField;
 use Flex\Features\Pages\Models\PageOption;
+use Flex\Features\Pages\Data\PageFieldType;
 use Flex\Features\Pages\Support\PagesTables;
 use Illuminate\Database\Eloquent\Collection;
 use PHPUnit\Framework\TestCase;
@@ -18,6 +20,28 @@ final class PageModelsTest extends TestCase
         self::assertSame(PagesTables::pages(), (new Page())->getTable());
         self::assertSame(PagesTables::options(), (new PageOption())->getTable());
         self::assertSame(PagesTables::elements(), (new PageElement())->getTable());
+        self::assertSame(PagesTables::fields(), (new PageField())->getTable());
+    }
+
+    public function testPageFieldUsesPublicFieldContract(): void
+    {
+        $field = new PageField([
+            'page_id' => '4',
+            'type' => PageFieldType::RichText->value,
+            'label' => 'Content',
+            'field_key' => 'content',
+            'field_group' => 'main',
+            'position' => '20',
+            'hint' => 'Page content',
+            'settings' => ['toolbar' => 'full'],
+        ]);
+
+        self::assertSame(4, $field->page_id);
+        self::assertSame(PageFieldType::RichText, $field->type);
+        self::assertSame('content', $field->fieldKey());
+        self::assertSame('main', $field->getGroupName());
+        self::assertSame(20, $field->getOrder());
+        self::assertSame('id', $field->getKeyName());
     }
 
     public function testPageCastsCoreAttributes(): void

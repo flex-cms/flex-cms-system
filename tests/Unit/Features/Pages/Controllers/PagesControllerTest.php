@@ -6,6 +6,7 @@ namespace Tests\Unit\Features\Pages\Controllers;
 
 use Flex\Core\Assets\AdminAssetRegistry;
 use Flex\Core\Assets\ViteAssetResolver;
+use Flex\Core\Helpers\Flash;
 use Flex\Core\Http\Request;
 use Flex\Core\View\Contracts\ViewRendererInterface;
 use Flex\Core\View\ViewResponse;
@@ -16,14 +17,11 @@ use Flex\Features\AdminUI\Services\AdminUIRenderer;
 use Flex\Features\Pages\Controllers\PagesController;
 use Flex\Features\Pages\Models\Page;
 use Flex\Features\Pages\Models\PageOption;
-use Flex\Features\Pages\Repositories\PageElementRepositoryInterface;
 use Flex\Features\Pages\Repositories\PageOptionRepositoryInterface;
 use Flex\Features\Pages\Repositories\PageRepositoryInterface;
-use Flex\Features\Pages\Services\PageElementService;
 use Flex\Features\Pages\Services\PageOptionService;
 use Flex\Features\Pages\Services\PageService;
 use Flex\Features\Pages\Services\PageTreeService;
-use Illuminate\Database\Eloquent\Collection;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
@@ -31,17 +29,16 @@ final class PagesControllerTest extends TestCase
 {
     private PageRepositoryInterface&MockObject $pages;
     private PageOptionRepositoryInterface&MockObject $options;
-    private PageElementRepositoryInterface&MockObject $elements;
     private ViewRendererInterface&MockObject $views;
     private PagesController $controller;
 
     protected function setUp(): void
     {
         parent::setUp();
+        Flash::pull();
 
         $this->pages = $this->createMock(PageRepositoryInterface::class);
         $this->options = $this->createMock(PageOptionRepositoryInterface::class);
-        $this->elements = $this->createMock(PageElementRepositoryInterface::class);
         $this->views = $this->createMock(ViewRendererInterface::class);
         $sidebars = new SidebarRegistry();
         $sidebars->create(SidebarRegistry::DEFAULT_SIDEBAR, 'Administration');
@@ -67,7 +64,6 @@ final class PagesControllerTest extends TestCase
         $this->controller = new PagesController(
             new PageService($this->pages, $tree),
             new PageOptionService($this->options),
-            new PageElementService($this->elements),
             $adminUI,
             $assetRegistry
         );
@@ -233,18 +229,6 @@ final class PagesControllerTest extends TestCase
             ->method('save')
             ->willReturn(new PageOption());
 
-        $this->elements->expects(self::once())
-            ->method('transaction')
-            ->willReturnCallback(static fn (callable $callback): mixed => $callback());
-        $this->elements->expects(self::once())
-            ->method('deleteMissing')
-            ->with($page, [])
-            ->willReturn(0);
-        $this->elements->expects(self::once())
-            ->method('allFor')
-            ->with($page)
-            ->willReturn(new Collection());
-
         $response = $this->controller->store(new Request(
             method: 'POST',
             uri: '/admin/pages/store',
@@ -258,7 +242,6 @@ final class PagesControllerTest extends TestCase
                     'excerpt' => 'Начална страница',
                     'use_full_slug' => '1',
                 ],
-                'elements_json' => '[]',
             ]
         ));
 
@@ -274,5 +257,11 @@ final class PagesControllerTest extends TestCase
         self::assertTrue($data['success']);
         self::assertSame(7, $data['id']);
         self::assertSame('/admin/pages/edit/7', $data['redirect']);
+        self::assertSame([
+            [
+                'type' => 'success',
+                'message' => 'Страницата беше създадена успешно.',
+            ],
+        ], Flash::pull());
     }
 }

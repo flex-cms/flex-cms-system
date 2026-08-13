@@ -107,6 +107,11 @@ function initializePagesTable() {
             return;
         }
 
+        if (action === "fields") {
+            visit(`/admin/pages/${row.id}/fields`);
+            return;
+        }
+
         if (!confirmAction(action, row)) {
             return;
         }
@@ -196,6 +201,15 @@ function pageActions(row) {
             label: "Редактиране",
             icon: "fa-solid fa-pen",
         },
+        ...(row.is_with_page_options
+            ? [
+                  {
+                      key: "fields",
+                      label: "Допълнителни полета",
+                      icon: "fa-solid fa-list-check",
+                  },
+              ]
+            : []),
         {
             key: "toggle",
             label: row.is_active ? "Деактивиране" : "Активиране",

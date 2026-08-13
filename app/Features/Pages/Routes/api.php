@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 use Flex\Core\Routing\FlexRouter;
 use Flex\Features\Pages\Controllers\PagesController;
+use Flex\Features\Pages\Controllers\PageContentController;
+use Flex\Features\Pages\Controllers\PageFieldsController;
 
 FlexRouter::get(
     '/api/admin/pages',
@@ -50,3 +52,25 @@ FlexRouter::post(
     ->whereNumber('id')
     ->middleware(['auth', 'admin'])
     ->name('api.admin.pages.force-delete');
+
+FlexRouter::get(
+    '/api/admin/pages/{id}/elements',
+    [PageContentController::class, 'show']
+)
+    ->whereNumber('id')
+    ->middleware(['auth', 'admin'])
+    ->name('api.admin.pages.elements.show');
+
+FlexRouter::put(
+    '/api/admin/pages/{id}/elements',
+    [PageContentController::class, 'update']
+)
+    ->whereNumber('id')
+    ->middleware(['auth', 'admin'])
+    ->name('api.admin.pages.elements.update');
+
+FlexRouter::get('/api/admin/pages/{pageId}/fields', [PageFieldsController::class, 'apiIndex'])
+    ->whereNumber('pageId')->middleware(['auth', 'admin'])->name('api.admin.pages.fields.index');
+
+FlexRouter::post('/api/admin/pages/{pageId}/fields/{fieldId}/delete', [PageFieldsController::class, 'delete'])
+    ->whereNumber('pageId')->whereNumber('fieldId')->middleware(['auth', 'admin'])->name('api.admin.pages.fields.delete');

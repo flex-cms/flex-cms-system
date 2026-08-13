@@ -34,7 +34,12 @@ final class EloquentPageRepository implements PageRepositoryInterface
             ? $sortBy
             : 'position';
         $sortDirection = $sortDirection === 'desc' ? 'desc' : 'asc';
-        $query = Page::query();
+        $query = Page::query()->with([
+            'pageOptions' => static fn ($query) => $query->where(
+                'option_key',
+                'is_with_page_options'
+            ),
+        ]);
         $search = trim((string) $search);
 
         if ($search !== '') {
@@ -76,6 +81,10 @@ final class EloquentPageRepository implements PageRepositoryInterface
                     'full_slug' => $page->full_slug,
                     'position' => (int) $page->position,
                     'is_active' => (bool) $page->is_active,
+                    'is_with_page_options' => (bool) $page->getOption(
+                        'is_with_page_options',
+                        false
+                    ),
                     'status' => $page->trashed()
                         ? 'deleted'
                         : ($page->is_active ? 'active' : 'inactive'),

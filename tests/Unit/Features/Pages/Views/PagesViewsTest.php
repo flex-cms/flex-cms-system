@@ -6,10 +6,10 @@ namespace Tests\Unit\Features\Pages\Views;
 
 use Flex\Core\View\ViewFinder;
 use Flex\Core\View\ViewRenderer;
-use Flex\Features\Pages\Data\PageElementNode;
 use Flex\Features\Pages\Data\PageTreeItem;
+use Flex\Features\Pages\Data\PageFieldType;
 use Flex\Features\Pages\Models\Page;
-use Flex\Features\Pages\Models\PageElement;
+use Flex\Features\Pages\Models\PageField;
 use PHPUnit\Framework\TestCase;
 
 final class PagesViewsTest extends TestCase
@@ -70,7 +70,7 @@ final class PagesViewsTest extends TestCase
         self::assertStringContainsString('action="/admin/pages/store"', $html);
         self::assertStringContainsString('mode="api"', $html);
         self::assertStringContainsString('name="name"', $html);
-        self::assertStringContainsString('name="elements_json"', $html);
+        self::assertStringNotContainsString('name="elements_json"', $html);
         self::assertStringContainsString('<flex-dropdown', $html);
         self::assertStringContainsString('name="parent_id"', $html);
         self::assertStringContainsString('name="options[page_template]"', $html);
@@ -80,22 +80,10 @@ final class PagesViewsTest extends TestCase
         self::assertStringContainsString('Създай страница', $html);
     }
 
-    public function testEditViewRendersCurrentDataAndElementJson(): void
+    public function testEditViewRendersCurrentPageDataWithoutContentEditor(): void
     {
         $parent = $this->page(1, 'Parent', 'parent', 'parent');
         $page = $this->page(2, 'Child', 'child', 'parent/child', 1);
-        $element = new PageElement();
-        $element->setRawAttributes([
-            'id' => 8,
-            'page_id' => 2,
-            'parent_id' => null,
-            'element_type' => 'text',
-            'position' => 0,
-            'settings' => json_encode([
-                'content' => '</textarea><script>alert(1)</script>',
-            ], JSON_THROW_ON_ERROR),
-        ], true);
-
         $html = $this->views->render('Pages::edit', [
             'page' => $page,
             'parentPages' => [new PageTreeItem($parent, 0)],
@@ -104,7 +92,6 @@ final class PagesViewsTest extends TestCase
                 'page_template' => 'landing',
                 'use_full_slug' => true,
             ],
-            'elements' => [new PageElementNode($element)],
             'templates' => ['landing' => 'Landing page'],
         ]);
 
@@ -113,8 +100,115 @@ final class PagesViewsTest extends TestCase
         self::assertStringContainsString('value="1"', $html);
         self::assertStringContainsString('Landing page', $html);
         self::assertStringContainsString('Short description', $html);
-        self::assertStringContainsString('&lt;/textarea&gt;', $html);
-        self::assertStringNotContainsString('</textarea><script>alert(1)</script>', $html);
+        self::assertStringNotContainsString('elements_json', $html);
+        self::assertStringNotContainsString('Структура на съдържанието', $html);
+    }
+
+    public function testContentEditorViewRendersPageContextAndActions(): void
+    {
+        $page = $this->page(12, '<Page>', 'page', 'page');
+
+        $html = $this->views->render('Pages::content/edit', [
+            'page' => $page,
+        ]);
+
+        self::assertStringContainsString('id="page-content-builder"', $html);
+        self::assertStringContainsString('data-page-id="12"', $html);
+        self::assertStringContainsString('/admin/pages/edit/12', $html);
+        self::assertStringContainsString('id="page-content-save"', $html);
+        self::assertStringContainsString('„&lt;Page&gt;“', $html);
+        self::assertStringNotContainsString('„<Page>“', $html);
+    }
+
+    public function testFieldsIndexRendersApiBackedTableAndActions(): void
+    {
+        $page = $this->page(12, '<Page>', 'page', 'page');
+
+        $html = $this->views->render('Pages::fields/index', [
+            'page' => $page,
+        ]);
+
+        self::assertStringContainsString('id="page-fields-table"', $html);
+        self::assertStringContainsString('data-page-id="12"', $html);
+        self::assertStringContainsString('/admin/pages/12/fields/create', $html);
+        self::assertStringContainsString('/admin/pages/12/fields/import', $html);
+        self::assertStringContainsString('„&lt;Page&gt;“', $html);
+        self::assertStringNotContainsString('pages-fields-data', $html);
+    }
+
+    public function testCreateFieldViewRendersSupportedFieldContract(): void
+    {
+        $page = $this->page(12, 'Page', 'page', 'page');
+
+        $html = $this->views->render('Pages::fields/create', [
+            'page' => $page,
+            'field' => null,
+            'types' => PageFieldType::options(),
+        ]);
+
+        self::assertStringContainsString(
+            'action="/admin/pages/12/fields/store"',
+            $html
+        );
+        self::assertStringContainsString('mode="api"', $html);
+        self::assertStringContainsString('name="type"', $html);
+        self::assertStringContainsString('name="label"', $html);
+        self::assertStringContainsString('name="key"', $html);
+        self::assertStringContainsString('name="group"', $html);
+        self::assertStringContainsString('name="order"', $html);
+        self::assertStringContainsString('name="hint"', $html);
+        self::assertStringContainsString('Визуален редактор', $html);
+        self::assertStringNotContainsString('<textarea', $html);
+    }
+
+    public function testEditFieldViewRendersCurrentValues(): void
+    {
+        $page = $this->page(12, 'Page', 'page', 'page');
+        $field = new PageField([
+            'type' => PageFieldType::Gallery,
+            'label' => '<Gallery>',
+            'field_key' => 'gallery',
+            'field_group' => 'media',
+            'position' => 20,
+            'hint' => 'Images',
+        ]);
+        $field->setAttribute('id', 7);
+
+        $html = $this->views->render('Pages::fields/edit', [
+            'page' => $page,
+            'field' => $field,
+            'types' => PageFieldType::options(),
+        ]);
+
+        self::assertStringContainsString(
+            'action="/admin/pages/12/fields/7/update"',
+            $html
+        );
+        self::assertStringContainsString('value="gallery"', $html);
+        self::assertStringContainsString('value="&lt;Gallery&gt;"', $html);
+        self::assertStringContainsString('value="media"', $html);
+        self::assertStringContainsString('value="20"', $html);
+        self::assertStringContainsString('value="Images"', $html);
+        self::assertStringNotContainsString('value="<Gallery>"', $html);
+    }
+
+    public function testFieldsImportViewUsesJsonApiForm(): void
+    {
+        $page = $this->page(12, '<Page>', 'page', 'page');
+
+        $html = $this->views->render('Pages::fields/import', [
+            'page' => $page,
+        ]);
+
+        self::assertStringContainsString(
+            'action="/admin/pages/12/fields/import"',
+            $html
+        );
+        self::assertStringContainsString('id="page-fields-import-form"', $html);
+        self::assertStringContainsString('name="fields_json"', $html);
+        self::assertStringContainsString('mode="api"', $html);
+        self::assertStringNotContainsString('type="file"', $html);
+        self::assertStringContainsString('„&lt;Page&gt;“', $html);
     }
 
     private function page(

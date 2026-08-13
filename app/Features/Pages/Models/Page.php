@@ -23,6 +23,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property-read Collection<int, Page> $children
  * @property-read Collection<int, PageOption> $pageOptions
  * @property-read Collection<int, PageElement> $elements
+ * @property-read Collection<int, PageField> $fields
  */
 final class Page extends Model
 {
@@ -69,6 +70,14 @@ final class Page extends Model
         return $this->hasMany(PageElement::class, 'page_id')
             ->whereNull('parent_id')
             ->orderBy('position');
+    }
+
+    public function fields(): HasMany
+    {
+        return $this->hasMany(PageField::class, 'page_id')
+            ->orderBy('field_group')
+            ->orderBy('position')
+            ->orderBy('id');
     }
 
     public function getOption(string $key, mixed $default = null): mixed
