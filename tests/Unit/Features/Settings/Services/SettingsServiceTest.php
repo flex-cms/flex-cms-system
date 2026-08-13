@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Features\Settings\Services;
 
-use Flex\Features\Settings\Configuration\SettingsPageConfig;
 use Flex\Features\Settings\Exceptions\UnknownSettingsGroupException;
 use Flex\Features\Settings\Repositories\SettingRepositoryInterface;
 use Flex\Features\Settings\Services\SettingsService;
@@ -26,32 +25,7 @@ final class SettingsServiceTest extends TestCase
             SettingRepositoryInterface::class
         );
 
-        $groups = [
-            'general' => [
-                'label' => 'Общи настройки',
-                'url' => '/admin/settings/general',
-            ],
-            'mail' => [
-                'label' => 'Имейл сървър',
-                'url' => '/admin/settings/mail',
-            ],
-            'media' => [
-                'label' => 'Файлове',
-                'url' => '/admin/settings/media',
-            ],
-        ];
-
-        $configuration = new SettingsPageConfig(
-            static fn(string $path, mixed $default = null): mixed =>
-            $path === 'settings_options.settings_page_groups'
-            ? $groups
-            : $default
-        );
-
-        $this->service = new SettingsService(
-            $this->repository,
-            $configuration
-        );
+        $this->service = new SettingsService($this->repository);
     }
 
     public function testItReturnsStoredValuesMergedWithDefaults(): void
@@ -304,31 +278,21 @@ final class SettingsServiceTest extends TestCase
 
         self::assertSame(
             'general',
-            $pageData->currentGroup
+            $pageData->group
         );
 
         self::assertSame(
             'My Flex website',
-            $pageData->settings['site_name']
+            $pageData->values['site_name']
         );
 
         self::assertTrue(
-            $pageData->settings['debug_mode']
+            $pageData->values['debug_mode']
         );
 
-        self::assertArrayHasKey(
-            'general',
-            $pageData->definedGroups
-        );
-
-        self::assertArrayHasKey(
-            'mail',
-            $pageData->definedGroups
-        );
-
-        self::assertArrayHasKey(
-            'media',
-            $pageData->definedGroups
+        self::assertSame(
+            SettingsService::DATABASE_GROUP,
+            $pageData->storageGroup
         );
 
         self::assertArrayHasKey(

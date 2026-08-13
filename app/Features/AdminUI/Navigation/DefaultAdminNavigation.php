@@ -24,7 +24,7 @@ final class DefaultAdminNavigation
         return $this->registry
             ->create(
                 SidebarRegistry::DEFAULT_SIDEBAR,
-                'Administration',
+                'Основна навигация',
                 SidebarPosition::Left
             )
             ->priority(10)

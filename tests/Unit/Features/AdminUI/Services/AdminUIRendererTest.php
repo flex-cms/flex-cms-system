@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Features\AdminUI\Services;
 
+use Flex\Core\Assets\AdminAssetRegistry;
+use Flex\Core\Assets\ViteAssetResolver;
 use Flex\Core\View\Contracts\ViewRendererInterface;
 use Flex\Core\View\ViewResponse;
 use Flex\Features\AdminUI\Configuration\AdminUIConfig;
@@ -22,7 +24,7 @@ final class AdminUIRendererTest extends TestCase
         );
 
         $config = $this->config();
-        $assets = new AdminUIAssets($config);
+        $assets = $this->assets($config);
         $sidebars = $this->sidebars();
 
         $renderer = new AdminUIRenderer(
@@ -93,7 +95,7 @@ final class AdminUIRendererTest extends TestCase
         );
 
         $config = $this->config();
-        $assets = new AdminUIAssets($config);
+        $assets = $this->assets($config);
         $sidebars = $this->sidebars();
 
         $renderer = new AdminUIRenderer(
@@ -156,7 +158,7 @@ final class AdminUIRendererTest extends TestCase
         );
 
         $config = $this->config();
-        $assets = new AdminUIAssets($config);
+        $assets = $this->assets($config);
         $sidebars = $this->sidebars();
 
         $renderer = new AdminUIRenderer(
@@ -220,6 +222,18 @@ final class AdminUIRendererTest extends TestCase
             ->register();
 
         return $registry;
+    }
+
+    private function assets(AdminUIConfig $config): AdminUIAssets
+    {
+        return new AdminUIAssets(
+            $config,
+            new AdminAssetRegistry(),
+            new ViteAssetResolver(
+                manifestPath: __DIR__ . '/missing-manifest.json',
+                development: true
+            )
+        );
     }
 
     private function config(): AdminUIConfig

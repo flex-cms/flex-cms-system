@@ -9,6 +9,7 @@ use Flex\Core\Assets\ViteAssetResolver;
 use Flex\Core\Container\Container;
 use Flex\Core\Features\Contracts\FeatureServiceProviderInterface;
 use Flex\Features\AdminUI\Configuration\AdminUIConfig;
+use Flex\Features\AdminUI\Navigation\DefaultAdminNavigation;
 use Flex\Features\AdminUI\Navigation\SidebarRegistry;
 use Flex\Features\AdminUI\Services\AdminUIAssets;
 use Flex\Features\AdminUI\Services\AdminUIRenderer;
@@ -31,44 +32,6 @@ final class AdminUIServiceProvider implements
             ViteAssetResolver::class,
             static fn(): ViteAssetResolver =>
             new ViteAssetResolver(
-                dirname(__DIR__, 4)
-                . '/public/dist/.vite/manifest.json',
-                '/public/dist/'
-            )
-        );
-
-        $container->singleton(
-            SidebarRegistry::class
-        );
-
-        $container->singleton(
-            AdminUIAssets::class
-        );
-
-        $container->singleton(
-            AdminUIRenderer::class
-        );
-
-        $sidebarRegistry = $container->get(
-            SidebarRegistry::class
-        );
-
-        if (
-            !$sidebarRegistry->has(
-                SidebarRegistry::DEFAULT_SIDEBAR
-            )
-        ) {
-            $sidebarRegistry->create(
-                SidebarRegistry::DEFAULT_SIDEBAR,
-                'Основна навигация',
-                'left'
-            );
-        }
-
-        $container->singleton(
-            ViteAssetResolver::class,
-            static fn(): ViteAssetResolver =>
-            new ViteAssetResolver(
                 manifestPath:
                 dirname(__DIR__, 4)
                 . '/public/dist/.vite/manifest.json',
@@ -84,5 +47,25 @@ final class AdminUIServiceProvider implements
                 'http://localhost:3000'
             )
         );
+
+        $container->singleton(
+            SidebarRegistry::class
+        );
+
+        $container->singleton(
+            DefaultAdminNavigation::class
+        );
+
+        $container->singleton(
+            AdminUIAssets::class
+        );
+
+        $container->singleton(
+            AdminUIRenderer::class
+        );
+
+        $container
+            ->get(DefaultAdminNavigation::class)
+            ->register();
     }
 }

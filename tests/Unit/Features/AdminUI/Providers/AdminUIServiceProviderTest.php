@@ -199,7 +199,7 @@ final class AdminUIServiceProviderTest extends TestCase
         );
 
         self::assertSame(
-            'Administration',
+            'Основна навигация',
             $sidebarData['label']
         );
 

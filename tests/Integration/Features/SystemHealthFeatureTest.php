@@ -25,10 +25,16 @@ final class SystemHealthFeatureTest extends TestCase
         );
 
         $result = $app
-            ->featureRoutes($root . '/app/Features')
+            ->featureRoutes(
+                $root . '/app/Features',
+                enabledFeatures: ['SystemHealth']
+            )
             ->load(['api']);
 
-        self::assertContains('SystemHealth', $result->loadedFeatures);
+        self::assertSame(
+            ['SystemHealth'],
+            $result->loadedFeatures
+        );
 
         $kernelResult = $app->kernel->handle(
             new Request('GET', '/api/flex/health')

@@ -39,7 +39,13 @@ final class SettingsRoutesTest extends TestCase
 
     public function testItRegistersSettingsRoutes(): void
     {
-        self::assertCount(2, $this->routes);
+        self::assertCount(3, $this->routes);
+
+        self::assertTrue(
+            $this->routes->hasNamed(
+                'admin.settings.runtime.date'
+            )
+        );
 
         self::assertTrue(
             $this->routes->hasNamed(

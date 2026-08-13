@@ -42,7 +42,7 @@ final class DashboardNavigationTest extends TestCase
         );
 
         self::assertSame(
-            'fa-solid fa-gauge-high',
+            'fa-solid fa-gauge',
             $itemData['icon']
         );
 

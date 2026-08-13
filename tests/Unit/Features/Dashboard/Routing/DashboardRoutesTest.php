@@ -8,6 +8,7 @@ use Flex\Core\Routing\FlexRouter;
 use Flex\Core\Routing\RouteCollection;
 use Flex\Core\Routing\RouteRegistrar;
 use Flex\Core\Routing\RouteMatcher;
+use Flex\Features\Dashboard\Controllers\DashboardController;
 use PHPUnit\Framework\TestCase;
 
 final class DashboardRoutesTest extends TestCase
@@ -28,16 +29,22 @@ final class DashboardRoutesTest extends TestCase
         parent::tearDown();
     }
 
-    public function testItRegistersAndMatchesPreviewRoute(): void
+    public function testItRegistersAndMatchesDashboardRoute(): void
     {
-        $route = $this->routes->named('admin.dashboard.preview');
+        self::assertCount(1, $this->routes);
+
+        $route = $this->routes->named('admin.dashboard');
         self::assertNotNull($route);
+        self::assertSame(
+            [DashboardController::class, 'index'],
+            $route->action()
+        );
         self::assertSame(['auth', 'admin'], $route->getMiddleware());
 
         $result = (new RouteMatcher($this->routes))
             ->matchMethodAndPath('GET', '/admin/dashboard');
 
         self::assertTrue($result->isFound());
-        self::assertSame('admin.dashboard.preview', $result->route()->getName());
+        self::assertSame('admin.dashboard', $result->route()->getName());
     }
 }

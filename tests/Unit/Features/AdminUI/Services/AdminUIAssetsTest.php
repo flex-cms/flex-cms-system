@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Features\AdminUI\Services;
 
+use Flex\Core\Assets\AdminAssetRegistry;
+use Flex\Core\Assets\ViteAssetResolver;
 use Flex\Features\AdminUI\Configuration\AdminUIConfig;
 use Flex\Features\AdminUI\Services\AdminUIAssets;
 use PHPUnit\Framework\TestCase;
@@ -85,22 +87,22 @@ final class AdminUIAssetsTest extends TestCase
         parent::tearDown();
     }
 
-    public function testItRendersTrackedStylesheet(): void
+    public function testItRendersStylesheet(): void
     {
         $html = $this->assets()->styles();
 
         self::assertSame(
-            '<link data-turbo-track="reload" rel="stylesheet" href="/public/dist/assets/admin-ui.css">',
+            '<link rel="stylesheet" href="/public/dist/assets/admin-ui.css">',
             $html
         );
     }
 
-    public function testItRendersTrackedJavaScript(): void
+    public function testItRendersJavaScript(): void
     {
         $html = $this->assets()->scripts();
 
         self::assertSame(
-            '<script data-turbo-track="reload" type="module" src="/public/dist/assets/admin-ui.js"></script>',
+            '<script type="module" src="/public/dist/assets/admin-ui.js"></script>',
             $html
         );
     }
@@ -137,18 +139,18 @@ final class AdminUIAssetsTest extends TestCase
         $html = $this->assets()
             ->themeBootstrap('dark');
 
-        self::assertStringContainsString(
-            'const fallbackPreference = "dark";',
+        self::assertMatchesRegularExpression(
+            '/const fallbackPreference\s*=\s*"dark";/',
             $html
         );
 
-        self::assertStringContainsString(
-            'root.dataset.theme = theme;',
+        self::assertMatchesRegularExpression(
+            '/root\.dataset\.theme\s*=\s*theme;/',
             $html
         );
 
-        self::assertStringContainsString(
-            'root.dataset.themePreference = preference;',
+        self::assertMatchesRegularExpression(
+            '/root\.dataset\.themePreference\s*=\s*preference;/',
             $html
         );
     }
@@ -158,8 +160,8 @@ final class AdminUIAssetsTest extends TestCase
         $html = $this->assets()
             ->themeBootstrap('invalid-theme');
 
-        self::assertStringContainsString(
-            'const fallbackPreference = "system";',
+        self::assertMatchesRegularExpression(
+            '/const fallbackPreference\s*=\s*"system";/',
             $html
         );
     }
@@ -175,8 +177,8 @@ final class AdminUIAssetsTest extends TestCase
             $html
         );
 
-        self::assertStringContainsString(
-            'const fallbackPreference = "system";',
+        self::assertMatchesRegularExpression(
+            '/const fallbackPreference\s*=\s*"system";/',
             $html
         );
     }
@@ -209,7 +211,15 @@ final class AdminUIAssetsTest extends TestCase
                 $values[$path] ?? $default
         );
 
-        return new AdminUIAssets($config);
+        return new AdminUIAssets(
+            $config,
+            new AdminAssetRegistry(),
+            new ViteAssetResolver(
+                $this->documentRoot
+                . '/public/dist/.vite/manifest.json',
+                '/public/dist/'
+            )
+        );
     }
 
     private function deleteDirectory(

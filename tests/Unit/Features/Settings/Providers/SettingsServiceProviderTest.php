@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Features\Settings\Providers;
 
+use Flex\Core\Assets\AdminAssetRegistry;
 use Flex\Core\Container\Container;
 use Flex\Core\Features\Contracts\FeatureServiceProviderInterface;
-use Flex\Features\Settings\Configuration\SettingsPageConfig;
+use Flex\Features\AdminUI\Navigation\SidebarRegistry;
+use Flex\Features\Settings\Navigation\SettingsNavigation;
 use Flex\Features\Settings\Providers\SettingsServiceProvider;
 use Flex\Features\Settings\Repositories\EloquentSettingRepository;
 use Flex\Features\Settings\Repositories\SettingRepositoryInterface;
@@ -17,75 +19,85 @@ final class SettingsServiceProviderTest extends TestCase
 {
     public function testItImplementsFeatureProviderContract(): void
     {
-        $provider = new SettingsServiceProvider();
-
         self::assertInstanceOf(
             FeatureServiceProviderInterface::class,
-            $provider
+            new SettingsServiceProvider()
         );
     }
 
     public function testItRegistersSettingsDependencies(): void
     {
-        $container = new Container();
-        $provider = new SettingsServiceProvider();
+        $container = $this->containerWithAdminDependencies();
 
-        $provider->register($container);
+        (new SettingsServiceProvider())->register($container);
 
-        self::assertTrue(
-            $container->has(SettingsPageConfig::class)
-        );
-
-        self::assertTrue(
-            $container->has(SettingRepositoryInterface::class)
-        );
-
-        self::assertTrue(
-            $container->has(SettingsService::class)
-        );
+        self::assertTrue($container->has(SettingRepositoryInterface::class));
+        self::assertTrue($container->has(SettingsService::class));
+        self::assertTrue($container->has(SettingsNavigation::class));
     }
 
     public function testItBindsRepositoryInterfaceToEloquentRepository(): void
     {
-        $container = new Container();
+        $container = $this->containerWithAdminDependencies();
 
-        (new SettingsServiceProvider())
-            ->register($container);
-
-        $repository = $container->get(
-            SettingRepositoryInterface::class
-        );
+        (new SettingsServiceProvider())->register($container);
 
         self::assertInstanceOf(
             EloquentSettingRepository::class,
-            $repository
+            $container->get(SettingRepositoryInterface::class)
         );
     }
 
     public function testRegisteredDependenciesAreSingletons(): void
     {
+        $container = $this->containerWithAdminDependencies();
+
+        (new SettingsServiceProvider())->register($container);
+
+        foreach ([
+            SettingRepositoryInterface::class,
+            SettingsService::class,
+            SettingsNavigation::class,
+        ] as $service) {
+            self::assertSame(
+                $container->get($service),
+                $container->get($service)
+            );
+        }
+    }
+
+    public function testItRegistersNavigationAndAssets(): void
+    {
+        $container = $this->containerWithAdminDependencies();
+
+        (new SettingsServiceProvider())->register($container);
+
+        $sidebars = $container->get(SidebarRegistry::class);
+        self::assertNotNull(
+            $sidebars->sidebar()->find('settings')
+        );
+
+        self::assertContains(
+            'app/Features/Settings/Resources/js/settings.js',
+            $container->get(AdminAssetRegistry::class)->scripts()
+        );
+    }
+
+    private function containerWithAdminDependencies(): Container
+    {
         $container = new Container();
-
-        (new SettingsServiceProvider())
-            ->register($container);
-
-        self::assertSame(
-            $container->get(SettingsPageConfig::class),
-            $container->get(SettingsPageConfig::class)
+        $sidebars = new SidebarRegistry();
+        $sidebars->create(
+            SidebarRegistry::DEFAULT_SIDEBAR,
+            'Administration'
         );
 
-        self::assertSame(
-            $container->get(
-                SettingRepositoryInterface::class
-            ),
-            $container->get(
-                SettingRepositoryInterface::class
-            )
+        $container->instance(SidebarRegistry::class, $sidebars);
+        $container->instance(
+            AdminAssetRegistry::class,
+            new AdminAssetRegistry()
         );
 
-        self::assertSame(
-            $container->get(SettingsService::class),
-            $container->get(SettingsService::class)
-        );
+        return $container;
     }
 }

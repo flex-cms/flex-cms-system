@@ -4,93 +4,66 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Features\Settings\Controllers;
 
-use Flex\Core\Http\RedirectResponse;
+use Flex\Core\Assets\AdminAssetRegistry;
+use Flex\Core\Assets\ViteAssetResolver;
+use Flex\Core\Http\JsonResponse;
 use Flex\Core\Http\Request;
 use Flex\Core\View\Contracts\ViewRendererInterface;
 use Flex\Core\View\ViewResponse;
-use Flex\Features\Settings\Configuration\SettingsPageConfig;
+use Flex\Features\AdminUI\Configuration\AdminUIConfig;
+use Flex\Features\AdminUI\Navigation\SidebarRegistry;
+use Flex\Features\AdminUI\Services\AdminUIAssets;
+use Flex\Features\AdminUI\Services\AdminUIRenderer;
 use Flex\Features\Settings\Controllers\SettingsController;
 use Flex\Features\Settings\Exceptions\UnknownSettingsGroupException;
 use Flex\Features\Settings\Repositories\SettingRepositoryInterface;
 use Flex\Features\Settings\Services\SettingsService;
-use InvalidArgumentException;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
 final class SettingsControllerTest extends TestCase
 {
     private SettingRepositoryInterface&MockObject $repository;
-
     private ViewRendererInterface&MockObject $views;
-
     private SettingsController $controller;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $_SESSION = [];
-
         $this->repository = $this->createMock(
             SettingRepositoryInterface::class
         );
-
         $this->views = $this->createMock(
             ViewRendererInterface::class
         );
 
-        $groups = [
-            'general' => [
-                'label' => 'Общи настройки',
-                'url' => '/admin/settings/general',
-            ],
-            'mail' => [
-                'label' => 'Имейл сървър',
-                'url' => '/admin/settings/mail',
-            ],
-            'media' => [
-                'label' => 'Файлове',
-                'url' => '/admin/settings/media',
-            ],
-        ];
-
-        $configuration = new SettingsPageConfig(
-            static fn (
-                string $path,
-                mixed $default = null
-            ): mixed => match ($path) {
-                'settings_options.settings_page_groups' =>
-                    $groups,
-
-                'languages' => [
-                    'bg' => 'Български',
-                    'en' => 'English',
-                ],
-
-                'date_formats' => [
-                    'd.m.Y' => 'Ден.Месец.Година',
-                ],
-
-                default => $default,
-            }
+        $config = new AdminUIConfig(
+            static fn (string $path, mixed $default = null): mixed => $default
         );
-
-        $service = new SettingsService(
-            $this->repository,
-            $configuration
+        $sidebars = new SidebarRegistry();
+        $sidebars->create(
+            SidebarRegistry::DEFAULT_SIDEBAR,
+            'Administration'
+        );
+        $assets = new AdminUIAssets(
+            $config,
+            new AdminAssetRegistry(),
+            new ViteAssetResolver(
+                manifestPath: __DIR__ . '/missing-manifest.json',
+                development: true
+            )
         );
 
         $this->controller = new SettingsController(
-            $service,
-            $this->views
+            new SettingsService($this->repository),
+            new AdminUIRenderer(
+                $this->views,
+                $assets,
+                $config,
+                $sidebars
+            )
         );
-    }
-
-    protected function tearDown(): void
-    {
-        unset($_SESSION['flash_success']);
-
-        parent::tearDown();
     }
 
     public function testShowReturnsSettingsViewResponse(): void
@@ -104,107 +77,69 @@ final class SettingsControllerTest extends TestCase
                 'debug_mode' => true,
             ]);
 
-        $expectedResponse = new ViewResponse(
-            '<h1>Settings</h1>'
-        );
+        $expectedResponse = new ViewResponse('<h1>Settings</h1>');
 
         $this->views
             ->expects(self::once())
             ->method('response')
             ->with(
-                'Settings::show',
+                'Settings::groups/general',
                 self::callback(
-                    static function (array $data): bool {
-                        return $data['title']
-                                === 'Настройки: Общи настройки'
-                            && $data['currentGroup']
-                                === 'general'
-                            && $data['group']
-                                === 'general'
-                            && $data['settings']['site_name']
-                                === 'My Flex website'
-                            && $data['settings']['debug_mode']
-                                === true
-                            && isset(
-                                $data['definedGroups']['mail']
-                            )
-                            && isset(
-                                $data['languages']['bg']
-                            )
-                            && isset(
-                                $data['timezones']['Europe/Sofia']
-                            )
-                            && isset(
-                                $data['dateFormats']['d.m.Y']
-                            );
-                    }
+                    static fn (array $data): bool =>
+                        $data['group'] === 'general'
+                        && $data['storageGroup'] === 'general'
+                        && $data['values']['site_name'] === 'My Flex website'
+                        && $data['values']['debug_mode'] === true
+                        && isset($data['languages']['bg'])
+                        && isset($data['timezones']['Europe/Sofia'])
+                        && isset($data['dateFormats']['d.m.Y'])
+                        && isset($data['adminUIConfig'])
+                        && isset($data['adminUISidebar'])
                 ),
-                'admin'
+                AdminUIRenderer::LAYOUT,
+                200
             )
             ->willReturn($expectedResponse);
 
-        $response = $this->controller->show(
-            'general'
-        );
-
         self::assertSame(
             $expectedResponse,
-            $response
+            $this->controller->show('general')
         );
     }
 
-    public function testUpdateSavesSettingsAndRedirects(): void
+    public function testUpdateSavesSettingsAndReturnsJson(): void
     {
         $this->repository
             ->expects(self::once())
             ->method('transaction')
             ->willReturnCallback(
-                static fn (callable $callback): mixed =>
-                    $callback()
+                static fn (callable $callback): mixed => $callback()
             );
-
         $this->repository
             ->expects(self::once())
             ->method('saveMany')
-            ->with(
-                [
-                    'site_name' => 'Updated website',
-                    'debug_mode' => true,
-                    'enable_multilang' => false,
-                ],
-                SettingsService::DATABASE_GROUP
-            );
-
-        $request = new Request(
-            method: 'POST',
-            uri: '/admin/settings/general/update',
-            body: [
-                'settings' => [
-                    'site_name' => 'Updated website',
-                    'debug_mode' => '1',
-                ],
-            ]
-        );
+            ->with([
+                'site_name' => 'Updated website',
+                'debug_mode' => true,
+                'enable_multilang' => false,
+            ], SettingsService::DATABASE_GROUP);
 
         $response = $this->controller->update(
-            $request,
+            new Request(
+                method: 'POST',
+                uri: '/admin/settings/general/update',
+                body: ['settings' => [
+                    'site_name' => 'Updated website',
+                    'debug_mode' => '1',
+                ]]
+            ),
             'general'
         );
 
-        self::assertInstanceOf(
-            RedirectResponse::class,
-            $response
-        );
-
-        self::assertSame(
-            '/admin/settings/general',
-            $response->targetUrl()
-        );
-
-        self::assertSame(
-            'Настройките бяха записани успешно.',
-            $_SESSION['flash_success'] ?? null
-        );
+        self::assertInstanceOf(JsonResponse::class, $response);
+        self::assertSame(200, $response->status());
+        self::assertSame('general', $this->json($response)['group']);
+        self::assertTrue($this->json($response)['success']);
     }
 
     public function testUpdateRejectsInvalidSettingsPayload(): void
@@ -213,30 +148,17 @@ final class SettingsControllerTest extends TestCase
             ->expects(self::never())
             ->method('transaction');
 
-        $this->repository
-            ->expects(self::never())
-            ->method('saveMany');
-
-        $request = new Request(
-            method: 'POST',
-            uri: '/admin/settings/general/update',
-            body: [
-                'settings' => 'invalid',
-            ]
-        );
-
-        $this->expectException(
-            InvalidArgumentException::class
-        );
-
-        $this->expectExceptionMessage(
-            'The settings payload must be an array.'
-        );
-
-        $this->controller->update(
-            $request,
+        $response = $this->controller->update(
+            new Request(
+                method: 'POST',
+                uri: '/admin/settings/general/update',
+                body: ['settings' => 'invalid']
+            ),
             'general'
         );
+
+        self::assertSame(422, $response->status());
+        self::assertFalse($this->json($response)['success']);
     }
 
     public function testShowRejectsUnknownGroup(): void
@@ -244,15 +166,23 @@ final class SettingsControllerTest extends TestCase
         $this->repository
             ->expects(self::never())
             ->method('valuesForGroup');
-
         $this->views
             ->expects(self::never())
             ->method('response');
 
-        $this->expectException(
-            UnknownSettingsGroupException::class
-        );
+        $this->expectException(UnknownSettingsGroupException::class);
 
         $this->controller->show('unknown');
+    }
+
+    /** @return array<string, mixed> */
+    private function json(JsonResponse $response): array
+    {
+        return json_decode(
+            $response->content(),
+            true,
+            512,
+            JSON_THROW_ON_ERROR
+        );
     }
 }

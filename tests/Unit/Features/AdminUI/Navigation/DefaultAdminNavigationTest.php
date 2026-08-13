@@ -34,7 +34,7 @@ final class DefaultAdminNavigationTest extends TestCase
         );
 
         self::assertSame(
-            'Administration',
+            'Основна навигация',
             $sidebarData['label']
         );
 
