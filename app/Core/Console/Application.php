@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Flex\Core\Console;
 
 use Flex\Core\Console\Commands\CreateSuperAdministratorCommand;
+use Flex\Core\Console\Commands\DatabaseSeedCommand;
 use Flex\Core\Console\Commands\FeatureFreshCommand;
 use Flex\Core\Console\Commands\FeatureRollbackCommand;
 use Flex\Core\Console\Commands\FeatureMakeMigrationCommand;
@@ -138,6 +139,13 @@ final class Application
 
         $this->register(
             new FeatureFreshCommand(
+                projectPath: $this->projectPath
+            )
+        );
+
+
+        $this->register(
+            new DatabaseSeedCommand(
                 projectPath: $this->projectPath
             )
         );

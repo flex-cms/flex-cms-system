@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Flex\Features\AdminUI\Navigation;
 
+use Flex\Features\Settings\Models\Setting;
+
 final class DefaultAdminNavigation
 {
     public function __construct(
@@ -21,13 +23,27 @@ final class DefaultAdminNavigation
             );
         }
 
+        $position = $this->resolveSidebarPosition();
+
         return $this->registry
             ->create(
                 SidebarRegistry::DEFAULT_SIDEBAR,
                 'Основна навигация',
-                SidebarPosition::Left
+                $position
             )
             ->priority(10)
             ->collapsible(true);
+    }
+
+    private function resolveSidebarPosition(): SidebarPosition
+    {
+        $setting = Setting::query()
+            ->where('key', 'admin_sidebar_position')
+            ->first();
+
+        return SidebarPosition::resolve(
+            $setting?->typedValue(),
+            SidebarPosition::Left
+        );
     }
 }

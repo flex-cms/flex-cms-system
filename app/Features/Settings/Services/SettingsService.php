@@ -56,6 +56,10 @@ final class SettingsService
                 'type' => 'string',
                 'default' => 'bg',
             ],
+            'admin_sidebar_position' => [
+                'type' => 'string',
+                'default' => 'left',
+            ],
         ],
 
         'mail' => [

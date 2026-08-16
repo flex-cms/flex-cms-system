@@ -14,6 +14,9 @@ $escape = static fn(mixed $value): string => htmlspecialchars(
     'UTF-8'
 );
 
+// Generate a unique ID for this form's permission checkboxes
+$permissionCheckboxId = 'permissions-' . ($role?->id ?? 'new') . '-' . uniqid();
+
 $isEdit = $role !== null;
 $action = $isEdit
     ? '/admin/authentication/roles/' . (int) $role->id . '/update'
@@ -108,6 +111,16 @@ $assignedPermissionIds = $role?->permissions
                 <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
                     Потребителят получава обединението от разрешенията на всички свои активни роли.
                 </p>
+                <div class="mt-4">
+                    <button
+                        type="button"
+                        id="<?= $escape($permissionCheckboxId) ?>-toggle"
+                        class="inline-flex items-center px-3 py-2 text-sm font-medium rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors"
+                    >
+                        <i class="fa-solid fa-check-square mr-2"></i>
+                        <span id="<?= $escape($permissionCheckboxId) ?>-label">Маркирай всички</span>
+                    </button>
+                </div>
             </div>
 
             <?php if (count($permissions) === 0): ?>
@@ -115,27 +128,70 @@ $assignedPermissionIds = $role?->permissions
                     Няма активни разрешения за задаване.
                 </p>
             <?php else: ?>
-                <?php foreach ($permissions as $module => $items): ?>
-                    <section class="space-y-3">
-                        <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
-                            <?php foreach ($items as $permission): ?>
-                                <div class="rounded-lg border border-slate-200 p-4 dark:border-slate-700">
-                                    <flex-checkbox
-                                        name="permissions[<?= (int) $permission->id ?>]"
-                                        value="1"
-                                        label="<?= $escape($permission->name) ?>"
-                                        helper="<?= $escape($permission->slug) ?>"
-                                        <?= in_array(
-                                            (int) $permission->id,
-                                            $assignedPermissionIds,
-                                            true
-                                        ) ? 'checked' : '' ?>
-                                    ></flex-checkbox>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-                    </section>
-                <?php endforeach; ?>
+                <div id="<?= $escape($permissionCheckboxId) ?>" class="permissions-container">
+                    <?php foreach ($permissions as $module => $items): ?>
+                        <section class="space-y-3">
+                            <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+                                <?php foreach ($items as $permission): ?>
+                                    <div class="rounded-lg border border-slate-200 p-4 dark:border-slate-700">
+                                        <flex-checkbox
+                                            class="permission-checkbox"
+                                            name="permissions[<?= (int) $permission->id ?>]"
+                                            value="1"
+                                            label="<?= $escape($permission->name) ?>"
+                                            helper="<?= $escape($permission->slug) ?>"
+                                            <?= in_array(
+                                                (int) $permission->id,
+                                                $assignedPermissionIds,
+                                                true
+                                            ) ? 'checked' : '' ?>
+                                        ></flex-checkbox>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        </section>
+                    <?php endforeach; ?>
+                </div>
+
+                <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    const container = document.getElementById('<?= $escape($permissionCheckboxId) ?>');
+                    const toggleBtn = document.getElementById('<?= $escape($permissionCheckboxId) ?>-toggle');
+                    const toggleLabel = document.getElementById('<?= $escape($permissionCheckboxId) ?>-label');
+
+                    if (!container || !toggleBtn) return;
+
+                    function updateButtonState() {
+                        const checkboxes = container.querySelectorAll('.permission-checkbox');
+                        const checkedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
+                        const allChecked = checkedCount === checkboxes.length && checkboxes.length > 0;
+
+                        if (allChecked) {
+                            toggleLabel.textContent = 'Отмаркирай всички';
+                            toggleBtn.querySelector('i').className = 'fa-solid fa-check-double mr-2';
+                        } else {
+                            toggleLabel.textContent = 'Маркирай всички';
+                            toggleBtn.querySelector('i').className = 'fa-solid fa-check-square mr-2';
+                        }
+                    }
+
+                    toggleBtn.addEventListener('click', function() {
+                        const checkboxes = container.querySelectorAll('.permission-checkbox');
+                        const checkedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
+                        const allChecked = checkedCount === checkboxes.length && checkboxes.length > 0;
+
+                        checkboxes.forEach(checkbox => {
+                            checkbox.checked = !allChecked;
+                        });
+
+                        updateButtonState();
+                    });
+
+                    container.addEventListener('change', updateButtonState);
+
+                    updateButtonState();
+                });
+                </script>
             <?php endif; ?>
         </fieldset>
 

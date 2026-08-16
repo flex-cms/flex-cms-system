@@ -46,7 +46,6 @@ final class ShoppingNavigation
                 )
                     ->icon('fa-solid fa-layer-group')
                     ->priority(10)
-                    ->exact(true)
                     ->turbo(true),
 
                 NavigationItem::make(

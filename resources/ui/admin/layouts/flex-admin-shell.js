@@ -17,6 +17,12 @@ export class FlexAdminShell extends FlexElement {
             attribute: "mobile-sidebar-open",
             reflect: true,
         },
+
+        sidebarPosition: {
+            type: String,
+            attribute: "sidebar-position",
+            reflect: true,
+        },
     };
 
     static styles = css`
@@ -37,10 +43,40 @@ export class FlexAdminShell extends FlexElement {
             transition: grid-template-columns var(--flex-duration-normal) var(--flex-easing);
         }
 
+        :host([sidebar-position="right"]) .shell {
+            grid-template-columns:
+                minmax(0, 1fr)
+                var(--flex-sidebar-width);
+        }
+
         :host([sidebar-collapsed]) .shell {
             grid-template-columns:
                 var(--flex-sidebar-collapsed-width)
                 minmax(0, 1fr);
+        }
+
+        :host([sidebar-position="right"][sidebar-collapsed]) .shell {
+            grid-template-columns:
+                minmax(0, 1fr)
+                var(--flex-sidebar-collapsed-width);
+        }
+
+        .sidebar {
+            grid-column: 1;
+            grid-row: 1;
+        }
+
+        .main {
+            grid-column: 2;
+            grid-row: 1;
+        }
+
+        :host([sidebar-position="right"]) .sidebar {
+            grid-column: 2;
+        }
+
+        :host([sidebar-position="right"]) .main {
+            grid-column: 1;
         }
 
         .sidebar {
@@ -50,8 +86,16 @@ export class FlexAdminShell extends FlexElement {
             min-width: 0;
             height: 100vh;
             overflow: hidden;
+
             border-right: 1px solid var(--flex-color-border);
+            border-left: 0;
+
             background: var(--flex-color-surface);
+        }
+
+        :host([sidebar-position="right"]) .sidebar {
+            border-right: 0;
+            border-left: 1px solid var(--flex-color-border);
         }
 
         .main {
@@ -114,8 +158,15 @@ export class FlexAdminShell extends FlexElement {
 
         @media (max-width: 1023px) {
             .shell,
-            :host([sidebar-collapsed]) .shell {
+            :host([sidebar-collapsed]) .shell,
+            :host([sidebar-position="right"]) .shell,
+            :host([sidebar-position="right"][sidebar-collapsed]) .shell {
                 grid-template-columns: minmax(0, 1fr);
+            }
+
+            .main,
+            :host([sidebar-position="right"]) .main {
+                grid-column: 1;
             }
 
             .sidebar {
@@ -129,28 +180,13 @@ export class FlexAdminShell extends FlexElement {
                 transition: transform var(--flex-duration-normal) var(--flex-easing);
             }
 
+            :host([sidebar-position="right"]) .sidebar {
+                inset: 0 0 0 auto;
+                transform: translateX(105%);
+            }
+
             :host([mobile-sidebar-open]) .sidebar {
                 transform: translateX(0);
-            }
-
-            .overlay {
-                position: fixed;
-                inset: 0;
-                z-index: calc(var(--flex-z-sidebar) - 1);
-                display: block;
-                width: 100%;
-                height: 100%;
-                padding: 0;
-                border: 0;
-                background: var(--flex-color-overlay);
-                opacity: 0;
-                pointer-events: none;
-                transition: opacity var(--flex-duration-normal) var(--flex-easing);
-            }
-
-            :host([mobile-sidebar-open]) .overlay {
-                opacity: 1;
-                pointer-events: auto;
             }
         }
 
@@ -169,8 +205,8 @@ export class FlexAdminShell extends FlexElement {
         super();
 
         this.sidebarCollapsed = this.#readCollapsedState();
-
         this.mobileSidebarOpen = false;
+        this.sidebarPosition = "left";
     }
 
     onConnect() {

@@ -37,7 +37,6 @@ final readonly class PagesNavigation
         )
             ->icon('fa-solid fa-file-lines')
             ->priority(10)
-            ->exact(true)
             ->turbo(true);
 
         $this->registry->add(
